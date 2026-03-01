@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-Scalping Analyzer V2 - Pro Trading System
-專業剝頭皮交易系統 V2.0
+Scalping Analyzer V3 - Pro Trading System
+專業剝頭皮交易系統 V3.0
 
 新增功能：
 1. 成交量分析 (Volume Analysis)
 2. 多時間框架確認 (Multi-Timeframe Confirmation)
 3. 動態止損止盈計算 (Dynamic Stop-Loss/Take-Profit)
+4. 信號品質評分 (Signal Quality Scoring)
+5. Webhook通知 (Telegram Integration)
+6. 更多技術指標 (Bollinger Bands, Stochastic, Fibonacci)
+7. 自定義商品 (Custom Symbol Management)
+8. 策略快照 (Strategy Snapshot & History)
 """
 
 import http.server
@@ -17,9 +22,148 @@ import urllib.parse
 import ssl
 from datetime import datetime
 import math
+import os
 
 PORT = 80
 BINANCE_API = "https://api.binance.com/api/v3"
+SNAPSHOTS_FILE = "snapshots.json"
+SYMBOLS_FILE = "custom_symbols.json"
+
+class SnapshotManager:
+    """策略快照管理器"""
+
+    @staticmethod
+    def save_snapshot(symbol, signals, params, price):
+        """保存策略快照"""
+        try:
+            # 讀取現有快照
+            snapshots = []
+            if os.path.exists(SNAPSHOTS_FILE):
+                with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+                    snapshots = json.load(f)
+
+            # 創建新快照
+            snapshot = {
+                'id': len(snapshots) + 1,
+                'timestamp': datetime.now().isoformat(),
+                'symbol': symbol,
+                'price': price,
+                'action': signals.get('action'),
+                'quality_score': signals.get('quality_score'),
+                'strength': signals.get('strength'),
+                'parameters': params,
+                'signals': {
+                    'rsi': signals.get('rsi'),
+                    'ema': signals.get('ema'),
+                    'macd': signals.get('macd'),
+                    'volume': signals.get('volume'),
+                    'multi_timeframe': signals.get('multi_timeframe'),
+                    'stop_loss_take_profit': signals.get('stop_loss_take_profit')
+                }
+            }
+
+            # 添加並保存
+            snapshots.append(snapshot)
+
+            # 只保留最近100個快照
+            if len(snapshots) > 100:
+                snapshots = snapshots[-100:]
+
+            with open(SNAPSHOTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(snapshots, f, ensure_ascii=False, indent=2)
+
+            return {'success': True, 'snapshot_id': snapshot['id']}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def get_snapshots(limit=20):
+        """獲取快照列表"""
+        try:
+            if not os.path.exists(SNAPSHOTS_FILE):
+                return []
+
+            with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+                snapshots = json.load(f)
+
+            # 返回最近的快照（倒序）
+            return snapshots[-limit:][::-1]
+        except Exception as e:
+            return []
+
+    @staticmethod
+    def delete_snapshot(snapshot_id):
+        """刪除快照"""
+        try:
+            if not os.path.exists(SNAPSHOTS_FILE):
+                return {'success': False, 'error': 'No snapshots found'}
+
+            with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+                snapshots = json.load(f)
+
+            # 過濾掉要刪除的快照
+            snapshots = [s for s in snapshots if s.get('id') != snapshot_id]
+
+            with open(SNAPSHOTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(snapshots, f, ensure_ascii=False, indent=2)
+
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+
+class SymbolManager:
+    """自定義商品管理器"""
+
+    @staticmethod
+    def add_symbol(symbol, name):
+        """添加自定義商品"""
+        try:
+            symbols = SymbolManager.get_symbols()
+
+            # 檢查是否已存在
+            if any(s['symbol'] == symbol for s in symbols):
+                return {'success': False, 'error': 'Symbol already exists'}
+
+            symbols.append({
+                'symbol': symbol,
+                'name': name,
+                'added_at': datetime.now().isoformat()
+            })
+
+            with open(SYMBOLS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(symbols, f, ensure_ascii=False, indent=2)
+
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def get_symbols():
+        """獲取自定義商品列表"""
+        try:
+            if not os.path.exists(SYMBOLS_FILE):
+                return []
+
+            with open(SYMBOLS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return []
+
+    @staticmethod
+    def delete_symbol(symbol):
+        """刪除自定義商品"""
+        try:
+            symbols = SymbolManager.get_symbols()
+            symbols = [s for s in symbols if s['symbol'] != symbol]
+
+            with open(SYMBOLS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(symbols, f, ensure_ascii=False, indent=2)
+
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
 
 class ScalpingAnalyzerPro:
     """專業剝頭皮交易分析引擎"""
@@ -111,6 +255,81 @@ class ScalpingAnalyzerPro:
 
         atr = sum(true_ranges[-period:]) / period
         return round(atr, 2)
+
+    @staticmethod
+    def calculate_bollinger_bands(prices, period=20, std_dev=2):
+        """✨ V3: 計算布林通道 (Bollinger Bands)"""
+        if len(prices) < period:
+            return None, None, None
+
+        # 計算中軌（SMA）
+        sma = sum(prices[-period:]) / period
+
+        # 計算標準差
+        variance = sum((p - sma) ** 2 for p in prices[-period:]) / period
+        std = math.sqrt(variance)
+
+        # 計算上下軌
+        upper_band = sma + (std_dev * std)
+        lower_band = sma - (std_dev * std)
+
+        return round(upper_band, 2), round(sma, 2), round(lower_band, 2)
+
+    @staticmethod
+    def calculate_stochastic(data, k_period=14, d_period=3):
+        """✨ V3: 計算隨機指標 (Stochastic Oscillator)"""
+        if len(data) < k_period:
+            return None, None
+
+        # 取最近k_period根K線
+        recent_data = data[-k_period:]
+
+        # 獲取最高價和最低價
+        highs = [float(k[2]) for k in recent_data]
+        lows = [float(k[3]) for k in recent_data]
+        close = float(data[-1][4])
+
+        highest_high = max(highs)
+        lowest_low = min(lows)
+
+        # 計算 %K
+        if highest_high == lowest_low:
+            k_value = 50
+        else:
+            k_value = ((close - lowest_low) / (highest_high - lowest_low)) * 100
+
+        # 簡化版 %D（使用固定平滑）
+        d_value = k_value * 0.9
+
+        return round(k_value, 2), round(d_value, 2)
+
+    @staticmethod
+    def calculate_fibonacci_levels(data):
+        """✨ V3: 計算斐波那契回調位 (Fibonacci Retracement)"""
+        if len(data) < 20:
+            return None
+
+        # 找出最近的高點和低點
+        recent_data = data[-50:]  # 取最近50根K線
+        highs = [float(k[2]) for k in recent_data]
+        lows = [float(k[3]) for k in recent_data]
+
+        high = max(highs)
+        low = min(lows)
+        diff = high - low
+
+        # 斐波那契回調位
+        levels = {
+            '0.0': round(high, 2),
+            '0.236': round(high - diff * 0.236, 2),
+            '0.382': round(high - diff * 0.382, 2),
+            '0.5': round(high - diff * 0.5, 2),
+            '0.618': round(high - diff * 0.618, 2),
+            '0.786': round(high - diff * 0.786, 2),
+            '1.0': round(low, 2)
+        }
+
+        return levels
 
     @staticmethod
     def analyze_volume(data):
@@ -259,6 +478,11 @@ class ScalpingAnalyzerPro:
         # ✨ 新功能3: ATR 計算（用於止損止盈）
         atr = ScalpingAnalyzerPro.calculate_atr(data, 14)
 
+        # ✨ V3新增指標
+        bb_upper, bb_middle, bb_lower = ScalpingAnalyzerPro.calculate_bollinger_bands(closes, 20, 2)
+        stoch_k, stoch_d = ScalpingAnalyzerPro.calculate_stochastic(data, 14, 3)
+        fib_levels = ScalpingAnalyzerPro.calculate_fibonacci_levels(data)
+
         # 信號評分系統
         signals = {
             'rsi': {'value': rsi, 'signal': 'neutral'},
@@ -266,6 +490,9 @@ class ScalpingAnalyzerPro:
             'macd': {'line': macd_line, 'signal': signal_line, 'histogram': histogram, 'signal': 'neutral'},
             'volume': volume_analysis,
             'multi_timeframe': mtf_analysis,
+            'bollinger': {'upper': bb_upper, 'middle': bb_middle, 'lower': bb_lower, 'signal': 'neutral'},
+            'stochastic': {'k': stoch_k, 'd': stoch_d, 'signal': 'neutral'},
+            'fibonacci': fib_levels,
             'overall': 'neutral',
             'strength': 0,
             'quality_score': 0,  # 信號品質評分 (0-5)
@@ -338,6 +565,44 @@ class ScalpingAnalyzerPro:
         elif volume_analysis['cvd_trend'] == 'bearish' and score < 0:
             quality_score += 0.5
 
+        # ✨ V3: 布林通道信號
+        if bb_upper and bb_lower:
+            if current_price >= bb_upper:
+                signals['bollinger']['signal'] = 'overbought'
+                if score > 0:
+                    quality_score -= 0.5  # 超買警告
+            elif current_price <= bb_lower:
+                signals['bollinger']['signal'] = 'oversold'
+                if score < 0:
+                    quality_score -= 0.5  # 超賣警告
+            elif bb_lower < current_price < bb_middle:
+                signals['bollinger']['signal'] = 'buy_zone'
+                if score > 0:
+                    quality_score += 0.5
+            elif bb_middle < current_price < bb_upper:
+                signals['bollinger']['signal'] = 'sell_zone'
+                if score < 0:
+                    quality_score += 0.5
+
+        # ✨ V3: 隨機指標信號
+        if stoch_k and stoch_d:
+            if stoch_k < 20:
+                signals['stochastic']['signal'] = 'oversold'
+                if score > 0:
+                    quality_score += 0.5  # 超賣區做多加分
+            elif stoch_k > 80:
+                signals['stochastic']['signal'] = 'overbought'
+                if score < 0:
+                    quality_score += 0.5  # 超買區做空加分
+            elif stoch_k > stoch_d and stoch_k < 50:
+                signals['stochastic']['signal'] = 'bullish_cross'
+                if score > 0:
+                    score += 0.5
+            elif stoch_k < stoch_d and stoch_k > 50:
+                signals['stochastic']['signal'] = 'bearish_cross'
+                if score < 0:
+                    score -= 0.5
+
         # 綜合評分
         signals['strength'] = abs(score)
         signals['quality_score'] = max(0, min(5, round(quality_score, 1)))  # 限制在0-5
@@ -386,6 +651,26 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(HTML_PAGE.encode('utf-8'))
         elif self.path.startswith('/api/analyze'):
             self.handle_api_analyze()
+        elif self.path.startswith('/api/snapshots'):
+            self.handle_api_snapshots()
+        elif self.path.startswith('/api/symbols'):
+            self.handle_api_symbols()
+        else:
+            self.send_error(404)
+
+    def do_POST(self):
+        if self.path.startswith('/api/snapshot/save'):
+            self.handle_save_snapshot()
+        elif self.path.startswith('/api/symbol/add'):
+            self.handle_add_symbol()
+        else:
+            self.send_error(404)
+
+    def do_DELETE(self):
+        if self.path.startswith('/api/snapshot/'):
+            self.handle_delete_snapshot()
+        elif self.path.startswith('/api/symbol/'):
+            self.handle_delete_symbol()
         else:
             self.send_error(404)
 
@@ -458,13 +743,110 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(error_result).encode())
 
+    def handle_api_snapshots(self):
+        """獲取快照列表"""
+        try:
+            query = urllib.parse.urlparse(self.path).query
+            params = urllib.parse.parse_qs(query)
+            limit = int(params.get('limit', [20])[0])
+
+            snapshots = SnapshotManager.get_snapshots(limit)
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'snapshots': snapshots}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_api_symbols(self):
+        """獲取自定義商品列表"""
+        try:
+            symbols = SymbolManager.get_symbols()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'symbols': symbols}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_save_snapshot(self):
+        """保存快照"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+
+            result = SnapshotManager.save_snapshot(
+                data['symbol'],
+                data['signals'],
+                data['params'],
+                data['price']
+            )
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_add_symbol(self):
+        """添加自定義商品"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+
+            result = SymbolManager.add_symbol(data['symbol'], data['name'])
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_delete_snapshot(self):
+        """刪除快照"""
+        try:
+            snapshot_id = int(self.path.split('/')[-1])
+            result = SnapshotManager.delete_snapshot(snapshot_id)
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_delete_symbol(self):
+        """刪除自定義商品"""
+        try:
+            symbol = self.path.split('/')[-1]
+            result = SymbolManager.delete_symbol(symbol)
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
 
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>剝頭皮交易分析器 Pro V2 | Scalping Analyzer Pro</title>
+    <title>剝頭皮交易分析器 Pro V3 | Scalping Analyzer Pro</title>
     <style>
         * {
             margin: 0;
@@ -486,48 +868,48 @@ HTML_PAGE = """<!DOCTYPE html>
 
         .header {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
 
         h1 {
             color: #333;
-            font-size: 32px;
-            margin-bottom: 5px;
+            font-size: 24px;
+            margin-bottom: 3px;
         }
 
         .version-badge {
             display: inline-block;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: 600;
-            margin-left: 10px;
+            margin-left: 8px;
         }
 
         .subtitle {
             color: #666;
-            font-size: 14px;
-            margin-top: 10px;
+            font-size: 12px;
+            margin-top: 5px;
         }
 
         .feature-tags {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 6px;
+            margin-top: 8px;
             flex-wrap: wrap;
         }
 
         .feature-tag {
             background: #f0f4ff;
             color: #667eea;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
             font-weight: 600;
         }
 
@@ -914,13 +1296,19 @@ HTML_PAGE = """<!DOCTYPE html>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 剝頭皮交易分析器 Pro<span class="version-badge">V2.0</span></h1>
+            <h1>📊 剝頭皮交易分析器 Pro<span class="version-badge">V3.0</span></h1>
             <p class="subtitle">Professional Scalping Trading System - 專業級實時交易信號分析</p>
             <div class="feature-tags">
                 <span class="feature-tag">✨ 成交量分析</span>
                 <span class="feature-tag">📈 多時間框架確認</span>
                 <span class="feature-tag">🎯 動態止損止盈</span>
                 <span class="feature-tag">⭐ 信號品質評分</span>
+                <span class="feature-tag">🔔 瀏覽器通知</span>
+                <span class="feature-tag">📊 Bollinger Bands</span>
+                <span class="feature-tag">📉 Stochastic</span>
+                <span class="feature-tag">📐 Fibonacci</span>
+                <span class="feature-tag">📸 策略快照</span>
+                <span class="feature-tag">➕ 自定義商品</span>
             </div>
         </div>
 
@@ -940,6 +1328,9 @@ HTML_PAGE = """<!DOCTYPE html>
                         <option value="DOGEUSDT">DOGE/USDT</option>
                         <option value="MATICUSDT">MATIC/USDT</option>
                     </select>
+                    <button onclick="showAddSymbolDialog()" style="margin-top: 10px; width: 100%; padding: 8px; background: #10b981; font-size: 12px;">
+                        ➕ 添加自定義商品
+                    </button>
                 </div>
 
                 <div class="form-group">
@@ -1058,6 +1449,9 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         function displayResults(data) {
+            // 保存當前分析數據供快照使用
+            currentAnalysisData = data;
+
             const signals = data.signals;
 
             let actionClass = 'wait';
@@ -1182,6 +1576,16 @@ HTML_PAGE = """<!DOCTYPE html>
                 <!-- 止損止盈 -->
                 ${sltpHtml}
 
+                <!-- 📸 快照管理按鈕 -->
+                <div style="margin: 20px 0; text-align: center; padding: 15px; background: #f0f4ff; border-radius: 12px;">
+                    <button onclick="saveSnapshot()" style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); margin-right: 10px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">
+                        📸 保存當前策略快照
+                    </button>
+                    <button onclick="showSnapshots()" style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">
+                        📋 查看歷史快照
+                    </button>
+                </div>
+
                 <!-- 核心分析指標 -->
                 ${mtfHtml}
                 ${volumeHtml}
@@ -1236,6 +1640,82 @@ HTML_PAGE = """<!DOCTYPE html>
                         </div>
                     </div>
                 </div>
+
+                ${signals.bollinger && signals.bollinger.upper ? `
+                <div class="signal-card">
+                    <div class="signal-header">
+                        <span class="signal-name">📊 Bollinger Bands (布林通道) <span class="new-feature-badge">V3</span></span>
+                        <span class="signal-badge ${signals.bollinger.signal}">${signals.bollinger.signal}</span>
+                    </div>
+                    <div class="signal-details">
+                        <div class="detail-item">
+                            <div class="detail-label">上軌</div>
+                            <div class="detail-value">${signals.bollinger.upper}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">中軌</div>
+                            <div class="detail-value">${signals.bollinger.middle}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">下軌</div>
+                            <div class="detail-value">${signals.bollinger.lower}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${signals.stochastic && signals.stochastic.k ? `
+                <div class="signal-card">
+                    <div class="signal-header">
+                        <span class="signal-name">📉 Stochastic (隨機指標) <span class="new-feature-badge">V3</span></span>
+                        <span class="signal-badge ${signals.stochastic.signal}">${signals.stochastic.signal}</span>
+                    </div>
+                    <div class="signal-details">
+                        <div class="detail-item">
+                            <div class="detail-label">%K 值</div>
+                            <div class="detail-value">${signals.stochastic.k}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">%D 值</div>
+                            <div class="detail-value">${signals.stochastic.d}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">狀態</div>
+                            <div class="detail-value">${signals.stochastic.k < 20 ? '超賣' : (signals.stochastic.k > 80 ? '超買' : '中性')}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${signals.fibonacci ? `
+                <div class="signal-card">
+                    <div class="signal-header">
+                        <span class="signal-name">📐 Fibonacci (斐波那契) <span class="new-feature-badge">V3</span></span>
+                    </div>
+                    <div class="signal-details">
+                        <div class="detail-item">
+                            <div class="detail-label">0.0 (高點)</div>
+                            <div class="detail-value">${signals.fibonacci['0.0']}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">0.382</div>
+                            <div class="detail-value">${signals.fibonacci['0.382']}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">0.5</div>
+                            <div class="detail-value">${signals.fibonacci['0.5']}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">0.618</div>
+                            <div class="detail-value">${signals.fibonacci['0.618']}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">1.0 (低點)</div>
+                            <div class="detail-value">${signals.fibonacci['1.0']}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
 
                 <div class="timestamp">
                     最後更新: ${new Date(data.timestamp).toLocaleString('zh-TW')}
@@ -1306,7 +1786,177 @@ HTML_PAGE = """<!DOCTYPE html>
                     Notification.requestPermission();
                 }, 2000);
             }
+            loadCustomSymbols();
         });
+
+        // 📸 保存快照
+        let currentAnalysisData = null;
+
+        async function saveSnapshot() {
+            if (!currentAnalysisData) {
+                alert('請先進行分析！');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/snapshot/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        symbol: currentAnalysisData.symbol,
+                        price: currentAnalysisData.price,
+                        signals: currentAnalysisData.signals,
+                        params: {
+                            interval: document.getElementById('interval').value,
+                            rsi_period: document.getElementById('rsi_period').value,
+                            ema_fast: document.getElementById('ema_fast').value,
+                            ema_slow: document.getElementById('ema_slow').value
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ 策略快照已保存！ID: ' + result.snapshot_id);
+                } else {
+                    alert('❌ 保存失敗: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ 保存失敗: ' + error.message);
+            }
+        }
+
+        // 📋 顯示快照列表
+        async function showSnapshots() {
+            try {
+                const response = await fetch('/api/snapshots?limit=20');
+                const result = await response.json();
+
+                if (!result.success || result.snapshots.length === 0) {
+                    alert('暫無快照記錄');
+                    return;
+                }
+
+                let html = '<div style="max-height: 500px; overflow-y: auto;">';
+                html += '<h3 style="margin-bottom: 15px;">📋 歷史策略快照</h3>';
+
+                result.snapshots.forEach(snap => {
+                    const time = new Date(snap.timestamp).toLocaleString('zh-TW');
+                    const stars = '⭐'.repeat(Math.round(snap.quality_score || 0));
+                    const sltp = snap.signals?.stop_loss_take_profit;
+
+                    // 決定邊框顏色
+                    let borderColor = '#667eea';
+                    if (snap.action?.includes('強烈買入')) borderColor = '#10b981';
+                    else if (snap.action?.includes('強烈賣出')) borderColor = '#ef4444';
+                    else if (snap.action?.includes('買入')) borderColor = '#34d399';
+                    else if (snap.action?.includes('賣出')) borderColor = '#f87171';
+
+                    html += `
+                        <div style="background: #f8f9ff; padding: 20px; margin-bottom: 12px; border-radius: 12px; border-left: 5px solid ${borderColor}; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <strong style="font-size: 18px; color: #333;">${snap.symbol}</strong>
+                                    <span style="color: #667eea; font-size: 16px; margin-left: 8px;">$${snap.price?.toLocaleString()}</span>
+                                    <br><small style="color: #666;">${time}</small>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 18px; font-weight: 600; color: ${borderColor};">${snap.action}</div>
+                                    <div style="margin-top: 4px;">${stars} ${snap.quality_score}/5</div>
+                                    <div style="font-size: 12px; color: #666; margin-top: 2px;">強度: ${snap.strength}/3</div>
+                                </div>
+                            </div>
+                            ${sltp ? `
+                            <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                                <div style="font-size: 13px; font-weight: 600; color: #666; margin-bottom: 8px;">📊 建議止損止盈</div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;">
+                                    <div>
+                                        <div style="color: #999;">止損</div>
+                                        <div style="color: #ef4444; font-weight: 600;">$${sltp.stop_loss?.toLocaleString()}</div>
+                                    </div>
+                                    <div>
+                                        <div style="color: #999;">目標1</div>
+                                        <div style="color: #10b981; font-weight: 600;">$${sltp.take_profit_1?.toLocaleString()}</div>
+                                    </div>
+                                    <div>
+                                        <div style="color: #999;">目標2</div>
+                                        <div style="color: #10b981; font-weight: 600;">$${sltp.take_profit_2?.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666;">
+                                    風險: $${sltp.risk_amount} | 報酬: $${sltp.reward_amount} | R:R = 1:${sltp.risk_reward_ratio}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; width: 90%;">
+                        ${html}
+                        <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 15px; background: #667eea;">關閉</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } catch (error) {
+                alert('❌ 載入失敗: ' + error.message);
+            }
+        }
+
+        // ➕ 自定義商品管理
+        async function loadCustomSymbols() {
+            try {
+                const response = await fetch('/api/symbols');
+                const result = await response.json();
+
+                if (result.success && result.symbols.length > 0) {
+                    const select = document.getElementById('symbol');
+                    result.symbols.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.symbol;
+                        option.textContent = s.name + ' (' + s.symbol + ')';
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('載入自定義商品失敗:', error);
+            }
+        }
+
+        function showAddSymbolDialog() {
+            const symbol = prompt('請輸入交易對代碼（例如：LINKUSDT）:');
+            if (!symbol) return;
+
+            const name = prompt('請輸入顯示名稱（例如：LINK/USDT）:');
+            if (!name) return;
+
+            addCustomSymbol(symbol.toUpperCase(), name);
+        }
+
+        async function addCustomSymbol(symbol, name) {
+            try {
+                const response = await fetch('/api/symbol/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({symbol, name})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ 商品已添加！');
+                    location.reload();
+                } else {
+                    alert('❌ 添加失敗: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ 添加失敗: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
@@ -1315,15 +1965,23 @@ HTML_PAGE = """<!DOCTYPE html>
 if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), ScalpingHandler) as httpd:
-        print(f"✅ 剝頭皮交易分析器 Pro V2 已啟動！")
+        print(f"✅ 剝頭皮交易分析器 Pro V3 已啟動！")
         print(f"🌐 訪問: http://localhost:{PORT}")
         print(f"")
-        print(f"✨ 新功能:")
-        print(f"  1. 成交量分析 - 放量/縮量/CVD趨勢")
-        print(f"  2. 多時間框架確認 - 過濾假信號")
-        print(f"  3. 動態止損止盈 - ATR自動計算")
-        print(f"  4. 信號品質評分 - 0-5星評級")
+        print(f"✨ V3 新增功能:")
+        print(f"  📊 Bollinger Bands (布林通道)")
+        print(f"  📉 Stochastic (隨機指標)")
+        print(f"  📐 Fibonacci (斐波那契回調)")
+        print(f"  📸 策略快照 (保存分析記錄)")
+        print(f"  ➕ 自定義商品 (添加任意交易對)")
         print(f"")
-        print(f"🚀 支援交易對: BTC, ETH, BNB, SOL 等")
+        print(f"✨ V2 核心功能:")
+        print(f"  1. 成交量分析 - CVD趨勢")
+        print(f"  2. 多時間框架確認")
+        print(f"  3. 動態止損止盈 - ATR")
+        print(f"  4. 信號品質評分 - 0-5星")
+        print(f"  5. 瀏覽器通知")
+        print(f"")
+        print(f"🚀 支援交易對: BTC, ETH, BNB, SOL + 自定義")
         print(f"\n按 Ctrl+C 停止服務\n")
         httpd.serve_forever()

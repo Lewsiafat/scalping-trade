@@ -1,0 +1,104 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2026-03-01T04:37:07.541431",
+    "symbol": "BTCUSDT",
+    "price": 67355.8,
+    "action": "觀望 WAIT",
+    "quality_score": 0.5,
+    "strength": 1,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": "10",
+      "ema_fast": "5",
+      "ema_slow": "20"
+    },
+    "signals": {
+      "rsi": {
+        "value": 28.76,
+        "signal": "buy"
+      },
+      "ema": {
+        "fast": 67325.7,
+        "slow": 67424.53,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": -98.83,
+        "signal": "sell",
+        "histogram": -9.88
+      },
+      "volume": {
+        "volume_ratio": 0.25,
+        "avg_volume": 56.38,
+        "current_volume": 14.34,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 1,
+        "ema_20": 67251.37,
+        "ema_50": 66583.88,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": null
+    }
+  },
+  {
+    "id": 2,
+    "timestamp": "2026-03-01T05:43:42.637491",
+    "symbol": "BTCUSDT",
+    "price": 67465.51,
+    "action": "考慮買入",
+    "quality_score": 2,
+    "strength": 3,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": "14",
+      "ema_fast": "5",
+      "ema_slow": "20"
+    },
+    "signals": {
+      "rsi": {
+        "value": 61.48,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 67473.31,
+        "slow": 67426.66,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 46.65,
+        "signal": "buy",
+        "histogram": 4.66
+      },
+      "volume": {
+        "volume_ratio": 0.33,
+        "avg_volume": 46.49,
+        "current_volume": 15.5,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.8,
+        "ema_20": 67304.72,
+        "ema_50": 66773.51,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 67311.52,
+        "take_profit_1": 67619.5,
+        "take_profit_2": 67773.49,
+        "risk_amount": 153.99,
+        "reward_amount": 307.98,
+        "risk_reward_ratio": 2,
+        "atr": 102.66
+      }
+    }
+  }
+]

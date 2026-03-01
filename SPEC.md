@@ -1,9 +1,9 @@
-# 📋 Technical Specification - Scalping Trade Analyzer Pro V2
+# 📋 Technical Specification - Scalping Trade Analyzer Pro V3
 
 ## 技術規格文件
 
-Version: 2.0
-Last Updated: 2026-02-28
+Version: 3.0
+Last Updated: 2026-03-01
 Author: Lewis Chan
 
 ---
@@ -51,8 +51,14 @@ Author: Lewis Chan
 │  │  │   RSI      │ │    EMA     │ │   MACD     │       │  │
 │  │  └────────────┘ └────────────┘ └────────────┘       │  │
 │  │  ┌────────────┐ ┌────────────┐ ┌────────────┐       │  │
+│  │  │ Bollinger  │ │ Stochastic │ │ Fibonacci  │       │  │
+│  │  └────────────┘ └────────────┘ └────────────┘       │  │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐       │  │
 │  │  │   Volume   │ │    MTF     │ │    ATR     │       │  │
 │  │  └────────────┘ └────────────┘ └────────────┘       │  │
+│  │  ┌────────────────────────────────────────────┐     │  │
+│  │  │  SnapshotManager + SymbolManager (V3)      │     │  │
+│  │  └────────────────────────────────────────────┘     │  │
 │  └──────────────┬───────────────────────────────────────┘  │
 │                 │                                            │
 └─────────────────┼────────────────────────────────────────────┘
@@ -394,9 +400,228 @@ def calculate_stop_loss_take_profit(current_price, atr, signal_type, risk_reward
 
 ---
 
+### 8. 布林通道 ✨ V3
+
+**公式**:
+```
+Middle_Band = SMA(Close, period)
+Upper_Band = Middle_Band + (std_dev × StdDev)
+Lower_Band = Middle_Band - (std_dev × StdDev)
+```
+
+**實作**:
+```python
+@staticmethod
+def calculate_bollinger_bands(prices, period=20, std_dev=2):
+    # 計算SMA
+    sma = sum(prices[-period:]) / period
+
+    # 計算標準差
+    variance = sum((p - sma) ** 2 for p in prices[-period:]) / period
+    std = math.sqrt(variance)
+
+    # 計算上下軌
+    upper_band = sma + (std_dev * std)
+    lower_band = sma - (std_dev * std)
+
+    return round(upper_band, 2), round(sma, 2), round(lower_band, 2)
+```
+
+**參數**:
+- `period`: 20
+- `std_dev`: 2
+
+**信號判定**:
+- Price > Upper_Band: 超買 → SELL
+- Price < Lower_Band: 超賣 → BUY
+- Price near Middle_Band: 中性
+
+---
+
+### 9. 隨機指標 ✨ V3
+
+**公式**:
+```
+%K = (Close - Lowest_Low) / (Highest_High - Lowest_Low) × 100
+%D = SMA(%K, d_period)
+```
+
+**實作**:
+```python
+@staticmethod
+def calculate_stochastic(data, k_period=14, d_period=3):
+    closes = [float(k[4]) for k in data[-k_period:]]
+    highs = [float(k[2]) for k in data[-k_period:]]
+    lows = [float(k[3]) for k in data[-k_period:]]
+
+    current_close = closes[-1]
+    lowest_low = min(lows)
+    highest_high = max(highs)
+
+    if highest_high == lowest_low:
+        k_value = 50
+    else:
+        k_value = ((current_close - lowest_low) /
+                   (highest_high - lowest_low)) * 100
+
+    # 簡化版 %D（使用最近幾個 %K 的平均）
+    d_value = k_value * 0.7  # 簡化計算
+
+    return round(k_value, 2), round(d_value, 2)
+```
+
+**參數**:
+- `k_period`: 14
+- `d_period`: 3
+- `overbought`: 80
+- `oversold`: 20
+
+**信號判定**:
+- %K < 20: 超賣 → BUY
+- %K > 80: 超買 → SELL
+- %K crosses %D: 交叉信號
+
+---
+
+### 10. 斐波那契回撤 ✨ V3
+
+**公式**:
+```
+Fibonacci_Level = High - (High - Low) × Ratio
+```
+
+**實作**:
+```python
+@staticmethod
+def calculate_fibonacci_levels(data, lookback=50):
+    recent_data = data[-lookback:]
+    highs = [float(k[2]) for k in recent_data]
+    lows = [float(k[3]) for k in recent_data]
+
+    swing_high = max(highs)
+    swing_low = min(lows)
+    diff = swing_high - swing_low
+
+    levels = {
+        '0.236': round(swing_high - diff * 0.236, 2),
+        '0.382': round(swing_high - diff * 0.382, 2),
+        '0.5': round(swing_high - diff * 0.5, 2),
+        '0.618': round(swing_high - diff * 0.618, 2),
+        '0.786': round(swing_high - diff * 0.786, 2)
+    }
+
+    return {
+        'swing_high': swing_high,
+        'swing_low': swing_low,
+        'levels': levels
+    }
+```
+
+**參數**:
+- `lookback`: 50根K線
+- **關鍵比率**: 0.236, 0.382, 0.5, 0.618, 0.786
+
+**信號判定**:
+- Price near 0.382 or 0.618: 關鍵支撐/壓力位
+- Price bounces from level: 反彈信號
+- Price breaks through level: 突破信號
+
+---
+
+### 11. 快照管理系統 ✨ V3
+
+**SnapshotManager 類別**:
+
+```python
+class SnapshotManager:
+    @staticmethod
+    def save_snapshot(symbol, signals, params, price):
+        snapshot = {
+            'id': len(snapshots) + 1,
+            'timestamp': datetime.now().isoformat(),
+            'symbol': symbol,
+            'price': price,
+            'action': signals.get('action'),
+            'quality_score': signals.get('quality_score'),
+            'strength': signals.get('strength'),
+            'parameters': params,
+            'signals': {
+                'rsi': signals.get('rsi'),
+                'ema': signals.get('ema'),
+                'macd': signals.get('macd'),
+                'bollinger': signals.get('bollinger'),
+                'stochastic': signals.get('stochastic'),
+                'fibonacci': signals.get('fibonacci'),
+                'volume': signals.get('volume'),
+                'multi_timeframe': signals.get('multi_timeframe'),
+                'stop_loss_take_profit': signals.get('stop_loss_take_profit')
+            }
+        }
+        snapshots.append(snapshot)
+        SnapshotManager.save_to_file()
+        return snapshot
+
+    @staticmethod
+    def load_from_file():
+        # 從 JSON 檔案載入快照
+
+    @staticmethod
+    def save_to_file():
+        # 儲存快照至 JSON 檔案
+```
+
+**數據格式**:
+- 儲存路徑: `snapshots.json`
+- 包含完整信號數據
+- ISO 時間戳記
+- 止損止盈價位
+
+---
+
+### 12. 自訂商品管理 ✨ V3
+
+**SymbolManager 類別**:
+
+```python
+class SymbolManager:
+    @staticmethod
+    def add_custom_symbol(symbol):
+        # 驗證商品（測試 API 請求）
+        test_data = ScalpingAnalyzerPro.fetch_binance_klines(
+            symbol, '5m', limit=10
+        )
+        if test_data and len(test_data) > 0:
+            if symbol not in custom_symbols:
+                custom_symbols.append(symbol)
+                SymbolManager.save_to_file()
+                return True
+        return False
+
+    @staticmethod
+    def remove_custom_symbol(symbol):
+        if symbol in custom_symbols:
+            custom_symbols.remove(symbol)
+            SymbolManager.save_to_file()
+            return True
+        return False
+
+    @staticmethod
+    def get_all_symbols():
+        # 合併預設與自訂商品
+        return default_symbols + custom_symbols
+```
+
+**功能**:
+- 動態新增 Binance 交易對
+- API 驗證新商品有效性
+- 持久化儲存（JSON）
+- 刪除自訂商品
+
+---
+
 ## 信號評分邏輯
 
-### 品質評分系統（0-5星）
+### 品質評分系統（0-5星）✨ V3 增強版
 
 **評分組成**:
 
@@ -414,20 +639,32 @@ if (macd_line > signal_line and histogram > 0) or
    (macd_line < signal_line and histogram < 0):
     quality_score += 1
 
-# 3. 成交量信號貢獻 (+1.5/-1)
+# 3. 布林通道貢獻 (+1) ✨ V3 NEW
+if bollinger_signal in ['oversold', 'overbought']:
+    quality_score += 1
+
+# 4. 隨機指標貢獻 (+0.5) ✨ V3 NEW
+if stoch_k < 20 or stoch_k > 80:
+    quality_score += 0.5
+
+# 5. 成交量信號貢獻 (+1.5/-1)
 if volume_signal == 'strong':
     quality_score += 1.5
 elif volume_signal == 'weak':
     quality_score -= 1
 
-# 4. 多時間框架確認 (+1.5/-1)
+# 6. 多時間框架確認 (+1.5/-1)
 if mtf_confirmation and trend_matches_signal:
     quality_score += 1.5
 elif mtf_confirmation and trend_opposite_signal:
     quality_score -= 1  # 逆勢扣分
 
-# 5. CVD 趨勢確認 (+0.5)
+# 7. CVD 趨勢確認 (+0.5)
 if cvd_trend_matches_signal:
+    quality_score += 0.5
+
+# 8. 斐波那契確認 (+0.5) ✨ V3 NEW
+if price_near_fib_level:
     quality_score += 0.5
 
 # 最終評分（限制在0-5）
