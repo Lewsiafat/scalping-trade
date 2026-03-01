@@ -111,6 +111,299 @@ class SnapshotManager:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    @staticmethod
+    def export_to_csv():
+        """匯出快照為 CSV 格式"""
+        try:
+            if not os.path.exists(SNAPSHOTS_FILE):
+                return {'success': False, 'error': 'No snapshots found'}
+
+            with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+                snapshots = json.load(f)
+
+            if not snapshots:
+                return {'success': False, 'error': 'No snapshots to export'}
+
+            # 建立 CSV 內容
+            csv_lines = []
+            # CSV 標頭
+            csv_lines.append('時間,交易對,價格,操作建議,信號強度,品質評分,止損,止盈1,止盈2,RSI,MACD信號,成交量信號,趨勢')
+
+            for snapshot in snapshots:
+                signals = snapshot.get('signals', {})
+                sl_tp = signals.get('stop_loss_take_profit', {})
+
+                line = ','.join([
+                    f'"{snapshot.get("timestamp", "")}"',
+                    snapshot.get('symbol', ''),
+                    str(snapshot.get('price', 0)),
+                    f'"{snapshot.get("action", "")}"',
+                    str(snapshot.get('strength', 0)),
+                    str(snapshot.get('quality_score', 0)),
+                    str(sl_tp.get('stop_loss', 0)),
+                    str(sl_tp.get('take_profit_1', 0)),
+                    str(sl_tp.get('take_profit_2', 0)),
+                    str(signals.get('rsi', {}).get('value', 0)),
+                    f'"{signals.get("macd", {}).get("signal", "")}"',
+                    f'"{signals.get("volume", {}).get("signal", "")}"',
+                    f'"{signals.get("multi_timeframe", {}).get("trend", "")}"'
+                ])
+                csv_lines.append(line)
+
+            csv_content = '\n'.join(csv_lines)
+            return {'success': True, 'csv': csv_content}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def search_snapshots(symbol=None, action=None, min_quality=None, start_date=None, end_date=None):
+        """搜尋與篩選快照"""
+        try:
+            if not os.path.exists(SNAPSHOTS_FILE):
+                return []
+
+            with open(SNAPSHOTS_FILE, 'r', encoding='utf-8') as f:
+                snapshots = json.load(f)
+
+            filtered = snapshots
+
+            # 依交易對篩選
+            if symbol:
+                filtered = [s for s in filtered if s.get('symbol') == symbol]
+
+            # 依操作類型篩選
+            if action:
+                filtered = [s for s in filtered if action.lower() in s.get('action', '').lower()]
+
+            # 依品質評分篩選
+            if min_quality is not None:
+                filtered = [s for s in filtered if s.get('quality_score', 0) >= min_quality]
+
+            # 依日期範圍篩選
+            if start_date:
+                filtered = [s for s in filtered if s.get('timestamp', '') >= start_date]
+            if end_date:
+                filtered = [s for s in filtered if s.get('timestamp', '') <= end_date]
+
+            return filtered[::-1]  # 倒序返回（最新的在前）
+        except Exception as e:
+            return []
+
+
+class AlertManager:
+    """警報系統管理器"""
+    ALERTS_FILE = "alerts.json"
+
+    @staticmethod
+    def add_alert(alert_type, symbol, condition, value, enabled=True):
+        """新增警報
+        alert_type: 'price' | 'quality' | 'signal'
+        condition: 'above' | 'below' | 'equal'
+        value: 觸發值
+        """
+        try:
+            alerts = AlertManager.get_alerts()
+
+            alert = {
+                'id': len(alerts) + 1,
+                'type': alert_type,
+                'symbol': symbol,
+                'condition': condition,
+                'value': value,
+                'enabled': enabled,
+                'created_at': datetime.now().isoformat(),
+                'triggered_count': 0,
+                'last_triggered': None
+            }
+
+            alerts.append(alert)
+
+            with open(AlertManager.ALERTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(alerts, f, ensure_ascii=False, indent=2)
+
+            return {'success': True, 'alert_id': alert['id']}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def get_alerts():
+        """獲取所有警報"""
+        try:
+            if not os.path.exists(AlertManager.ALERTS_FILE):
+                return []
+
+            with open(AlertManager.ALERTS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return []
+
+    @staticmethod
+    def delete_alert(alert_id):
+        """刪除警報"""
+        try:
+            alerts = AlertManager.get_alerts()
+            alerts = [a for a in alerts if a.get('id') != alert_id]
+
+            with open(AlertManager.ALERTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(alerts, f, ensure_ascii=False, indent=2)
+
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def toggle_alert(alert_id, enabled):
+        """啟用/停用警報"""
+        try:
+            alerts = AlertManager.get_alerts()
+
+            for alert in alerts:
+                if alert.get('id') == alert_id:
+                    alert['enabled'] = enabled
+                    break
+
+            with open(AlertManager.ALERTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(alerts, f, ensure_ascii=False, indent=2)
+
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
+    def check_alerts(symbol, price, quality_score, action):
+        """檢查是否觸發警報"""
+        try:
+            alerts = AlertManager.get_alerts()
+            triggered = []
+
+            for alert in alerts:
+                if not alert.get('enabled'):
+                    continue
+
+                # 檢查商品匹配（空白表示所有商品）
+                if alert.get('symbol') and alert.get('symbol') != symbol:
+                    continue
+
+                is_triggered = False
+                message = ""
+
+                # 價格警報
+                if alert['type'] == 'price':
+                    value = float(alert['value'])
+                    if alert['condition'] == 'above' and price > value:
+                        is_triggered = True
+                        message = f"{symbol} 價格 ${price} 突破 ${value}"
+                    elif alert['condition'] == 'below' and price < value:
+                        is_triggered = True
+                        message = f"{symbol} 價格 ${price} 跌破 ${value}"
+
+                # 品質評分警報
+                elif alert['type'] == 'quality':
+                    value = float(alert['value'])
+                    if alert['condition'] == 'above' and quality_score >= value:
+                        is_triggered = True
+                        message = f"{symbol} 信號品質 {quality_score}★ 達到 {value}★ 以上"
+
+                # 信號類型警報
+                elif alert['type'] == 'signal':
+                    target_signal = alert['value'].lower()
+                    if target_signal in action.lower():
+                        is_triggered = True
+                        message = f"{symbol} 出現 {action} 信號"
+
+                if is_triggered:
+                    # 更新觸發記錄
+                    alert['triggered_count'] = alert.get('triggered_count', 0) + 1
+                    alert['last_triggered'] = datetime.now().isoformat()
+
+                    triggered.append({
+                        'alert_id': alert['id'],
+                        'type': alert['type'],
+                        'message': message,
+                        'symbol': symbol,
+                        'price': price,
+                        'quality_score': quality_score,
+                        'action': action
+                    })
+
+            # 保存更新後的警報狀態
+            if triggered:
+                with open(AlertManager.ALERTS_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(alerts, f, ensure_ascii=False, indent=2)
+
+            return triggered
+        except Exception as e:
+            return []
+
+
+class PresetManager:
+    """參數預設組合管理器"""
+
+    # 預設參數組合
+    PRESETS = {
+        'scalping': {
+            'name': '超短線剝頭皮',
+            'description': '適合1-3分鐘快速進出，高頻交易',
+            'params': {
+                'interval': '1m',
+                'rsi_period': 7,
+                'rsi_overbought': 75,
+                'rsi_oversold': 25,
+                'ema_fast': 3,
+                'ema_slow': 10,
+                'macd_fast': 3,
+                'macd_slow': 10,
+                'macd_signal': 3,
+                'atr_period': 7,
+                'risk_reward': 1.5
+            }
+        },
+        'daytrading': {
+            'name': '短線當沖',
+            'description': '適合5-15分鐘，日內交易',
+            'params': {
+                'interval': '5m',
+                'rsi_period': 14,
+                'rsi_overbought': 70,
+                'rsi_oversold': 30,
+                'ema_fast': 5,
+                'ema_slow': 20,
+                'macd_fast': 5,
+                'macd_slow': 20,
+                'macd_signal': 5,
+                'atr_period': 14,
+                'risk_reward': 2
+            }
+        },
+        'conservative': {
+            'name': '穩健策略',
+            'description': '適合15分鐘以上，降低假信號',
+            'params': {
+                'interval': '15m',
+                'rsi_period': 21,
+                'rsi_overbought': 65,
+                'rsi_oversold': 35,
+                'ema_fast': 8,
+                'ema_slow': 34,
+                'macd_fast': 12,
+                'macd_slow': 26,
+                'macd_signal': 9,
+                'atr_period': 21,
+                'risk_reward': 2.5
+            }
+        }
+    }
+
+    @staticmethod
+    def get_presets():
+        """獲取所有預設組合"""
+        return PresetManager.PRESETS
+
+    @staticmethod
+    def get_preset(preset_name):
+        """獲取特定預設組合"""
+        return PresetManager.PRESETS.get(preset_name)
+
 
 class SymbolManager:
     """自定義商品管理器"""
@@ -651,10 +944,18 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(HTML_PAGE.encode('utf-8'))
         elif self.path.startswith('/api/analyze'):
             self.handle_api_analyze()
+        elif self.path.startswith('/api/snapshots/export'):
+            self.handle_export_snapshots()
+        elif self.path.startswith('/api/snapshots/search'):
+            self.handle_search_snapshots()
         elif self.path.startswith('/api/snapshots'):
             self.handle_api_snapshots()
         elif self.path.startswith('/api/symbols'):
             self.handle_api_symbols()
+        elif self.path.startswith('/api/alerts'):
+            self.handle_api_alerts()
+        elif self.path.startswith('/api/presets'):
+            self.handle_api_presets()
         else:
             self.send_error(404)
 
@@ -663,6 +964,10 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_save_snapshot()
         elif self.path.startswith('/api/symbol/add'):
             self.handle_add_symbol()
+        elif self.path.startswith('/api/alert/add'):
+            self.handle_add_alert()
+        elif self.path.startswith('/api/alert/toggle'):
+            self.handle_toggle_alert()
         else:
             self.send_error(404)
 
@@ -671,6 +976,8 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_delete_snapshot()
         elif self.path.startswith('/api/symbol/'):
             self.handle_delete_symbol()
+        elif self.path.startswith('/api/alert/'):
+            self.handle_delete_alert()
         else:
             self.send_error(404)
 
@@ -719,12 +1026,21 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             # 當前價格
             current_price = float(data[-1][4])
 
+            # 檢查警報
+            triggered_alerts = AlertManager.check_alerts(
+                symbol,
+                current_price,
+                signals.get('quality_score', 0),
+                signals.get('action', '')
+            )
+
             result = {
                 'success': True,
                 'symbol': symbol,
                 'price': current_price,
                 'timestamp': datetime.now().isoformat(),
-                'signals': signals
+                'signals': signals,
+                'triggered_alerts': triggered_alerts
             }
 
             self.send_response(200)
@@ -837,6 +1153,125 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_export_snapshots(self):
+        """匯出快照為 CSV"""
+        try:
+            result = SnapshotManager.export_to_csv()
+
+            if result['success']:
+                self.send_response(200)
+                self.send_header('Content-type', 'text/csv; charset=utf-8')
+                self.send_header('Content-Disposition', 'attachment; filename="snapshots.csv"')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(result['csv'].encode('utf-8-sig'))  # BOM for Excel
+            else:
+                self.send_error(404, result.get('error', 'Export failed'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_search_snapshots(self):
+        """搜尋快照"""
+        try:
+            query = urllib.parse.urlparse(self.path).query
+            params = urllib.parse.parse_qs(query)
+
+            symbol = params.get('symbol', [None])[0]
+            action = params.get('action', [None])[0]
+            min_quality = float(params.get('min_quality', [0])[0]) if params.get('min_quality') else None
+            start_date = params.get('start_date', [None])[0]
+            end_date = params.get('end_date', [None])[0]
+
+            snapshots = SnapshotManager.search_snapshots(symbol, action, min_quality, start_date, end_date)
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'snapshots': snapshots}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_api_alerts(self):
+        """獲取警報列表"""
+        try:
+            alerts = AlertManager.get_alerts()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'alerts': alerts}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_add_alert(self):
+        """新增警報"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+
+            result = AlertManager.add_alert(
+                data['type'],
+                data.get('symbol', ''),
+                data['condition'],
+                data['value'],
+                data.get('enabled', True)
+            )
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_toggle_alert(self):
+        """切換警報狀態"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+
+            result = AlertManager.toggle_alert(data['alert_id'], data['enabled'])
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_delete_alert(self):
+        """刪除警報"""
+        try:
+            alert_id = int(self.path.split('/')[-1])
+            result = AlertManager.delete_alert(alert_id)
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_api_presets(self):
+        """獲取參數預設組合"""
+        try:
+            presets = PresetManager.get_presets()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'presets': presets}, ensure_ascii=False).encode('utf-8'))
         except Exception as e:
             self.send_error(500, str(e))
 
@@ -1343,6 +1778,19 @@ HTML_PAGE = """<!DOCTYPE html>
                     </select>
                 </div>
 
+                <div class="panel-title" style="margin-top: 20px;">⚡ 快速預設</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
+                    <button onclick="loadPreset('scalping')" style="padding: 8px 5px; background: #ef4444; font-size: 11px; white-space: nowrap;">
+                        🔥 超短線
+                    </button>
+                    <button onclick="loadPreset('daytrading')" style="padding: 8px 5px; background: #3b82f6; font-size: 11px;">
+                        📊 短線
+                    </button>
+                    <button onclick="loadPreset('conservative')" style="padding: 8px 5px; background: #10b981; font-size: 11px;">
+                        🛡️ 穩健
+                    </button>
+                </div>
+
                 <div class="panel-title" style="margin-top: 30px;">📈 RSI 設定</div>
 
                 <div class="form-group">
@@ -1395,6 +1843,16 @@ HTML_PAGE = """<!DOCTYPE html>
                     <input type="checkbox" id="auto_refresh" onchange="toggleAutoRefresh()">
                     <label for="auto_refresh">自動刷新 (10秒)</label>
                 </div>
+
+                <div class="panel-title" style="margin-top: 25px;">🔧 進階功能</div>
+
+                <button onclick="showSnapshotManager()" style="margin-top: 10px; background: #8b5cf6;">
+                    📸 快照管理
+                </button>
+
+                <button onclick="showAlertManager()" style="margin-top: 10px; background: #f59e0b;">
+                    🔔 警報設定
+                </button>
             </div>
 
             <div class="panel result-panel">
@@ -1723,6 +2181,13 @@ HTML_PAGE = """<!DOCTYPE html>
             `;
 
             document.getElementById('results').innerHTML = html;
+
+            // 檢查並顯示觸發的警報
+            if (data.triggered_alerts && data.triggered_alerts.length > 0) {
+                data.triggered_alerts.forEach(alert => {
+                    sendNotification('🔔 警報觸發', alert.message);
+                });
+            }
         }
 
         function showError(message) {
@@ -1925,6 +2390,323 @@ HTML_PAGE = """<!DOCTYPE html>
                 }
             } catch (error) {
                 console.error('載入自定義商品失敗:', error);
+            }
+        }
+
+        // ⚡ 載入參數預設組合
+        async function loadPreset(presetName) {
+            try {
+                const response = await fetch('/api/presets');
+                const result = await response.json();
+
+                if (result.success && result.presets[presetName]) {
+                    const preset = result.presets[presetName];
+                    const params = preset.params;
+
+                    // 設置參數
+                    document.getElementById('interval').value = params.interval;
+                    document.getElementById('rsi_period').value = params.rsi_period;
+                    document.getElementById('rsi_overbought').value = params.rsi_overbought;
+                    document.getElementById('rsi_oversold').value = params.rsi_oversold;
+                    document.getElementById('ema_fast').value = params.ema_fast;
+                    document.getElementById('ema_slow').value = params.ema_slow;
+                    document.getElementById('macd_fast').value = params.macd_fast;
+                    document.getElementById('macd_slow').value = params.macd_slow;
+                    document.getElementById('macd_signal').value = params.macd_signal;
+
+                    alert(`✅ 已載入「${preset.name}」預設\\n${preset.description}`);
+                } else {
+                    alert('❌ 載入預設失敗');
+                }
+            } catch (error) {
+                alert('❌ 載入預設失敗: ' + error.message);
+            }
+        }
+
+        // 📸 快照管理器
+        function showSnapshotManager() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 20px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 20px;">📸 快照管理器</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <button onclick="exportSnapshots()" style="padding: 10px; background: #10b981;">
+                            📥 匯出 CSV
+                        </button>
+                        <button onclick="showSearchDialog()" style="padding: 10px; background: #3b82f6;">
+                            🔍 搜尋篩選
+                        </button>
+                        <button onclick="loadSnapshotsInModal()" style="padding: 10px; background: #8b5cf6;">
+                            🔄 重新載入
+                        </button>
+                    </div>
+
+                    <div id="snapshotList" style="min-height: 200px;">
+                        <p style="text-align: center; color: #666;">載入中...</p>
+                    </div>
+
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: #667eea;">關閉</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            loadSnapshotsInModal();
+        }
+
+        async function loadSnapshotsInModal() {
+            try {
+                const response = await fetch('/api/snapshots?limit=50');
+                const result = await response.json();
+
+                const listDiv = document.getElementById('snapshotList');
+                if (!result.success || result.snapshots.length === 0) {
+                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">暫無快照記錄</p>';
+                    return;
+                }
+
+                let html = '';
+                result.snapshots.forEach(snapshot => {
+                    const borderColor = snapshot.action.includes('買入') ? '#10b981' : (snapshot.action.includes('賣出') ? '#ef4444' : '#6b7280');
+                    html += `
+                        <div style="border: 2px solid ${borderColor}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div>
+                                    <strong>${snapshot.symbol}</strong> - ${snapshot.action}
+                                    <span style="margin-left: 10px;">⭐ ${snapshot.quality_score}</span>
+                                </div>
+                                <button onclick="deleteSnapshot(${snapshot.id})" style="padding: 5px 10px; background: #ef4444; font-size: 12px;">
+                                    🗑️ 刪除
+                                </button>
+                            </div>
+                            <div style="font-size: 12px; color: #666;">
+                                時間: ${new Date(snapshot.timestamp).toLocaleString('zh-TW')}
+                            </div>
+                            <div style="font-size: 12px; margin-top: 5px;">
+                                價格: $${snapshot.price} | 止損: $${snapshot.signals.stop_loss_take_profit?.stop_loss} | 止盈: $${snapshot.signals.stop_loss_take_profit?.take_profit_2}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                listDiv.innerHTML = html;
+            } catch (error) {
+                document.getElementById('snapshotList').innerHTML = '<p style="text-align: center; color: #ef4444;">載入失敗</p>';
+            }
+        }
+
+        async function exportSnapshots() {
+            try {
+                window.open('/api/snapshots/export', '_blank');
+                alert('✅ 開始下載 CSV 檔案');
+            } catch (error) {
+                alert('❌ 匯出失敗: ' + error.message);
+            }
+        }
+
+        async function deleteSnapshot(id) {
+            if (!confirm('確定要刪除此快照嗎？')) return;
+
+            try {
+                const response = await fetch('/api/snapshot/' + id, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 快照已刪除');
+                    loadSnapshotsInModal();
+                } else {
+                    alert('❌ 刪除失敗');
+                }
+            } catch (error) {
+                alert('❌ 刪除失敗: ' + error.message);
+            }
+        }
+
+        function showSearchDialog() {
+            const symbol = prompt('搜尋交易對（留空=全部）:');
+            const action = prompt('搜尋信號類型（買入/賣出/觀望，留空=全部）:');
+            const minQuality = prompt('最低品質評分（0-5，留空=全部）:');
+
+            searchSnapshots(symbol, action, minQuality);
+        }
+
+        async function searchSnapshots(symbol, action, minQuality) {
+            try {
+                let url = '/api/snapshots/search?';
+                if (symbol) url += 'symbol=' + symbol + '&';
+                if (action) url += 'action=' + action + '&';
+                if (minQuality) url += 'min_quality=' + minQuality + '&';
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                const listDiv = document.getElementById('snapshotList');
+                if (!result.success || result.snapshots.length === 0) {
+                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">沒有符合條件的快照</p>';
+                    return;
+                }
+
+                let html = '<p style="color: #10b981; margin-bottom: 15px;">找到 ' + result.snapshots.length + ' 筆結果</p>';
+                result.snapshots.forEach(snapshot => {
+                    const borderColor = snapshot.action.includes('買入') ? '#10b981' : (snapshot.action.includes('賣出') ? '#ef4444' : '#6b7280');
+                    html += `
+                        <div style="border: 2px solid ${borderColor}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div><strong>${snapshot.symbol}</strong> - ${snapshot.action} ⭐ ${snapshot.quality_score}</div>
+                            <div style="font-size: 12px; color: #666;">${new Date(snapshot.timestamp).toLocaleString('zh-TW')}</div>
+                        </div>
+                    `;
+                });
+
+                listDiv.innerHTML = html;
+            } catch (error) {
+                alert('❌ 搜尋失敗: ' + error.message);
+            }
+        }
+
+        // 🔔 警報管理器
+        function showAlertManager() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 20px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 20px;">🔔 警報設定</h2>
+
+                    <button onclick="showAddAlertDialog()" style="width: 100%; margin-bottom: 20px; background: #10b981;">
+                        ➕ 新增警報
+                    </button>
+
+                    <div id="alertList" style="min-height: 200px;">
+                        <p style="text-align: center; color: #666;">載入中...</p>
+                    </div>
+
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: #667eea;">關閉</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            loadAlertsInModal();
+        }
+
+        async function loadAlertsInModal() {
+            try {
+                const response = await fetch('/api/alerts');
+                const result = await response.json();
+
+                const listDiv = document.getElementById('alertList');
+                if (!result.success || result.alerts.length === 0) {
+                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">暫無警報設定</p>';
+                    return;
+                }
+
+                let html = '';
+                result.alerts.forEach(alert => {
+                    const typeText = alert.type === 'price' ? '💰 價格' : (alert.type === 'quality' ? '⭐ 品質' : '📊 信號');
+                    const condText = alert.condition === 'above' ? '高於' : (alert.condition === 'below' ? '低於' : '等於');
+                    const status = alert.enabled ? '✅ 啟用' : '❌ 停用';
+
+                    html += `
+                        <div style="border: 2px solid ${alert.enabled ? '#10b981' : '#6b7280'}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${typeText}</strong> ${condText} ${alert.value}
+                                    ${alert.symbol ? '(' + alert.symbol + ')' : '(所有商品)'}
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="toggleAlert(${alert.id}, ${!alert.enabled})" style="padding: 5px 10px; background: ${alert.enabled ? '#f59e0b' : '#10b981'}; font-size: 12px;">
+                                        ${alert.enabled ? '暫停' : '啟用'}
+                                    </button>
+                                    <button onclick="deleteAlert(${alert.id})" style="padding: 5px 10px; background: #ef4444; font-size: 12px;">
+                                        刪除
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                觸發次數: ${alert.triggered_count || 0} | ${status}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                listDiv.innerHTML = html;
+            } catch (error) {
+                document.getElementById('alertList').innerHTML = '<p style="text-align: center; color: #ef4444;">載入失敗</p>';
+            }
+        }
+
+        function showAddAlertDialog() {
+            const type = prompt('警報類型（price=價格 / quality=品質評分 / signal=信號類型）:');
+            if (!type || !['price', 'quality', 'signal'].includes(type)) {
+                alert('❌ 請輸入正確的警報類型');
+                return;
+            }
+
+            const symbol = prompt('交易對（留空=所有商品）:');
+            const condition = type === 'signal' ? 'equal' : prompt('條件（above=高於 / below=低於）:');
+
+            if (type !== 'signal' && !['above', 'below'].includes(condition)) {
+                alert('❌ 請輸入正確的條件');
+                return;
+            }
+
+            const value = prompt(type === 'price' ? '價格:' : (type === 'quality' ? '品質評分(0-5):' : '信號類型（買入/賣出）:'));
+            if (!value) return;
+
+            addAlert(type, symbol || '', condition, value);
+        }
+
+        async function addAlert(type, symbol, condition, value) {
+            try {
+                const response = await fetch('/api/alert/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({type, symbol, condition, value, enabled: true})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ 警報已新增！');
+                    loadAlertsInModal();
+                } else {
+                    alert('❌ 新增失敗: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ 新增失敗: ' + error.message);
+            }
+        }
+
+        async function toggleAlert(id, enabled) {
+            try {
+                const response = await fetch('/api/alert/toggle', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({alert_id: id, enabled})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    loadAlertsInModal();
+                } else {
+                    alert('❌ 更新失敗');
+                }
+            } catch (error) {
+                alert('❌ 更新失敗: ' + error.message);
+            }
+        }
+
+        async function deleteAlert(id) {
+            if (!confirm('確定要刪除此警報嗎？')) return;
+
+            try {
+                const response = await fetch('/api/alert/' + id, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 警報已刪除');
+                    loadAlertsInModal();
+                } else {
+                    alert('❌ 刪除失敗');
+                }
+            } catch (error) {
+                alert('❌ 刪除失敗: ' + error.message);
             }
         }
 
