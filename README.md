@@ -1,443 +1,447 @@
 # 📈 Scalping Trade Analyzer Pro V3.3
 
-> 專業級實時剝頭皮交易信號分析系統 | Professional Real-time Scalping Trading Signal Analysis System
+> Professional Real-time Scalping Trading Signal Analysis System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-## 🎯 專案概述
+> 🌐 [繁體中文版 README](README.zh-TW.md)
 
-Scalping Trade Analyzer Pro 是一個專為剝頭皮交易者設計的實時信號分析系統。整合多項技術指標、即時 K 線圖表、成交量分析、多時間框架確認與動態止損止盈計算，幫助交易者做出更精準的交易決策。
+## 🎯 Project Overview
 
-### ✨ 核心功能
+Scalping Trade Analyzer Pro is a real-time signal analysis system designed for scalping traders. It integrates multiple technical indicators, live candlestick charts, volume analysis, multi-timeframe confirmation, and dynamic stop-loss/take-profit calculation to help traders make more precise trading decisions.
 
-- **📊 8大技術指標** - RSI、EMA、MACD、ATR、布林通道、隨機指標、斐波那契
-- **📈 成交量分析** - CVD趨勢指標、成交量比率分析
-- **⏱️ 多時間框架確認** - 自動檢查更高時間框架趨勢，過濾假信號
-- **🎯 動態止損止盈** - 基於ATR指標自動計算風險報酬比
-- **⭐ 信號品質評分** - 0-5星智能評分系統
-- **📉 即時 K 線圖表** - TradingView Lightweight Charts 即時顯示 <span style="color: #ef4444;">✨ V3.2 NEW</span>
-- **🔄 智能重試機制** - 指數退避 + 錯誤分類，API 請求更穩定 <span style="color: #ef4444;">✨ V3.2 NEW</span>
-- **💬 Toast 通知系統** - 取代原生 alert()，進度指示器 <span style="color: #ef4444;">✨ V3.2 NEW</span>
-- **📸 策略快照增強** - 刪除、CSV匯出、多條件搜尋篩選
-- **🔔 智能警報系統** - 價格/品質/信號三種警報類型
-- **⚡ 參數快速預設** - 超短線/短線/穩健三種策略一鍵切換
-- **🎨 自訂交易對** - 新增與管理個人化交易商品清單
-- **🔄 自動刷新** - 每10秒自動更新市場數據
-- **🌐 命令列 Port 指定** - `--port <N>` / `-p <N>` 自訂監聽端口 ✨ V3.3 NEW
-- **🔗 nginx 子路徑支援** - `--prefix <PATH>` 反向代理路徑前綴 ✨ V3.3 NEW
-- **📱 響應式設計** - 支援桌面與移動設備
+### ✨ Core Features
 
-## 🚀 快速開始
+- **📊 8 Technical Indicators** – RSI, EMA, MACD, ATR, Bollinger Bands, Stochastic, Fibonacci
+- **📈 Volume Analysis** – CVD trend indicator, volume ratio analysis
+- **⏱️ Multi-Timeframe Confirmation** – Automatically checks higher timeframe trends to filter false signals
+- **🎯 Dynamic Stop-Loss / Take-Profit** – Automatically calculates risk-reward ratio based on ATR
+- **⭐ Signal Quality Score** – Smart 0–5 star rating system
+- **📉 Live Candlestick Chart** – Real-time display via TradingView Lightweight Charts <span style="color: #ef4444;">✨ V3.2 NEW</span>
+- **🔄 Smart Retry Mechanism** – Exponential backoff + error classification for stable API requests <span style="color: #ef4444;">✨ V3.2 NEW</span>
+- **💬 Toast Notification System** – Replaces native `alert()` with a progress indicator <span style="color: #ef4444;">✨ V3.2 NEW</span>
+- **📸 Enhanced Strategy Snapshots** – Delete, CSV export, multi-condition search & filter
+- **🔔 Smart Alert System** – Three alert types: price, quality, and signal
+- **⚡ Quick Parameter Presets** – One-click switch between scalp / short-term / conservative strategies
+- **🎨 Custom Trading Pairs** – Add and manage a personalized instrument list
+- **🔄 Auto Refresh** – Market data auto-updates every 10 seconds
+- **🌐 CLI Port Selection** – `--port <N>` / `-p <N>` to specify the listening port ✨ V3.3 NEW
+- **🔗 Nginx Sub-path Support** – `--prefix <PATH>` for reverse-proxy path prefix ✨ V3.3 NEW
+- **📱 Responsive Design** – Supports both desktop and mobile devices
 
-### 環境需求
+## 🚀 Quick Start
+
+### Requirements
 
 - Python 3.11+
-- 網路連接（用於獲取 Binance API 數據）
-- 現代瀏覽器（支援 Notification API）
+- Internet connection (for Binance API data)
+- Modern browser (with Notification API support)
 
-### 安裝與運行
+### Installation & Running
 
 ```bash
-# 1. 克隆專案
+# 1. Clone the project
 git clone git@github.com:Lewsiafat/scalping-trade.git
 cd scalping-trade
 
-# 2. 直接運行（無需安裝依賴）
+# 2. Run directly (no dependencies needed)
 python3 app_v2.py
 
-# 可選：指定 port（預設 80）
+# Optional: specify a port (default: 80)
 python3 app_v2.py --port 8080
 
-# 可選：nginx 子路徑部署（例如 /scalping）
+# Optional: deploy under an nginx sub-path (e.g. /scalping)
 python3 app_v2.py --port 9000 --prefix /scalping
 
-# 3. 訪問應用
-# 在瀏覽器開啟: http://localhost:80
+# 3. Open the application
+# Visit in browser: http://localhost:80
 ```
 
-**特點：** 本專案使用 Python 標準庫開發，無需安裝任何第三方依賴！
+**Key advantage:** Built entirely with the Python standard library — no third-party dependencies required!
 
-## 📊 技術指標說明
+## 📊 Technical Indicators
 
-### 1. RSI（相對強弱指標）
-- **預設週期**: 14
-- **超買線**: 70
-- **超賣線**: 30
-- **用途**: 判斷市場超買超賣狀態
+### 1. RSI (Relative Strength Index)
+- **Default Period**: 14
+- **Overbought**: 70
+- **Oversold**: 30
+- **Purpose**: Identifies overbought / oversold market conditions
 
-### 2. EMA（指數移動平均）
-- **快速 EMA**: 5（適合剝頭皮）
-- **慢速 EMA**: 20
-- **用途**: 判斷短期趨勢方向
+### 2. EMA (Exponential Moving Average)
+- **Fast EMA**: 5 (optimized for scalping)
+- **Slow EMA**: 20
+- **Purpose**: Determines short-term trend direction
 
-### 3. MACD（平滑異同移動平均）
-- **快線**: 5
-- **慢線**: 20
-- **信號線**: 5
-- **用途**: 捕捉動能變化與交叉信號
+### 3. MACD (Moving Average Convergence Divergence)
+- **Fast Line**: 5
+- **Slow Line**: 20
+- **Signal Line**: 5
+- **Purpose**: Captures momentum changes and crossover signals
 
-### 4. ATR（平均真實波幅）
-- **週期**: 14
-- **止損距離**: 1.5倍ATR
-- **風險報酬比**: 1:2（可調整）
+### 4. ATR (Average True Range)
+- **Period**: 14
+- **Stop-Loss Distance**: 1.5× ATR
+- **Risk-Reward Ratio**: 1:2 (adjustable)
 
-### 5. 布林通道 ✨ V3 NEW
-- **週期**: 20
-- **標準差**: 2
-- **用途**: 判斷價格波動範圍與突破信號
-- **信號**: 價格觸及上軌（超買）、下軌（超賣）
+### 5. Bollinger Bands ✨ V3 NEW
+- **Period**: 20
+- **Standard Deviation**: 2
+- **Purpose**: Identifies price volatility range and breakout signals
+- **Signals**: Price touching upper band (overbought) or lower band (oversold)
 
-### 6. 隨機指標（Stochastic） ✨ V3 NEW
-- **K週期**: 14
-- **D週期**: 3
-- **超買線**: 80
-- **超賣線**: 20
-- **用途**: 動量指標，判斷超買超賣
+### 6. Stochastic Oscillator ✨ V3 NEW
+- **%K Period**: 14
+- **%D Period**: 3
+- **Overbought**: 80
+- **Oversold**: 20
+- **Purpose**: Momentum indicator for identifying overbought/oversold levels
 
-### 7. 斐波那契回撤 ✨ V3 NEW
-- **關鍵水平**: 0.236, 0.382, 0.5, 0.618, 0.786
-- **用途**: 識別潛在支撐與壓力位
-- **計算**: 基於最近50根K線的高低點
+### 7. Fibonacci Retracement ✨ V3 NEW
+- **Key Levels**: 0.236, 0.382, 0.5, 0.618, 0.786
+- **Purpose**: Identifies potential support and resistance levels
+- **Calculation**: Based on the high/low of the last 50 candles
 
-### 8. 成交量分析
-- **成交量比率**: 當前成交量 / 平均成交量
-- **CVD趨勢**: 累積成交量差異（Cumulative Volume Delta）
-- **信號分級**: 強/正常/弱
+### 8. Volume Analysis
+- **Volume Ratio**: Current volume / Average volume
+- **CVD Trend**: Cumulative Volume Delta
+- **Signal Grades**: Strong / Normal / Weak
 
-### 9. 多時間框架
-- **1分鐘** → 檢查 5分鐘趨勢
-- **5分鐘** → 檢查 15分鐘趨勢
-- **15分鐘** → 檢查 1小時趨勢
-- **用途**: 確認大週期趨勢，減少假信號
+### 9. Multi-Timeframe
+- **1m** → Checks 5m trend
+- **5m** → Checks 15m trend
+- **15m** → Checks 1h trend
+- **Purpose**: Confirms macro trend to reduce false signals
 
-## 🎯 使用教學
+## 🎯 Usage Guide
 
-### 基本操作
+### Basic Operation
 
-1. **選擇交易對**: BTC/USDT, ETH/USDT, SOL/USDT 等
-2. **設定時間框架**: 1分鐘、3分鐘、5分鐘、15分鐘
-3. **調整指標參數**: 根據個人交易風格微調
-4. **點擊分析**: 獲取實時交易信號
-5. **啟用自動刷新**: 每10秒自動更新（可選）
+1. **Select Trading Pair**: BTC/USDT, ETH/USDT, SOL/USDT, etc.
+2. **Set Timeframe**: 1m, 3m, 5m, or 15m
+3. **Adjust Indicator Parameters**: Fine-tune based on your trading style
+4. **Click Analyze**: Get real-time trading signals
+5. **Enable Auto Refresh**: Auto-updates every 10 seconds (optional)
 
-### V3 新功能使用
+### V3 New Features
 
-#### 📸 策略快照管理
+#### 📸 Strategy Snapshot Management
 
-**保存當前策略**:
-1. 完成一次分析後，點擊「保存當前策略快照」
-2. 系統自動記錄：
-   - 時間戳記
-   - 交易對與價格
-   - 所有技術指標數值
-   - 建議操作與評分
-   - 止損止盈價位
+**Save Current Strategy**:
+1. After completing an analysis, click "Save Current Strategy Snapshot"
+2. The system automatically records:
+   - Timestamp
+   - Trading pair and price
+   - All indicator values
+   - Recommended action and score
+   - Stop-loss and take-profit levels
 
-**查看歷史快照**:
-1. 點擊「查看歷史快照」
-2. 瀏覽所有已保存的策略
-3. 快照依操作類型顯示不同顏色：
-   - 🟢 綠框 = 買入信號
-   - 🔴 紅框 = 賣出信號
-   - ⚪ 灰框 = 觀望建議
+**View Historical Snapshots**:
+1. Click "View Historical Snapshots"
+2. Browse all saved strategies
+3. Snapshots are color-coded by action type:
+   - 🟢 Green = Buy signal
+   - 🔴 Red = Sell signal
+   - ⚪ Grey = Wait / neutral
 
-#### 🎨 自訂交易對
+#### 🎨 Custom Trading Pairs
 
-**新增商品**:
-1. 在交易對下拉選單選擇「+ 新增自訂商品」
-2. 輸入Binance交易對代碼（例：AVAXUSDT）
-3. 系統自動驗證並加入清單
+**Add Instrument**:
+1. Select "+ Add Custom Instrument" from the trading pair dropdown
+2. Enter the Binance symbol (e.g., `AVAXUSDT`)
+3. The system validates and adds it automatically
 
-**管理商品**:
-- 自訂商品顯示「[自訂]」標記
-- 可隨時從清單中刪除
+**Manage Instruments**:
+- Custom pairs are marked with `[Custom]`
+- Can be removed from the list at any time
 
-### 信號解讀
+### Signal Interpretation
 
-#### 信號品質評分（0-5星）
+#### Signal Quality Score (0–5 Stars)
 
-| 評分 | 說明 | 建議操作 |
-|------|------|---------|
-| ⭐⭐⭐⭐⭐ | 完美信號 | 強烈考慮入場 |
-| ⭐⭐⭐⭐ | 優質信號 | 可以入場 |
-| ⭐⭐⭐ | 中等信號 | 謹慎觀察 |
-| ⭐⭐ 以下 | 弱信號 | 建議觀望 |
+| Score | Description | Recommendation |
+|-------|-------------|----------------|
+| ⭐⭐⭐⭐⭐ | Perfect signal | Strongly consider entry |
+| ⭐⭐⭐⭐ | High-quality signal | Consider entry |
+| ⭐⭐⭐ | Moderate signal | Watch cautiously |
+| ⭐⭐ or below | Weak signal | Stay on the sidelines |
 
-#### 建議操作類型
+#### Recommended Action Types
 
-- **🟢 強烈買入 BUY**: 多項指標強烈看多 + 高品質評分
-- **🟢 考慮買入**: 部分指標看多
-- **🔴 強烈賣出 SELL**: 多項指標強烈看空 + 高品質評分
-- **🔴 考慮賣出**: 部分指標看空
-- **⚪ 觀望 WAIT**: 信號不明確或相互矛盾
+- **🟢 Strong BUY**: Multiple indicators strongly bullish + high quality score
+- **🟢 Consider BUY**: Some indicators bullish
+- **🔴 Strong SELL**: Multiple indicators strongly bearish + high quality score
+- **🔴 Consider SELL**: Some indicators bearish
+- **⚪ WAIT**: Signals unclear or conflicting
 
-### 止損止盈設置
+### Stop-Loss / Take-Profit Setup
 
-系統自動計算基於ATR的止損止盈：
+The system automatically calculates ATR-based levels:
 
-- **止損 (Stop Loss)**: 當前價格 ± 1.5倍ATR
-- **目標1 (TP1)**: 50%獲利目標（建議平倉一半）
-- **目標2 (TP2)**: 100%獲利目標（預設風險報酬比1:2）
+- **Stop Loss**: Entry price ± 1.5× ATR
+- **Target 1 (TP1)**: 50% profit target (recommended: close half position)
+- **Target 2 (TP2)**: 100% profit target (default risk-reward ratio 1:2)
 
-**範例**：
+**Example**:
 ```
-入場價格: $65,000
+Entry Price: $65,000
 ATR: $150
-止損: $64,775 (風險 $225)
-TP1: $65,225 (報酬 $225)
-TP2: $65,450 (報酬 $450)
-風險報酬比: 1:2
+Stop Loss: $64,775 (Risk: $225)
+TP1: $65,225 (Reward: $225)
+TP2: $65,450 (Reward: $450)
+Risk-Reward Ratio: 1:2
 ```
 
-## 📱 瀏覽器通知
+## 📱 Browser Notifications
 
-### 啟用方式
+### How to Enable
 
-1. 首次訪問頁面時，允許瀏覽器通知權限
-2. 當出現高品質信號（≥4星）時，自動彈出通知
-3. 通知內容包含：交易對、操作建議、品質評分
+1. Allow browser notification permissions on first visit
+2. A notification will pop up automatically when a high-quality signal (≥ 4 stars) is detected
+3. Notification content includes: trading pair, recommended action, quality score
 
-### 通知條件
+### Notification Conditions
 
-- 品質評分 ≥ 4星
-- 出現「強烈買入」或「強烈賣出」信號
-- 啟用自動刷新時，每次刷新都會檢查
+- Quality score ≥ 4 stars
+- "Strong BUY" or "Strong SELL" signal appears
+- When auto-refresh is enabled, each refresh cycle checks for notifications
 
-## 🎨 支援的交易對
+## 🎨 Supported Trading Pairs
 
-### 加密貨幣（Binance）
+### Cryptocurrency (Binance)
 
-- BTC/USDT（比特幣）
-- ETH/USDT（以太坊）
-- BNB/USDT（幣安幣）
-- SOL/USDT（Solana）
-- XRP/USDT（瑞波幣）
-- ADA/USDT（艾達幣）
-- DOGE/USDT（狗狗幣）
-- MATIC/USDT（Polygon）
+- BTC/USDT (Bitcoin)
+- ETH/USDT (Ethereum)
+- BNB/USDT (BNB)
+- SOL/USDT (Solana)
+- XRP/USDT (XRP)
+- ADA/USDT (Cardano)
+- DOGE/USDT (Dogecoin)
+- MATIC/USDT (Polygon)
 
-**注意**: 使用 Binance 公共 API，無需 API Key
+**Note**: Uses Binance public API — no API key required.
 
-## ⚠️ 風險管理建議
+## ⚠️ Risk Management
 
-### 核心原則
+### Core Principles
 
-1. **永遠設置止損** - 系統已自動計算，務必執行
-2. **控制倉位大小** - 單筆交易風險不超過總資金的0.5-1%
-3. **分批獲利** - 在TP1平倉50%，TP2平倉剩餘
-4. **避免過度交易** - 只交易高品質信號（≥3星）
-5. **記錄交易日誌** - 持續優化策略
+1. **Always set a stop-loss** – The system calculates it automatically; always execute it
+2. **Control position size** – Risk no more than 0.5–1% of total capital per trade
+3. **Scale out profits** – Close 50% at TP1, remainder at TP2
+4. **Avoid overtrading** – Only trade high-quality signals (≥ 3 stars)
+5. **Keep a trade journal** – Continuously optimize your strategy
 
-### 資金管理範例
+### Position Sizing Example
 
-假設帳戶餘額: $10,000
+Assume account balance: $10,000
 
-| 風險% | 每筆風險金額 | 止損距離 | 建議倉位大小 |
-|-------|------------|---------|-------------|
-| 0.5% | $50 | $100 | 0.5 單位 |
-| 1.0% | $100 | $100 | 1.0 單位 |
-| 2.0% | $200 | $100 | 2.0 單位 |
+| Risk % | Risk Per Trade | Stop Distance | Suggested Position Size |
+|--------|---------------|---------------|------------------------|
+| 0.5% | $50 | $100 | 0.5 units |
+| 1.0% | $100 | $100 | 1.0 units |
+| 2.0% | $200 | $100 | 2.0 units |
 
-**公式**: `倉位大小 = (帳戶餘額 × 風險%) / 止損距離`
+**Formula**: `Position Size = (Account Balance × Risk%) / Stop Distance`
 
-## 📈 實戰策略
+## 📈 Trading Strategy
 
-### 剝頭皮交易策略
+### Scalping Strategy
 
-**時間框架**: 1-5分鐘
-**目標利潤**: 0.1% - 1%
-**持倉時間**: 數秒至數分鐘
-**每日交易**: 20-50筆
+**Timeframe**: 1–5 minutes
+**Target Profit**: 0.1% – 1%
+**Hold Duration**: Seconds to minutes
+**Daily Trades**: 20–50
 
-#### 入場條件（全部符合）
+#### Entry Conditions (all must be met)
 
-1. ✅ 信號品質 ≥ 3星
-2. ✅ 多時間框架趨勢確認
-3. ✅ 成交量比率 > 1.0
-4. ✅ RSI + MACD + EMA 方向一致
-5. ✅ 風險報酬比 ≥ 1:1.5
+1. ✅ Signal quality ≥ 3 stars
+2. ✅ Multi-timeframe trend confirmed
+3. ✅ Volume ratio > 1.0
+4. ✅ RSI + MACD + EMA aligned in same direction
+5. ✅ Risk-reward ratio ≥ 1:1.5
 
-#### 出場策略
+#### Exit Strategy
 
-- **快速獲利**: TP1達成後平倉50%
-- **追蹤止損**: 將止損移至入場價
-- **完全出場**: TP2達成或止損觸發
+- **Quick Profit**: Close 50% at TP1
+- **Trailing Stop**: Move stop-loss to entry price
+- **Full Exit**: TP2 reached or stop-loss triggered
 
-### 適用市場時段
+### Best Market Sessions
 
-| 市場 | 最佳時段（UTC+8） | 特點 |
-|------|-----------------|------|
-| 加密貨幣 | 24小時 | 高波動，適合剝頭皮 |
-| 外匯 EUR/USD | 15:00-00:00 | 倫敦+紐約重疊 |
-| 美股期貨 | 21:30-04:00 | 美股盤中時段 |
+| Market | Best Time (UTC+8) | Characteristics |
+|--------|-------------------|-----------------|
+| Crypto | 24 hours | High volatility, ideal for scalping |
+| Forex EUR/USD | 15:00–00:00 | London + New York overlap |
+| US Stock Futures | 21:30–04:00 | US market hours |
 
-## 🛠️ 技術架構
+## 🛠️ Technical Architecture
 
-### 系統組成
+### Project Structure
 
 ```
 scalping-trade/
-├── app_v2.py           # 主程式（包含前後端）
-├── README.md           # 專案說明
-├── CLAUDE.md           # Claude Code 專案指引
-├── CHANGELOG.md        # 版本變更記錄
-├── SPEC.md            # 技術規格
+├── app_v2.py            # Main application (frontend + backend)
+├── README.md            # Project documentation (English)
+├── README.zh-TW.md      # Project documentation (Traditional Chinese)
+├── CLAUDE.md            # Claude Code project guide
+├── CHANGELOG.md         # Version change log (English)
+├── CHANGELOG.zh-TW.md   # Version change log (Traditional Chinese)
+├── SPEC.md              # Technical specification
 ├── docs/
-│   └── improv_plan.md  # 改善計畫
-└── LICENSE            # MIT 授權
+│   └── improv_plan.md   # Improvement plan
+└── LICENSE              # MIT License
 ```
 
-### 技術棧
+### Tech Stack
 
-- **後端**: Python 3.11+ (標準庫)
-- **HTTP服務器**: socketserver.TCPServer
-- **數據來源**: Binance Public API
-- **前端**: 原生 HTML5 + CSS3 + JavaScript
-- **通知**: Notification API
+- **Backend**: Python 3.11+ (Standard Library)
+- **HTTP Server**: `socketserver.TCPServer`
+- **Data Source**: Binance Public API
+- **Frontend**: Vanilla HTML5 + CSS3 + JavaScript
+- **Notifications**: Notification API
 
-### API 端點
+### API Endpoints
 
-- `GET /` - 主頁面
-- `GET /api/analyze?symbol=BTCUSDT&interval=5m&...` - 分析API
-- `GET /api/snapshots` - 獲取所有快照 ✨ V3
-- `POST /api/snapshot/save` - 保存策略快照 ✨ V3
-- `GET /api/symbols` - 獲取交易對清單 ✨ V3
-- `POST /api/symbol/add` - 新增自訂交易對 ✨ V3
-- `DELETE /api/symbol/{symbol}` - 刪除自訂交易對 ✨ V3
+- `GET /` – Main page
+- `GET /api/analyze?symbol=BTCUSDT&interval=5m&...` – Analysis API
+- `GET /api/snapshots` – Get all snapshots ✨ V3
+- `POST /api/snapshot/save` – Save strategy snapshot ✨ V3
+- `GET /api/symbols` – Get trading pair list ✨ V3
+- `POST /api/symbol/add` – Add custom trading pair ✨ V3
+- `DELETE /api/symbol/{symbol}` – Delete custom trading pair ✨ V3
 
-## 📊 性能指標
+## 📊 Performance
 
-### 系統要求
+### System Requirements
 
-- **記憶體**: < 30MB
-- **CPU**: 極低（單執行緒）
-- **網路**: ~10KB/請求（API數據）
-- **回應時間**: < 2秒（含API請求）
+- **Memory**: < 30 MB
+- **CPU**: Very low (single-threaded)
+- **Network**: ~10 KB/request (API data)
+- **Response Time**: < 2 seconds (including API request)
 
-### 準確率
+### Accuracy
 
-基於回測結果（僅供參考）：
+Based on backtesting results (for reference only):
 
-- **勝率**: 45-55%（配合風險管理）
-- **風險報酬比**: 1:1.5 - 1:2
-- **假信號過濾**: 多時間框架可減少30-50%假信號
+- **Win Rate**: 45–55% (with proper risk management)
+- **Risk-Reward Ratio**: 1:1.5 – 1:2
+- **False Signal Reduction**: Multi-timeframe analysis can reduce false signals by 30–50%
 
-## 🤝 貢獻指南
+## 🤝 Contributing
 
-歡迎提交問題與改進建議！
+Issues and improvement suggestions are welcome!
 
-1. Fork 本專案
-2. 建立功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交變更 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 開啟 Pull Request
+1. Fork this project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📝 版本歷史
+## 📝 Version History
 
-### V3.3 (2026-03-02) ✨ 最新版本
-- 🌐 **命令列 Port 指定**: `--port <N>` / `-p <N>` 啟動時指定監聽端口（預設 80）
-- 🔗 **nginx 子路徑支援**: `--prefix <PATH>` 參數啟用路徑前綴，前後端 API 路由全部動態適配
-  - HTML 自動注入 `window.APP_PREFIX` 全域變數
-  - nginx 設定範例：`proxy_pass http://127.0.0.1:9000/scalping/`
+### V3.3 (2026-03-02) ✨ Latest
+- 🌐 **CLI Port Selection**: `--port <N>` / `-p <N>` to specify the listening port at startup (default: 80)
+- 🔗 **Nginx Sub-path Support**: `--prefix <PATH>` enables path prefix; all frontend/backend API routes adapt dynamically
+  - HTML automatically injects `window.APP_PREFIX` global variable
+  - Nginx config example: `proxy_pass http://127.0.0.1:9000/scalping/`
 
 ### V3.2-beta (2026-03-02)
-- 📉 **即時 K 線圖表**: TradingView Lightweight Charts 整合
-  - 即時 K 線顯示
-  - EMA 線與布林通道 overlay 疊加
-- 🔄 **智能重試機制**:
-  - 指數退避重試（最多 3 次）
-  - 錯誤類型分類（限速/伺服器錯誤/逾時）
-  - HTTP 400 無效交易對不重試
-- 💬 **使用者體驗升級**:
-  - Toast 通知系統取代原生 `alert()` 彈窗
-  - 分析進度指示器
-  - 結構化中文錯誤訊息
-- 🔧 **後端新增**:
-  - `fetch_with_retry()` — 帶重試機制的 HTTP 請求函數
-  - `classify_error()` — 錯誤分類與中文訊息函數
+- 📉 **Live Candlestick Chart**: TradingView Lightweight Charts integration
+  - Real-time candlestick display
+  - EMA and Bollinger Bands overlay
+- 🔄 **Smart Retry Mechanism**:
+  - Exponential backoff retry (up to 3 attempts)
+  - Error type classification (rate-limit / server error / timeout)
+  - HTTP 400 (invalid pair) does not retry
+- 💬 **UX Improvements**:
+  - Toast notification system replaces native `alert()` dialogs
+  - Analysis progress indicator
+  - Structured Chinese error messages
+- 🔧 **Backend Additions**:
+  - `fetch_with_retry()` – HTTP request function with retry logic
+  - `classify_error()` – Error classification with user-friendly messages
 
 ### V3.1 (2026-03-01)
-- 📸 **快照增強功能**:
-  - 刪除快照功能
-  - CSV 匯出（Excel 可直接開啟，UTF-8 BOM 編碼）
-  - 多條件搜尋篩選（交易對/信號類型/品質評分/日期範圍）
-- 🔔 **智能警報系統**:
-  - 價格警報（突破/跌破指定價格）
-  - 品質評分警報（達到指定星級）
-  - 信號類型警報（出現買入/賣出信號）
-  - 警報管理（啟用/停用/刪除）
-  - 瀏覽器通知整合
-  - 觸發次數與歷史記錄
-- ⚡ **參數快速預設**:
-  - 超短線剝頭皮（1分鐘，高頻交易）
-  - 短線當沖（5分鐘，日內交易）
-  - 穩健策略（15分鐘，降低假信號）
-  - 一鍵載入所有參數設定
-- 🔧 **新增 API 端點**:
-  - `/api/snapshots/export` - CSV 匯出
-  - `/api/snapshots/search` - 搜尋篩選
-  - `/api/alerts` - 警報管理
-  - `/api/alert/add` - 新增警報
-  - `/api/alert/toggle` - 啟用/停用
-  - `/api/presets` - 參數預設組合
-- 🐛 **Bug 修復**:
-  - 修復 JavaScript 模板字符串語法錯誤
-  - 修復函數名稱不匹配問題
+- 📸 **Enhanced Snapshots**:
+  - Delete snapshot
+  - CSV export (UTF-8 BOM, directly openable in Excel)
+  - Multi-condition search & filter (pair / signal type / quality score / date range)
+- 🔔 **Smart Alert System**:
+  - Price alerts (breakout / breakdown)
+  - Quality score alerts (reaches specified star level)
+  - Signal type alerts (BUY / SELL signal appears)
+  - Alert management (enable / disable / delete)
+  - Browser notification integration
+  - Trigger count and history
+- ⚡ **Quick Parameter Presets**:
+  - Ultra-short scalp (1m, high-frequency)
+  - Short-term day trade (5m, intraday)
+  - Conservative strategy (15m, fewer false signals)
+  - One-click load all settings
+- 🔧 **New API Endpoints**:
+  - `/api/snapshots/export` – CSV export
+  - `/api/snapshots/search` – Search & filter
+  - `/api/alerts` – Alert management
+  - `/api/alert/add` – Add alert
+  - `/api/alert/toggle` – Enable / disable
+  - `/api/presets` – Parameter preset sets
+- 🐛 **Bug Fixes**:
+  - Fixed JavaScript template string syntax error
+  - Fixed function name mismatch issue
 
 ### V3.0 (2026-03-01)
-- ✨ **新增3大技術指標**: 布林通道（Bollinger Bands）、隨機指標（Stochastic）、斐波那契回撤（Fibonacci）
-- 📸 **策略快照管理**: 保存當前策略快照，查看歷史快照記錄
-  - 包含完整時間戳記
-  - 記錄止損止盈價位
-  - 顯示信號強度與品質評分
-  - 依操作類型色彩編碼（買入/賣出/觀望）
-- 🎨 **自訂交易對管理**: 新增與刪除個人化商品清單
-- 🎨 **UI優化**:
-  - 精簡頁首高度，節省50%顯示空間
-  - 快照按鈕移至多時間框架上方
-  - 優化信號評分邏輯，納入新增指標
-- 🔧 **API擴充**:
-  - `/api/snapshots` - 快照管理
-  - `/api/symbols` - 自訂商品管理
-  - `/api/snapshot/save` - 保存快照
-  - `/api/symbol/add` - 新增商品
+- ✨ **3 New Technical Indicators**: Bollinger Bands, Stochastic Oscillator, Fibonacci Retracement
+- 📸 **Strategy Snapshot Management**: Save and review historical snapshots
+  - Full timestamp
+  - Stop-loss and take-profit levels recorded
+  - Signal strength and quality score displayed
+  - Color-coded by action type (buy / sell / wait)
+- 🎨 **Custom Trading Pair Management**: Add and delete personalized instrument list
+- 🎨 **UI Improvements**:
+  - Streamlined header height, saving 50% display space
+  - Snapshot button moved above multi-timeframe section
+  - Optimized signal scoring logic to include new indicators
+- 🔧 **API Expansion**:
+  - `/api/snapshots` – Snapshot management
+  - `/api/symbols` – Custom instrument management
+  - `/api/snapshot/save` – Save snapshot
+  - `/api/symbol/add` – Add instrument
 
 ### V2.0 (2026-02-28)
-- ✨ 新增成交量分析（CVD、成交量比率）
-- ✨ 新增多時間框架確認
-- ✨ 新增動態止損止盈計算（ATR）
-- ✨ 新增信號品質評分系統（0-5星）
-- ✨ 新增瀏覽器通知功能
-- 🎨 優化UI佈局（建議操作置頂）
+- ✨ Added volume analysis (CVD, volume ratio)
+- ✨ Added multi-timeframe confirmation
+- ✨ Added dynamic stop-loss / take-profit calculation (ATR)
+- ✨ Added signal quality scoring system (0–5 stars)
+- ✨ Added browser notification support
+- 🎨 Optimized UI layout (recommended action moved to top)
 
 ### V1.0 (2026-02-26)
-- 🎉 初始版本
-- 基礎技術指標（RSI、EMA、MACD）
-- 即時數據分析
-- 響應式網頁設計
+- 🎉 Initial release
+- Basic technical indicators (RSI, EMA, MACD)
+- Real-time data analysis
+- Responsive web design
 
-## ⚖️ 免責聲明
+## ⚖️ Disclaimer
 
-**重要提示**: 本工具僅供教育與研究用途，不構成任何投資建議。
+**Important**: This tool is for educational and research purposes only and does not constitute any investment advice.
 
-- ⚠️ 交易涉及重大風險，可能導致本金全部損失
-- ⚠️ 過去的表現不代表未來結果
-- ⚠️ 使用本工具的所有交易決策由用戶自行承擔
-- ⚠️ 作者不對任何交易損失負責
-- ⚠️ 使用前請充分了解金融市場風險
-- ⚠️ 建議先在模擬帳戶練習
+- ⚠️ Trading involves significant risk and may result in total loss of principal
+- ⚠️ Past performance does not guarantee future results
+- ⚠️ All trading decisions made using this tool are solely the user's responsibility
+- ⚠️ The author is not liable for any trading losses
+- ⚠️ Please fully understand the risks of financial markets before use
+- ⚠️ It is recommended to practice on a demo account first
 
-**請務必**:
-1. 只投資您能承受損失的資金
-2. 進行充分的研究與測試
-3. 考慮諮詢專業金融顧問
-4. 遵守當地金融法規
+**Please ensure you**:
+1. Only invest what you can afford to lose
+2. Conduct thorough research and testing
+3. Consider consulting a professional financial advisor
+4. Comply with local financial regulations
 
-## 📄 授權條款
+## 📄 License
 
-本專案採用 [MIT License](LICENSE) 授權
+This project is licensed under the [MIT License](LICENSE).
 
 ```
 MIT License
@@ -463,20 +467,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 🌟 致謝
+## 🌟 Acknowledgements
 
-- Binance API - 提供免費的市場數據
-- Python Community - 強大的標準庫
-- 所有貢獻者與使用者的反饋
+- Binance API – Free market data provider
+- Python Community – Powerful standard library
+- All contributors and users for their feedback
 
-## 📞 聯絡方式
+## 📞 Contact
 
 - **GitHub**: [@Lewsiafat](https://github.com/Lewsiafat)
-- **Issues**: [報告問題](https://github.com/Lewsiafat/scalping-trade/issues)
-- **Pull Requests**: [提交改進](https://github.com/Lewsiafat/scalping-trade/pulls)
+- **Issues**: [Report a Bug](https://github.com/Lewsiafat/scalping-trade/issues)
+- **Pull Requests**: [Submit Improvements](https://github.com/Lewsiafat/scalping-trade/pulls)
 
 ---
 
 **Built with** ❤️ **by traders, for traders**
 
-*最後更新: 2026-03-02 | 版本: v3.3.0*
+*Last updated: 2026-03-02 | Version: v3.3.0*
