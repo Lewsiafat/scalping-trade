@@ -28,8 +28,24 @@ from datetime import datetime
 import math
 import os
 import time
+import sys
 
-PORT = 80
+def parse_port():
+    """從命令列參數解析 port，支援 --port <N> 或 -p <N>"""
+    args = sys.argv[1:]
+    for i, arg in enumerate(args):
+        if arg in ('--port', '-p') and i + 1 < len(args):
+            try:
+                port = int(args[i + 1])
+                if not (1 <= port <= 65535):
+                    raise ValueError
+                return port
+            except ValueError:
+                print(f"❌ 無效的 port 值：{args[i + 1]}（應為 1–65535）")
+                sys.exit(1)
+    return 80  # 預設值
+
+PORT = parse_port()
 BINANCE_API = "https://api.binance.com/api/v3"
 
 
