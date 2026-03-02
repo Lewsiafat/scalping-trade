@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-Scalping Analyzer V3 - Pro Trading System
-專業剝頭皮交易系統 V3.0
+Scalping Analyzer V3.2 - Pro Trading System
+專業剝頭皮交易系統 V3.2
 
-新增功能：
-1. 成交量分析 (Volume Analysis)
-2. 多時間框架確認 (Multi-Timeframe Confirmation)
-3. 動態止損止盈計算 (Dynamic Stop-Loss/Take-Profit)
-4. 信號品質評分 (Signal Quality Scoring)
-5. Webhook通知 (Telegram Integration)
-6. 更多技術指標 (Bollinger Bands, Stochastic, Fibonacci)
-7. 自定義商品 (Custom Symbol Management)
-8. 策略快照 (Strategy Snapshot & History)
+V3.2 新增功能：
+1. 即時 K 線圖表 (TradingView Lightweight Charts)
+2. 智能重試機制 (指數退避 + 錯誤分類)
+3. 中文錯誤訊息 + 錯誤類型分類
+4. 進度指示器 + Toast 通知取代 alert()
+5. EMA/布林通道 overlay 時間序列
+
+既有功能：
+- 成交量分析 / 多時間框架確認 / 動態止損止盈
+- 信號品質評分 / 瀏覽器通知
+- Bollinger Bands / Stochastic / Fibonacci
+- 自定義商品 / 策略快照 / 智能警報
 """
 
 import http.server
@@ -19,13 +22,107 @@ import socketserver
 import json
 import urllib.request
 import urllib.parse
+import urllib.error
 import ssl
 from datetime import datetime
 import math
 import os
+import time
 
 PORT = 80
 BINANCE_API = "https://api.binance.com/api/v3"
+
+
+def fetch_with_retry(url, ctx=None, max_retries=3, base_timeout=10):
+    """帶重試機制的 HTTP 請求（指數退避）"""
+    if ctx is None:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, context=ctx, timeout=base_timeout) as response:
+                return json.loads(response.read().decode())
+        except urllib.error.HTTPError as e:
+            last_error = e
+            # 400 無效交易對，不重試
+            if e.code == 400:
+                raise
+            # 429 限速，延長等待
+            if e.code == 429:
+                time.sleep(2 ** attempt * 2)
+                continue
+            # 5xx 伺服器錯誤，重試
+            if e.code >= 500:
+                time.sleep(2 ** attempt * 0.5)
+                continue
+            raise
+        except urllib.error.URLError as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt * 0.5)
+                continue
+        except TimeoutError:
+            last_error = TimeoutError("連線逾時")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt * 0.5)
+                continue
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt * 0.5)
+                continue
+
+    raise last_error
+
+
+def classify_error(e):
+    """錯誤分類，返回結構化中文錯誤資訊"""
+    if isinstance(e, urllib.error.HTTPError):
+        if e.code == 400:
+            return {
+                'error_type': 'invalid_symbol',
+                'error': '無效的交易對，請確認交易對名稱是否正確',
+                'icon': 'warning'
+            }
+        if e.code == 429:
+            return {
+                'error_type': 'rate_limit',
+                'error': '請求過於頻繁，請稍後再試',
+                'icon': 'clock'
+            }
+        if e.code >= 500:
+            return {
+                'error_type': 'server_error',
+                'error': 'Binance 伺服器暫時不可用，請稍後再試',
+                'icon': 'server'
+            }
+        return {
+            'error_type': 'api_error',
+            'error': f'API 錯誤 (HTTP {e.code})',
+            'icon': 'warning'
+        }
+    if isinstance(e, urllib.error.URLError):
+        return {
+            'error_type': 'network',
+            'error': '網路連線失敗，請檢查網路狀態',
+            'icon': 'network'
+        }
+    if isinstance(e, (TimeoutError, OSError)):
+        if 'timed out' in str(e).lower() or '逾時' in str(e):
+            return {
+                'error_type': 'timeout',
+                'error': '連線逾時，請檢查網路或稍後再試',
+                'icon': 'clock'
+            }
+    return {
+        'error_type': 'unknown',
+        'error': f'發生未知錯誤：{str(e)}',
+        'icon': 'warning'
+    }
 SNAPSHOTS_FILE = "snapshots.json"
 SYMBOLS_FILE = "custom_symbols.json"
 
@@ -625,6 +722,44 @@ class ScalpingAnalyzerPro:
         return levels
 
     @staticmethod
+    def compute_ema_series(prices, period):
+        """✨ V3.2: 計算完整 EMA 時間序列"""
+        if len(prices) < period:
+            return [None] * len(prices)
+
+        result = [None] * (period - 1)
+        multiplier = 2 / (period + 1)
+        ema = sum(prices[:period]) / period
+        result.append(round(ema, 2))
+
+        for price in prices[period:]:
+            ema = (price - ema) * multiplier + ema
+            result.append(round(ema, 2))
+
+        return result
+
+    @staticmethod
+    def compute_bb_series(prices, period=20, std_dev=2):
+        """✨ V3.2: 計算完整布林通道時間序列"""
+        upper = []
+        lower = []
+
+        for i in range(len(prices)):
+            if i < period - 1:
+                upper.append(None)
+                lower.append(None)
+                continue
+
+            window = prices[i - period + 1:i + 1]
+            sma = sum(window) / period
+            variance = sum((p - sma) ** 2 for p in window) / period
+            std = math.sqrt(variance)
+            upper.append(round(sma + std_dev * std, 2))
+            lower.append(round(sma - std_dev * std, 2))
+
+        return upper, lower
+
+    @staticmethod
     def analyze_volume(data):
         """✨ 功能1: 成交量分析"""
         volumes = [float(k[5]) for k in data[-20:]]  # 最近20根K線
@@ -660,10 +795,6 @@ class ScalpingAnalyzerPro:
     def multi_timeframe_analysis(symbol, current_interval):
         """✨ 功能2: 多時間框架分析"""
         try:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-
             # 根據當前時間框架，選擇更大的時間框架
             timeframe_map = {
                 '1m': '5m',
@@ -674,11 +805,9 @@ class ScalpingAnalyzerPro:
 
             higher_tf = timeframe_map.get(current_interval, '15m')
 
-            # 獲取更大時間框架數據
+            # 獲取更大時間框架數據（使用帶重試的請求）
             url = f"{BINANCE_API}/klines?symbol={symbol}&interval={higher_tf}&limit=50"
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
-                data = json.loads(response.read().decode())
+            data = fetch_with_retry(url)
 
             closes = [float(k[4]) for k in data]
 
@@ -998,15 +1127,9 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             macd_slow = int(params.get('macd_slow', [20])[0])
             macd_signal = int(params.get('macd_signal', [5])[0])
 
-            # 獲取 K 線數據
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-
+            # 獲取 K 線數據（使用帶重試的請求）
             url = f"{BINANCE_API}/klines?symbol={symbol}&interval={interval}&limit=100"
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
-                data = json.loads(response.read().decode())
+            data = fetch_with_retry(url)
 
             # 分析參數
             analysis_params = {
@@ -1034,13 +1157,48 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
                 signals.get('action', '')
             )
 
+            # ✨ V3.2: 生成 K 線數據供前端圖表使用
+            closes = [float(k[4]) for k in data]
+            klines = []
+            for k in data:
+                klines.append({
+                    'time': int(k[0]) // 1000,  # 毫秒轉秒
+                    'open': float(k[1]),
+                    'high': float(k[2]),
+                    'low': float(k[3]),
+                    'close': float(k[4]),
+                    'volume': float(k[5])
+                })
+
+            # ✨ V3.2: 計算 overlay 序列
+            ema_fast_series = ScalpingAnalyzerPro.compute_ema_series(closes, ema_fast)
+            ema_slow_series = ScalpingAnalyzerPro.compute_ema_series(closes, ema_slow)
+            bb_upper_series, bb_lower_series = ScalpingAnalyzerPro.compute_bb_series(closes, 20, 2)
+
+            def build_time_series(values, kline_data):
+                """過濾 None 值，生成 {time, value} 陣列"""
+                series = []
+                for i, v in enumerate(values):
+                    if v is not None:
+                        series.append({'time': int(kline_data[i][0]) // 1000, 'value': v})
+                return series
+
+            overlays = {
+                'ema_fast': build_time_series(ema_fast_series, data),
+                'ema_slow': build_time_series(ema_slow_series, data),
+                'bb_upper': build_time_series(bb_upper_series, data),
+                'bb_lower': build_time_series(bb_lower_series, data)
+            }
+
             result = {
                 'success': True,
                 'symbol': symbol,
                 'price': current_price,
                 'timestamp': datetime.now().isoformat(),
                 'signals': signals,
-                'triggered_alerts': triggered_alerts
+                'triggered_alerts': triggered_alerts,
+                'klines': klines,
+                'overlays': overlays
             }
 
             self.send_response(200)
@@ -1050,14 +1208,18 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(result).encode())
 
         except Exception as e:
+            error_info = classify_error(e)
             error_result = {
                 'success': False,
-                'error': str(e)
+                'error': error_info['error'],
+                'error_type': error_info['error_type'],
+                'icon': error_info['icon']
             }
-            self.send_response(500)
+            status_code = 400 if error_info['error_type'] == 'invalid_symbol' else 500
+            self.send_response(status_code)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(error_result).encode())
+            self.wfile.write(json.dumps(error_result, ensure_ascii=False).encode('utf-8'))
 
     def handle_api_snapshots(self):
         """獲取快照列表"""
@@ -1718,6 +1880,178 @@ HTML_PAGE = """<!DOCTYPE html>
             margin-left: 8px;
         }
 
+        /* ✨ V3.2: 進度步驟指示器 */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            color: #999;
+            transition: all 0.3s ease;
+        }
+        .progress-step.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            font-weight: 600;
+        }
+        .progress-step.done {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .progress-step .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s ease;
+        }
+        .progress-step.active .step-dot {
+            background: #667eea;
+            animation: pulse-dot 1s infinite;
+        }
+        .progress-step.done .step-dot {
+            background: #10b981;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+
+        /* ✨ V3.2: Toast 通知 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            animation: toast-in 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 360px;
+        }
+        .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .toast.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .toast.removing {
+            animation: toast-out 0.3s ease forwards;
+        }
+        @keyframes toast-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toast-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* ✨ V3.2: 改善的錯誤顯示 */
+        .error-display {
+            text-align: center;
+            padding: 30px;
+        }
+        .error-display .error-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .error-display .error-message {
+            color: #ef4444;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .error-display .error-hint {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .error-display .retry-btn {
+            padding: 10px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .error-display .retry-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* ✨ V3.2: 圖表容器 */
+        #chart-container {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        #chart-container .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+        #chart-container .chart-title {
+            color: #e0e0e0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        #chart-container .chart-legend {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+        }
+        #chart-container .chart-legend span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #999;
+        }
+        #chart-container .chart-legend .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        #candlestick-chart {
+            width: 100%;
+            height: 400px;
+        }
+        #volume-chart {
+            width: 100%;
+            height: 100px;
+            margin-top: 5px;
+        }
+        .chart-unavailable {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1725,15 +2059,29 @@ HTML_PAGE = """<!DOCTYPE html>
             .sl-tp-grid {
                 grid-template-columns: 1fr;
             }
+            #candlestick-chart {
+                height: 300px;
+            }
+            #volume-chart {
+                height: 80px;
+            }
+            .progress-steps {
+                flex-wrap: wrap;
+            }
+            .chart-legend {
+                flex-wrap: wrap;
+            }
         }
     </style>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 剝頭皮交易分析器 Pro<span class="version-badge">V3.0</span></h1>
+            <h1>📊 剝頭皮交易分析器 Pro<span class="version-badge">V3.2</span></h1>
             <p class="subtitle">Professional Scalping Trading System - 專業級實時交易信號分析</p>
             <div class="feature-tags">
+                <span class="feature-tag">📈 即時圖表</span>
                 <span class="feature-tag">✨ 成交量分析</span>
                 <span class="feature-tag">📈 多時間框架確認</span>
                 <span class="feature-tag">🎯 動態止損止盈</span>
@@ -1857,11 +2205,25 @@ HTML_PAGE = """<!DOCTYPE html>
 
             <div class="panel result-panel">
                 <div class="panel-title">📊 分析結果</div>
+                <div id="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">K 線圖表</div>
+                        <div class="chart-legend">
+                            <span><span class="legend-dot" style="background:#f0b90b"></span>EMA Fast</span>
+                            <span><span class="legend-dot" style="background:#2962ff"></span>EMA Slow</span>
+                            <span><span class="legend-dot" style="background:#ab47bc"></span>布林通道</span>
+                            <span><span class="legend-dot" style="background:#ef4444"></span>止損</span>
+                            <span><span class="legend-dot" style="background:#10b981"></span>止盈</span>
+                        </div>
+                    </div>
+                    <div id="candlestick-chart"></div>
+                    <div id="volume-chart"></div>
+                </div>
                 <div id="results">
                     <div class="loading">
                         <div style="font-size: 48px; margin-bottom: 20px;">📈</div>
                         <p>請點擊「分析入場信號」開始分析</p>
-                        <p style="margin-top: 10px; color: #10b981; font-weight: 600;">✨ 全新 V2 版本：成交量分析 + 多時間框架 + 動態止損止盈</p>
+                        <p style="margin-top: 10px; color: #10b981; font-weight: 600;">✨ V3.2：即時圖表 + 智能錯誤處理 + 進度指示器</p>
                     </div>
                 </div>
             </div>
@@ -1870,6 +2232,40 @@ HTML_PAGE = """<!DOCTYPE html>
 
     <script>
         let autoRefreshInterval = null;
+        let candlestickChart = null;
+        let volumeChart = null;
+        let lastVisibleRange = null;
+
+        // ✨ V3.2: Toast 通知系統
+        function showToast(message, type = 'info', duration = 3000) {
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<span>' + (icons[type] || '') + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // ✨ V3.2: 進度步驟更新
+        function updateProgressStep(step) {
+            const steps = document.querySelectorAll('.progress-step');
+            steps.forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i < step) el.classList.add('done');
+                else if (i === step) el.classList.add('active');
+            });
+        }
 
         async function analyze() {
             const symbol = document.getElementById('symbol').value;
@@ -1883,12 +2279,26 @@ HTML_PAGE = """<!DOCTYPE html>
             const macd_slow = document.getElementById('macd_slow').value;
             const macd_signal = document.getElementById('macd_signal').value;
 
+            // 保存圖表時間軸範圍（自動刷新時用）
+            if (candlestickChart) {
+                try { lastVisibleRange = candlestickChart.timeScale().getVisibleRange(); } catch(e) {}
+            }
+
             document.getElementById('results').innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>分析中...</p>
+                    <div class="progress-steps">
+                        <div class="progress-step active"><span class="step-dot"></span>獲取數據</div>
+                        <div class="progress-step"><span class="step-dot"></span>計算指標</div>
+                        <div class="progress-step"><span class="step-dot"></span>生成建議</div>
+                    </div>
                 </div>
             `;
+
+            // 模擬進度步驟
+            setTimeout(() => updateProgressStep(1), 800);
+            setTimeout(() => updateProgressStep(2), 1500);
 
             try {
                 const url = `/api/analyze?symbol=${symbol}&interval=${interval}&rsi_period=${rsi_period}&rsi_overbought=${rsi_overbought}&rsi_oversold=${rsi_oversold}&ema_fast=${ema_fast}&ema_slow=${ema_slow}&macd_fast=${macd_fast}&macd_slow=${macd_slow}&macd_signal=${macd_signal}`;
@@ -1899,10 +2309,10 @@ HTML_PAGE = """<!DOCTYPE html>
                 if (data.success) {
                     displayResults(data);
                 } else {
-                    showError(data.error);
+                    showError(data.error, data.error_type);
                 }
             } catch (error) {
-                showError(error.message);
+                showError('網路連線失敗，請檢查網路狀態', 'network');
             }
         }
 
@@ -2182,19 +2592,158 @@ HTML_PAGE = """<!DOCTYPE html>
 
             document.getElementById('results').innerHTML = html;
 
+            // ✨ V3.2: 渲染圖表
+            renderChart(data);
+
             // 檢查並顯示觸發的警報
             if (data.triggered_alerts && data.triggered_alerts.length > 0) {
-                data.triggered_alerts.forEach(alert => {
-                    sendNotification('🔔 警報觸發', alert.message);
+                data.triggered_alerts.forEach(a => {
+                    sendNotification('🔔 警報觸發', a.message);
                 });
             }
         }
 
-        function showError(message) {
+        // ✨ V3.2: 圖表渲染
+        function renderChart(data) {
+            if (typeof LightweightCharts === 'undefined') {
+                document.getElementById('chart-container').innerHTML = '<div class="chart-unavailable">圖表功能不可用（CDN 載入失敗）</div>';
+                document.getElementById('chart-container').style.display = 'block';
+                return;
+            }
+
+            if (!data.klines || data.klines.length === 0) return;
+
+            const container = document.getElementById('chart-container');
+            container.style.display = 'block';
+
+            const candleEl = document.getElementById('candlestick-chart');
+            const volumeEl = document.getElementById('volume-chart');
+            candleEl.innerHTML = '';
+            volumeEl.innerHTML = '';
+
+            // 銷毀舊圖表
+            if (candlestickChart) { candlestickChart.remove(); candlestickChart = null; }
+            if (volumeChart) { volumeChart.remove(); volumeChart = null; }
+
+            const chartOptions = {
+                layout: { background: { color: '#1a1a2e' }, textColor: '#d1d4dc' },
+                grid: { vertLines: { color: 'rgba(42, 46, 57, 0.5)' }, horzLines: { color: 'rgba(42, 46, 57, 0.5)' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                rightPriceScale: { borderColor: 'rgba(197, 203, 206, 0.3)' },
+                timeScale: { borderColor: 'rgba(197, 203, 206, 0.3)', timeVisible: true, secondsVisible: false }
+            };
+
+            // K 線圖
+            candlestickChart = LightweightCharts.createChart(candleEl, { ...chartOptions, height: 400 });
+            const candleSeries = candlestickChart.addCandlestickSeries({
+                upColor: '#26a69a', downColor: '#ef5350',
+                borderUpColor: '#26a69a', borderDownColor: '#ef5350',
+                wickUpColor: '#26a69a', wickDownColor: '#ef5350'
+            });
+            candleSeries.setData(data.klines);
+
+            // EMA 疊加
+            if (data.overlays) {
+                if (data.overlays.ema_fast && data.overlays.ema_fast.length > 0) {
+                    const emaFastLine = candlestickChart.addLineSeries({ color: '#f0b90b', lineWidth: 1, title: 'EMA Fast' });
+                    emaFastLine.setData(data.overlays.ema_fast);
+                }
+                if (data.overlays.ema_slow && data.overlays.ema_slow.length > 0) {
+                    const emaSlowLine = candlestickChart.addLineSeries({ color: '#2962ff', lineWidth: 1, title: 'EMA Slow' });
+                    emaSlowLine.setData(data.overlays.ema_slow);
+                }
+                // 布林通道
+                if (data.overlays.bb_upper && data.overlays.bb_upper.length > 0) {
+                    const bbUpper = candlestickChart.addLineSeries({ color: '#ab47bc', lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
+                    bbUpper.setData(data.overlays.bb_upper);
+                }
+                if (data.overlays.bb_lower && data.overlays.bb_lower.length > 0) {
+                    const bbLower = candlestickChart.addLineSeries({ color: '#ab47bc', lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
+                    bbLower.setData(data.overlays.bb_lower);
+                }
+            }
+
+            // 止損止盈水平線
+            const sltp = data.signals.stop_loss_take_profit;
+            if (sltp) {
+                const markers = [];
+                candleSeries.createPriceLine({ price: sltp.stop_loss, color: '#ef4444', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'SL' });
+                candleSeries.createPriceLine({ price: sltp.take_profit_1, color: '#10b981', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'TP1' });
+                candleSeries.createPriceLine({ price: sltp.take_profit_2, color: '#10b981', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'TP2' });
+            }
+
+            // 成交量圖
+            volumeChart = LightweightCharts.createChart(volumeEl, {
+                ...chartOptions,
+                height: 100,
+                rightPriceScale: { ...chartOptions.rightPriceScale, scaleMargins: { top: 0.1, bottom: 0 } },
+                timeScale: { ...chartOptions.timeScale, visible: false }
+            });
+
+            const volumeSeries = volumeChart.addHistogramSeries({
+                priceFormat: { type: 'volume' },
+                priceScaleId: ''
+            });
+            volumeSeries.setData(data.klines.map(k => ({
+                time: k.time,
+                value: k.volume,
+                color: k.close >= k.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)'
+            })));
+
+            // 雙圖表時間軸同步
+            let isSyncing = false;
+            candlestickChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+                if (isSyncing) return;
+                isSyncing = true;
+                const range = candlestickChart.timeScale().getVisibleRange();
+                if (range) volumeChart.timeScale().setVisibleRange(range);
+                isSyncing = false;
+            });
+            volumeChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+                if (isSyncing) return;
+                isSyncing = true;
+                const range = volumeChart.timeScale().getVisibleRange();
+                if (range) candlestickChart.timeScale().setVisibleRange(range);
+                isSyncing = false;
+            });
+
+            // 恢復先前的時間軸範圍（自動刷新時）
+            if (lastVisibleRange) {
+                try {
+                    candlestickChart.timeScale().setVisibleRange(lastVisibleRange);
+                } catch(e) {}
+                lastVisibleRange = null;
+            } else {
+                candlestickChart.timeScale().fitContent();
+                volumeChart.timeScale().fitContent();
+            }
+
+            // 響應式
+            const resizeObserver = new ResizeObserver(() => {
+                if (candlestickChart) candlestickChart.applyOptions({ width: candleEl.clientWidth });
+                if (volumeChart) volumeChart.applyOptions({ width: volumeEl.clientWidth });
+            });
+            resizeObserver.observe(candleEl);
+        }
+
+        function showError(message, errorType) {
+            const errorConfig = {
+                'network':        { icon: '🌐', hint: '請確認網路連線是否正常' },
+                'timeout':        { icon: '⏱️', hint: '伺服器回應時間過長，請稍後再試' },
+                'invalid_symbol': { icon: '🔍', hint: '請確認交易對名稱是否正確（如 BTCUSDT）' },
+                'rate_limit':     { icon: '🚦', hint: '請等待幾秒後再試' },
+                'server_error':   { icon: '🖥️', hint: 'Binance 伺服器暫時不可用' },
+                'unknown':        { icon: '⚠️', hint: '如持續發生，請檢查網路或稍後重試' }
+            };
+            const config = errorConfig[errorType] || errorConfig['unknown'];
+
+            document.getElementById('chart-container').style.display = 'none';
             document.getElementById('results').innerHTML = `
-                <div class="loading">
-                    <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                    <p style="color: #ef4444;">錯誤: ${message}</p>
+                <div class="error-display">
+                    <div class="error-icon">${config.icon}</div>
+                    <div class="error-message">${message}</div>
+                    <div class="error-hint">${config.hint}</div>
+                    <button class="retry-btn" onclick="analyze()">🔄 重新嘗試</button>
                 </div>
             `;
         }
@@ -2259,7 +2808,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function saveSnapshot() {
             if (!currentAnalysisData) {
-                alert('請先進行分析！');
+                showToast('請先進行分析！', 'warning');
                 return;
             }
 
@@ -2282,12 +2831,12 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ 策略快照已保存！ID: ' + result.snapshot_id);
+                    showToast('策略快照已保存！ID: ' + result.snapshot_id, 'success');
                 } else {
-                    alert('❌ 保存失敗: ' + result.error);
+                    showToast('保存失敗: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('❌ 保存失敗: ' + error.message);
+                showToast('保存失敗: ' + error.message, 'error');
             }
         }
 
@@ -2298,7 +2847,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 const result = await response.json();
 
                 if (!result.success || result.snapshots.length === 0) {
-                    alert('暫無快照記錄');
+                    showToast('暫無快照記錄', 'info');
                     return;
                 }
 
@@ -2369,7 +2918,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 `;
                 document.body.appendChild(modal);
             } catch (error) {
-                alert('❌ 載入失敗: ' + error.message);
+                showToast('載入失敗: ' + error.message, 'error');
             }
         }
 
@@ -2414,12 +2963,12 @@ HTML_PAGE = """<!DOCTYPE html>
                     document.getElementById('macd_slow').value = params.macd_slow;
                     document.getElementById('macd_signal').value = params.macd_signal;
 
-                    alert(`✅ 已載入「${preset.name}」預設\\n${preset.description}`);
+                    showToast('已載入「' + preset.name + '」預設', 'success');
                 } else {
-                    alert('❌ 載入預設失敗');
+                    showToast('載入預設失敗', 'error');
                 }
             } catch (error) {
-                alert('❌ 載入預設失敗: ' + error.message);
+                showToast('載入預設失敗: ' + error.message, 'error');
             }
         }
 
@@ -2498,9 +3047,9 @@ HTML_PAGE = """<!DOCTYPE html>
         async function exportSnapshots() {
             try {
                 window.open('/api/snapshots/export', '_blank');
-                alert('✅ 開始下載 CSV 檔案');
+                showToast('開始下載 CSV 檔案', 'success');
             } catch (error) {
-                alert('❌ 匯出失敗: ' + error.message);
+                showToast('匯出失敗: ' + error.message, 'error');
             }
         }
 
@@ -2512,13 +3061,13 @@ HTML_PAGE = """<!DOCTYPE html>
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('✅ 快照已刪除');
+                    showToast('快照已刪除', 'success');
                     loadSnapshotsInModal();
                 } else {
-                    alert('❌ 刪除失敗');
+                    showToast('刪除失敗', 'error');
                 }
             } catch (error) {
-                alert('❌ 刪除失敗: ' + error.message);
+                showToast('刪除失敗: ' + error.message, 'error');
             }
         }
 
@@ -2559,7 +3108,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 listDiv.innerHTML = html;
             } catch (error) {
-                alert('❌ 搜尋失敗: ' + error.message);
+                showToast('搜尋失敗: ' + error.message, 'error');
             }
         }
 
@@ -2663,13 +3212,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ 警報已新增！');
+                    showToast('警報已新增！', 'success');
                     loadAlertsInModal();
                 } else {
-                    alert('❌ 新增失敗: ' + result.error);
+                    showToast('新增失敗: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('❌ 新增失敗: ' + error.message);
+                showToast('新增失敗: ' + error.message, 'error');
             }
         }
 
@@ -2685,10 +3234,10 @@ HTML_PAGE = """<!DOCTYPE html>
                 if (result.success) {
                     loadAlertsInModal();
                 } else {
-                    alert('❌ 更新失敗');
+                    showToast('更新失敗', 'error');
                 }
             } catch (error) {
-                alert('❌ 更新失敗: ' + error.message);
+                showToast('更新失敗: ' + error.message, 'error');
             }
         }
 
@@ -2700,13 +3249,13 @@ HTML_PAGE = """<!DOCTYPE html>
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('✅ 警報已刪除');
+                    showToast('警報已刪除', 'success');
                     loadAlertsInModal();
                 } else {
-                    alert('❌ 刪除失敗');
+                    showToast('刪除失敗', 'error');
                 }
             } catch (error) {
-                alert('❌ 刪除失敗: ' + error.message);
+                showToast('刪除失敗: ' + error.message, 'error');
             }
         }
 
@@ -2730,13 +3279,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ 商品已添加！');
+                    showToast('商品已添加！', 'success');
                     location.reload();
                 } else {
-                    alert('❌ 添加失敗: ' + result.error);
+                    showToast('添加失敗: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('❌ 添加失敗: ' + error.message);
+                showToast('添加失敗: ' + error.message, 'error');
             }
         }
     </script>
@@ -2747,22 +3296,18 @@ HTML_PAGE = """<!DOCTYPE html>
 if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), ScalpingHandler) as httpd:
-        print(f"✅ 剝頭皮交易分析器 Pro V3 已啟動！")
+        print(f"✅ 剝頭皮交易分析器 Pro V3.2 已啟動！")
         print(f"🌐 訪問: http://localhost:{PORT}")
         print(f"")
-        print(f"✨ V3 新增功能:")
-        print(f"  📊 Bollinger Bands (布林通道)")
-        print(f"  📉 Stochastic (隨機指標)")
-        print(f"  📐 Fibonacci (斐波那契回調)")
-        print(f"  📸 策略快照 (保存分析記錄)")
-        print(f"  ➕ 自定義商品 (添加任意交易對)")
+        print(f"✨ V3.2 新增功能:")
+        print(f"  📈 即時 K 線圖表 (TradingView Lightweight Charts)")
+        print(f"  🔄 智能重試機制 (指數退避)")
+        print(f"  🌐 中文錯誤訊息 + 錯誤分類")
+        print(f"  📊 進度指示器 + Toast 通知")
         print(f"")
-        print(f"✨ V2 核心功能:")
-        print(f"  1. 成交量分析 - CVD趨勢")
-        print(f"  2. 多時間框架確認")
-        print(f"  3. 動態止損止盈 - ATR")
-        print(f"  4. 信號品質評分 - 0-5星")
-        print(f"  5. 瀏覽器通知")
+        print(f"✨ V3 功能:")
+        print(f"  📊 Bollinger Bands | 📉 Stochastic | 📐 Fibonacci")
+        print(f"  📸 策略快照 | ➕ 自定義商品 | 🔔 智能警報")
         print(f"")
         print(f"🚀 支援交易對: BTC, ETH, BNB, SOL + 自定義")
         print(f"\n按 Ctrl+C 停止服務\n")
