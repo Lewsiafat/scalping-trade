@@ -46,6 +46,19 @@ def parse_port():
     return 80  # 預設值
 
 PORT = parse_port()
+
+def parse_prefix():
+    """從命令列參數解析路徑前綴，支援 --prefix <PATH>"""
+    args = sys.argv[1:]
+    for i, arg in enumerate(args):
+        if arg == '--prefix' and i + 1 < len(args):
+            prefix = args[i + 1].rstrip('/')
+            if prefix and not prefix.startswith('/'):
+                prefix = '/' + prefix
+            return prefix
+    return ''  # 預設無前綴
+
+PREFIX = parse_prefix()
 BINANCE_API = "https://api.binance.com/api/v3"
 
 
@@ -1082,46 +1095,54 @@ class ScalpingAnalyzerPro:
 class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
-        if self.path == '/' or self.path == '/index.html':
+        p = PREFIX
+        if self.path in ('/', '/index.html', p + '/', p + '/index.html'):
             self.send_response(200)
             self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
-            self.wfile.write(HTML_PAGE.encode('utf-8'))
-        elif self.path.startswith('/api/analyze'):
+            html = HTML_PAGE.replace(
+                '<head>',
+                f'<head><script>window.APP_PREFIX = "{PREFIX}";</script>',
+                1
+            )
+            self.wfile.write(html.encode('utf-8'))
+        elif self.path.startswith(p + '/api/analyze'):
             self.handle_api_analyze()
-        elif self.path.startswith('/api/snapshots/export'):
+        elif self.path.startswith(p + '/api/snapshots/export'):
             self.handle_export_snapshots()
-        elif self.path.startswith('/api/snapshots/search'):
+        elif self.path.startswith(p + '/api/snapshots/search'):
             self.handle_search_snapshots()
-        elif self.path.startswith('/api/snapshots'):
+        elif self.path.startswith(p + '/api/snapshots'):
             self.handle_api_snapshots()
-        elif self.path.startswith('/api/symbols'):
+        elif self.path.startswith(p + '/api/symbols'):
             self.handle_api_symbols()
-        elif self.path.startswith('/api/alerts'):
+        elif self.path.startswith(p + '/api/alerts'):
             self.handle_api_alerts()
-        elif self.path.startswith('/api/presets'):
+        elif self.path.startswith(p + '/api/presets'):
             self.handle_api_presets()
         else:
             self.send_error(404)
 
     def do_POST(self):
-        if self.path.startswith('/api/snapshot/save'):
+        p = PREFIX
+        if self.path.startswith(p + '/api/snapshot/save'):
             self.handle_save_snapshot()
-        elif self.path.startswith('/api/symbol/add'):
+        elif self.path.startswith(p + '/api/symbol/add'):
             self.handle_add_symbol()
-        elif self.path.startswith('/api/alert/add'):
+        elif self.path.startswith(p + '/api/alert/add'):
             self.handle_add_alert()
-        elif self.path.startswith('/api/alert/toggle'):
+        elif self.path.startswith(p + '/api/alert/toggle'):
             self.handle_toggle_alert()
         else:
             self.send_error(404)
 
     def do_DELETE(self):
-        if self.path.startswith('/api/snapshot/'):
+        p = PREFIX
+        if self.path.startswith(p + '/api/snapshot/'):
             self.handle_delete_snapshot()
-        elif self.path.startswith('/api/symbol/'):
+        elif self.path.startswith(p + '/api/symbol/'):
             self.handle_delete_symbol()
-        elif self.path.startswith('/api/alert/'):
+        elif self.path.startswith(p + '/api/alert/'):
             self.handle_delete_alert()
         else:
             self.send_error(404)
@@ -2247,6 +2268,7 @@ HTML_PAGE = """<!DOCTYPE html>
     </div>
 
     <script>
+        const APP_PREFIX = window.APP_PREFIX || '';
         let autoRefreshInterval = null;
         let candlestickChart = null;
         let volumeChart = null;
@@ -2317,7 +2339,7 @@ HTML_PAGE = """<!DOCTYPE html>
             setTimeout(() => updateProgressStep(2), 1500);
 
             try {
-                const url = `/api/analyze?symbol=${symbol}&interval=${interval}&rsi_period=${rsi_period}&rsi_overbought=${rsi_overbought}&rsi_oversold=${rsi_oversold}&ema_fast=${ema_fast}&ema_slow=${ema_slow}&macd_fast=${macd_fast}&macd_slow=${macd_slow}&macd_signal=${macd_signal}`;
+                const url = `${APP_PREFIX}/api/analyze?symbol=${symbol}&interval=${interval}&rsi_period=${rsi_period}&rsi_overbought=${rsi_overbought}&rsi_oversold=${rsi_oversold}&ema_fast=${ema_fast}&ema_slow=${ema_slow}&macd_fast=${macd_fast}&macd_slow=${macd_slow}&macd_signal=${macd_signal}`;
 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -2829,7 +2851,7 @@ HTML_PAGE = """<!DOCTYPE html>
             }
 
             try {
-                const response = await fetch('/api/snapshot/save', {
+                const response = await fetch(APP_PREFIX + '/api/snapshot/save', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -2859,7 +2881,7 @@ HTML_PAGE = """<!DOCTYPE html>
         // 📋 顯示快照列表
         async function showSnapshots() {
             try {
-                const response = await fetch('/api/snapshots?limit=20');
+                const response = await fetch(APP_PREFIX + '/api/snapshots?limit=20');
                 const result = await response.json();
 
                 if (!result.success || result.snapshots.length === 0) {
@@ -2941,7 +2963,7 @@ HTML_PAGE = """<!DOCTYPE html>
         // ➕ 自定義商品管理
         async function loadCustomSymbols() {
             try {
-                const response = await fetch('/api/symbols');
+                const response = await fetch(APP_PREFIX + '/api/symbols');
                 const result = await response.json();
 
                 if (result.success && result.symbols.length > 0) {
@@ -2961,7 +2983,7 @@ HTML_PAGE = """<!DOCTYPE html>
         // ⚡ 載入參數預設組合
         async function loadPreset(presetName) {
             try {
-                const response = await fetch('/api/presets');
+                const response = await fetch(APP_PREFIX + '/api/presets');
                 const result = await response.json();
 
                 if (result.success && result.presets[presetName]) {
@@ -3021,7 +3043,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function loadSnapshotsInModal() {
             try {
-                const response = await fetch('/api/snapshots?limit=50');
+                const response = await fetch(APP_PREFIX + '/api/snapshots?limit=50');
                 const result = await response.json();
 
                 const listDiv = document.getElementById('snapshotList');
@@ -3073,7 +3095,7 @@ HTML_PAGE = """<!DOCTYPE html>
             if (!confirm('確定要刪除此快照嗎？')) return;
 
             try {
-                const response = await fetch('/api/snapshot/' + id, { method: 'DELETE' });
+                const response = await fetch(APP_PREFIX + '/api/snapshot/' + id, { method: 'DELETE' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -3153,7 +3175,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function loadAlertsInModal() {
             try {
-                const response = await fetch('/api/alerts');
+                const response = await fetch(APP_PREFIX + '/api/alerts');
                 const result = await response.json();
 
                 const listDiv = document.getElementById('alertList');
@@ -3220,7 +3242,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function addAlert(type, symbol, condition, value) {
             try {
-                const response = await fetch('/api/alert/add', {
+                const response = await fetch(APP_PREFIX + '/api/alert/add', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({type, symbol, condition, value, enabled: true})
@@ -3240,7 +3262,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function toggleAlert(id, enabled) {
             try {
-                const response = await fetch('/api/alert/toggle', {
+                const response = await fetch(APP_PREFIX + '/api/alert/toggle', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({alert_id: id, enabled})
@@ -3261,7 +3283,7 @@ HTML_PAGE = """<!DOCTYPE html>
             if (!confirm('確定要刪除此警報嗎？')) return;
 
             try {
-                const response = await fetch('/api/alert/' + id, { method: 'DELETE' });
+                const response = await fetch(APP_PREFIX + '/api/alert/' + id, { method: 'DELETE' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -3287,7 +3309,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function addCustomSymbol(symbol, name) {
             try {
-                const response = await fetch('/api/symbol/add', {
+                const response = await fetch(APP_PREFIX + '/api/symbol/add', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({symbol, name})
