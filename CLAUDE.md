@@ -11,6 +11,12 @@ Scalping Trade Analyzer Pro — a real-time scalping trading signal analysis sys
 ```bash
 python3 app_v2.py
 # Serves on http://localhost:80
+
+# Optional: specify port
+python3 app_v2.py --port 8080
+
+# Optional: nginx sub-path deployment
+python3 app_v2.py --port 9000 --prefix /scalping
 ```
 
 No dependency installation needed — uses only Python 3.11+ standard library.
@@ -65,7 +71,8 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 
 - External data source: Binance Public API (no API key required)
 - SSL verification is disabled for Binance API calls (`ssl.CERT_NONE`)
-- Server runs on port 80 (may require elevated privileges)
+- Server port configurable via `--port <N>` / `-p <N>` (default: 80)
+- URL path prefix configurable via `--prefix <PATH>` for nginx reverse proxy (default: empty)
 - Signal quality scoring combines 8 indicators with weighted contributions, capped at 0-5
 - MACD uses a simplified signal line calculation (not full EMA-based)
 - Frontend auto-refreshes every 10 seconds when enabled

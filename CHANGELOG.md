@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-03-02
+
+### Added
+- 命令列 Port 指定：支援 `--port <N>` / `-p <N>` 參數，啟動時指定監聽端口（預設 80）
+- URL 路徑前綴支援：支援 `--prefix <PATH>` 參數，讓應用可在 nginx 子路徑下正確運作（如 `/scalping`）
+- 後端路由動態 PREFIX：`do_GET` / `do_POST` / `do_DELETE` 全部支援路徑前綴
+- HTML 動態注入 `window.APP_PREFIX` 全域變數，前端所有 API 請求自動帶上路徑前綴
+
 ## [3.2.0-beta] - 2026-03-02
 
 ### Added
