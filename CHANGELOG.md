@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [3.4.0] - 2026-03-03
+
+### Added
+- Feature: Custom UI themes - implemented dynamic CSS variable management with theme-switching logic.
+- Feature: Interactive layouts - support collapsing the main settings sidebar horizontally and folding detailed analysis sections vertically.
+- UX: Saved structural UI states (sidebar/panels toggles) into `localStorage` for continuity across page loads.
+- UI enhancement: Hand-crafted "Soft Minimalist" aesthetic theme offering a polished, muted pastel color palette with gentle box shadows, and applied it to inputs, buttons, and layouts seamlessly.
+
 ## [3.3.1] - 2026-03-02
 
 ### Changed

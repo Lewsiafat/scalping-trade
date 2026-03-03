@@ -4,6 +4,23 @@
 
 格式依據 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
+> 🌐 [English CHANGELOG](CHANGELOG.md)
+
+## [3.4.0] - 2026-03-03
+
+### 新增
+- 功能：自定義 UI 主題 - 實作動態 CSS 變數管理與主題切換邏輯。
+- 功能：互動式排版 - 支援左側「交易設定」面板水平折收，並支援細部分析結果的垂直折收。
+- UX：UI 的結構狀態 (面板折收) 自動儲存於 `localStorage` 中以維持頁面重載後的連續性。
+- UI 強化：套用了「柔和極簡風格 (Soft Minimalist)」主題，帶來更舒適精緻的粉彩配色及陰影變化，並套用於按鈕、輸入框與視覺排版上。
+
+## [3.3.1] - 2026-03-02
+
+### 變更
+- 翻譯 `README.md` 和 `CHANGELOG.md` 為英文
+- 新增 `README.zh-TW.md` 及 `CHANGELOG.zh-TW.md` 作為繁體中文對照版本
+- 將 `SPEC.md` 移動到 `docs/` 資料夾
+- 新增 `GEMINI.md`
 
 ## [3.3.0] - 2026-03-02
 

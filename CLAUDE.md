@@ -66,6 +66,8 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 - TradingView Lightweight Charts for real-time K-line display with EMA/Bollinger overlay
 - Toast notification system (replaces native `alert()`)
 - Progress indicator during analysis
+- Custom UI Themes: Dynamic CSS variable management with "Soft Minimalist" aesthetic theme
+- Interactive Layouts: Horizontal sidebar folding and vertical analysis panels with `localStorage` state saving
 
 ## Key Technical Details
 
