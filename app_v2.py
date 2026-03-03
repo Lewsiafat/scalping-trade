@@ -2382,6 +2382,71 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
             </div>
+            </div>
+        </div>
+
+        <!-- 新增警報 Modal -->
+        <div id="add-alert-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 100%;">
+                <h3 style="margin-bottom: 20px;">➕ 新增警報設定</h3>
+                
+                <div class="form-group">
+                    <label>警報類型</label>
+                    <select id="new_alert_type" onchange="updateAlertConditionOptions()">
+                        <option value="price">💰 價格警報 (例如: BTC大於 70000)</option>
+                        <option value="quality">⭐ 品質評分警報 (例如: 綜合星等大於 4)</option>
+                        <option value="signal">📊 信號警報 (例如: 出現強烈買入)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>指定交易對 (留空則套用所有商品)</label>
+                    <input type="text" id="new_alert_symbol" placeholder="例如: BTCUSDT" style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group">
+                    <label>觸發條件</label>
+                    <select id="new_alert_condition">
+                        <option value="above">大於 / 高於 (Above)</option>
+                        <option value="below">小於 / 低於 (Below)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="new_alert_value_group">
+                    <label id="new_alert_value_label">目標數值</label>
+                    <input type="text" id="new_alert_value" placeholder="輸入觸發數值...">
+                    <div id="new_alert_value_hint" style="font-size: 11px; color: #666; margin-top: 5px;"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button onclick="submitNewAlert()" style="background: var(--color-buy); flex: 1;">📝 儲存警報</button>
+                    <button onclick="document.getElementById('add-alert-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加自定義商品 Modal -->
+        <div id="add-symbol-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 100%;">
+                <h3 style="margin-bottom: 20px;">➕ 添加自定義商品</h3>
+                
+                <div class="form-group">
+                    <label>交易對代碼 (Symbol)</label>
+                    <input type="text" id="new_symbol_code" placeholder="例如: DOGEUSDT, WIFUSDT" style="text-transform: uppercase;">
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;">請輸入 Binance 支援的精確代碼。</div>
+                </div>
+
+                <div class="form-group">
+                    <label>顯示名稱 (Display Name)</label>
+                    <input type="text" id="new_symbol_name" placeholder="例如: DOGE/USDT, 狗狗幣">
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;">在選單中顯示的可讀名稱。</div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button onclick="submitNewSymbol()" style="background: var(--color-buy); flex: 1;">✅ 確認添加</button>
+                    <button onclick="document.getElementById('add-symbol-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;">取消</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3436,24 +3501,70 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         function showAddAlertDialog() {
-            const type = prompt('警報類型（price=價格 / quality=品質評分 / signal=信號類型）:');
-            if (!type || !['price', 'quality', 'signal'].includes(type)) {
-                alert('❌ 請輸入正確的警報類型');
+            document.getElementById('add-alert-modal').style.display = 'flex';
+            updateAlertConditionOptions(); // 初始化選項與提示
+        }
+
+        function updateAlertConditionOptions() {
+            const type = document.getElementById('new_alert_type').value;
+            const conditionSelect = document.getElementById('new_alert_condition');
+            const valueInput = document.getElementById('new_alert_value');
+            const valueLabel = document.getElementById('new_alert_value_label');
+            const valueHint = document.getElementById('new_alert_value_hint');
+
+            conditionSelect.innerHTML = '';
+            
+            if (type === 'price') {
+                conditionSelect.innerHTML = `
+                    <option value="above">大於 / 高於 (Above)</option>
+                    <option value="below">小於 / 低於 (Below)</option>
+                `;
+                valueLabel.textContent = '目標價格';
+                valueInput.placeholder = '例如: 65000 或者 0.52';
+                valueInput.type = 'number';
+                valueInput.step = 'any';
+                valueHint.innerHTML = '當商品價格達到此數值條件時觸發通知。';
+            } else if (type === 'quality') {
+                conditionSelect.innerHTML = `
+                    <option value="above">大於 / 等於 (>=)</option>
+                    <option value="below">小於 / 低於 (<)</option>
+                `;
+                valueLabel.textContent = '品質評分 (0~5)';
+                valueInput.placeholder = '例如: 4';
+                valueInput.type = 'number';
+                valueInput.step = '0.5';
+                valueInput.min = '0';
+                valueInput.max = '5';
+                valueHint.innerHTML = '0分最弱，5分(⭐⭐⭐⭐⭐)表示最強烈信號。';
+            } else if (type === 'signal') {
+                conditionSelect.innerHTML = `
+                    <option value="equal">包含此信號 (Contains)</option>
+                `;
+                valueLabel.textContent = '信號類型';
+                valueInput.type = 'text';
+                valueInput.placeholder = '例如: 買入, 賣出, 強烈買入';
+                valueHint.innerHTML = '當分析結果的「行動建議」包含此關鍵字時觸發。';
+            }
+        }
+
+        function submitNewAlert() {
+            const type = document.getElementById('new_alert_type').value;
+            const symbol = document.getElementById('new_alert_symbol').value.trim().toUpperCase();
+            const condition = document.getElementById('new_alert_condition').value;
+            const value = document.getElementById('new_alert_value').value.trim();
+
+            if (!value) {
+                alert('❌ 請輸入目標數值');
                 return;
             }
 
-            const symbol = prompt('交易對（留空=所有商品）:');
-            const condition = type === 'signal' ? 'equal' : prompt('條件（above=高於 / below=低於）:');
-
-            if (type !== 'signal' && !['above', 'below'].includes(condition)) {
-                alert('❌ 請輸入正確的條件');
-                return;
-            }
-
-            const value = prompt(type === 'price' ? '價格:' : (type === 'quality' ? '品質評分(0-5):' : '信號類型（買入/賣出）:'));
-            if (!value) return;
-
-            addAlert(type, symbol || '', condition, value);
+            // 關閉 Modal 並發送請求
+            document.getElementById('add-alert-modal').style.display = 'none';
+            addAlert(type, symbol, condition, value);
+            
+            // 清空表單
+            document.getElementById('new_alert_value').value = '';
+            document.getElementById('new_alert_symbol').value = '';
         }
 
         async function addAlert(type, symbol, condition, value) {
@@ -3514,13 +3625,28 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         function showAddSymbolDialog() {
-            const symbol = prompt('請輸入交易對代碼（例如：LINKUSDT）:');
-            if (!symbol) return;
+            document.getElementById('add-symbol-modal').style.display = 'flex';
+        }
 
-            const name = prompt('請輸入顯示名稱（例如：LINK/USDT）:');
-            if (!name) return;
+        function submitNewSymbol() {
+            const symbol = document.getElementById('new_symbol_code').value.trim().toUpperCase();
+            const name = document.getElementById('new_symbol_name').value.trim();
 
-            addCustomSymbol(symbol.toUpperCase(), name);
+            if (!symbol) {
+                alert('❌ 請輸入交易對代碼！');
+                return;
+            }
+            if (!name) {
+                alert('❌ 請輸入顯示名稱！');
+                return;
+            }
+
+            document.getElementById('add-symbol-modal').style.display = 'none';
+            addCustomSymbol(symbol, name);
+            
+            // 清空表單
+            document.getElementById('new_symbol_code').value = '';
+            document.getElementById('new_symbol_name').value = '';
         }
 
         async function addCustomSymbol(symbol, name) {
