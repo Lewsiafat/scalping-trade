@@ -1,0 +1,27 @@
+[
+  {
+    "symbol": "SOLUSDT",
+    "name": "Solana",
+    "added_at": "2026-03-03T16:32:02.262756"
+  },
+  {
+    "symbol": "SHIBUSDT",
+    "name": "SHIB",
+    "added_at": "2026-03-03T17:05:14.811067"
+  },
+  {
+    "symbol": "WIFIUSDT",
+    "name": "WIFI",
+    "added_at": "2026-03-03T17:16:54.181949"
+  },
+  {
+    "symbol": "XAUUSDT",
+    "name": "黃金",
+    "added_at": "2026-03-03T17:19:07.598975"
+  },
+  {
+    "symbol": "BCHUSDT",
+    "name": "BCH",
+    "added_at": "2026-03-03T17:20:54.834099"
+  }
+]
