@@ -1578,6 +1578,47 @@ HTML_PAGE = """<!DOCTYPE html>
             display: grid;
             grid-template-columns: 350px 1fr;
             gap: 20px;
+            transition: grid-template-columns 0.4s ease-in-out, gap 0.4s ease-in-out;
+        }
+
+        .main-grid.sidebar-collapsed {
+            grid-template-columns: 0px 1fr;
+            gap: 0px;
+        }
+
+        .sidebar {
+            overflow: hidden;
+            transition: opacity 0.4s ease, padding 0.4s ease, border 0.4s ease;
+        }
+
+        .main-grid.sidebar-collapsed .sidebar {
+            opacity: 0;
+            padding-left: 0;
+            padding-right: 0;
+            border: none;
+            pointer-events: none;
+        }
+        
+        .sidebar-toggle-btn {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text-main);
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            width: auto;
+            box-shadow: var(--shadow-sm);
+        }
+        .sidebar-toggle-btn:hover {
+            opacity: 0.8;
+            background: rgba(255,255,255,0.05);
+            transform: translateY(0);
         }
 
         .panel {
@@ -2137,6 +2178,41 @@ HTML_PAGE = """<!DOCTYPE html>
                 flex-wrap: wrap;
             }
         }
+        
+        /* UI 區塊折疊樣式 */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapsible-header:hover {
+            opacity: 0.8;
+        }
+        .toggle-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+            color: var(--color-text-muted);
+        }
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        .collapsible-content {
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out, margin 0.3s ease-in-out;
+            max-height: 4000px;
+            overflow: hidden;
+            opacity: 1;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            border: none;
+        }
     </style>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -2160,9 +2236,19 @@ HTML_PAGE = """<!DOCTYPE html>
             </div>
         </div>
 
-        <div class="main-grid">
-            <div class="panel">
-                <div class="panel-title">⚙️ 交易設定</div>
+        <div style="text-align: left;">
+            <button class="sidebar-toggle-btn" onclick="toggleMainSidebar()">
+                <span id="sidebar-toggle-icon">◀</span> 交易設定
+            </button>
+        </div>
+
+        <div class="main-grid" id="main-grid">
+            <div class="panel sidebar">
+                <div class="panel-title collapsible-header" onclick="toggleCollapse('settings-content', this)">
+                    <span>⚙️ 交易設定</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div id="settings-content" class="collapsible-content">
 
                 <div class="form-group">
                     <label>交易對 Symbol</label>
@@ -2266,23 +2352,27 @@ HTML_PAGE = """<!DOCTYPE html>
                 <button onclick="showAlertManager()" style="margin-top: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                     🔔 警報設定
                 </button>
+                </div>
             </div>
 
             <div class="panel result-panel">
                 <div class="panel-title">📊 分析結果</div>
                 <div id="chart-container">
-                    <div class="chart-header">
+                    <div class="chart-header collapsible-header" onclick="toggleCollapse('chart-content', this)">
                         <div class="chart-title">K 線圖表</div>
-                        <div class="chart-legend">
+                        <div class="chart-legend" style="pointer-events: none; flex-grow: 1; justify-content: flex-end; margin-right: 15px;">
                             <span><span class="legend-dot" style="background:#f0b90b"></span>EMA Fast</span>
                             <span><span class="legend-dot" style="background:#2962ff"></span>EMA Slow</span>
                             <span><span class="legend-dot" style="background:#ab47bc"></span>布林通道</span>
                             <span><span class="legend-dot" style="background:#ef4444"></span>止損</span>
                             <span><span class="legend-dot" style="background:#10b981"></span>止盈</span>
                         </div>
+                        <span class="toggle-icon">▼</span>
                     </div>
-                    <div id="candlestick-chart"></div>
-                    <div id="volume-chart"></div>
+                    <div id="chart-content" class="collapsible-content">
+                        <div id="candlestick-chart"></div>
+                        <div id="volume-chart"></div>
+                    </div>
                 </div>
                 <div id="results">
                     <div class="loading">
@@ -2301,6 +2391,82 @@ HTML_PAGE = """<!DOCTYPE html>
         let candlestickChart = null;
         let volumeChart = null;
         let lastVisibleRange = null;
+
+        // UI Collapse Logic
+        function toggleMainSidebar() {
+            const grid = document.getElementById('main-grid');
+            const icon = document.getElementById('sidebar-toggle-icon');
+            if (grid.classList.contains('sidebar-collapsed')) {
+                grid.classList.remove('sidebar-collapsed');
+                if (icon) icon.textContent = '◀';
+                localStorage.setItem('sidebar_state', 'open');
+            } else {
+                grid.classList.add('sidebar-collapsed');
+                if (icon) icon.textContent = '▶';
+                localStorage.setItem('sidebar_state', 'closed');
+            }
+            // trigger resize for charts
+            if (candlestickChart && volumeChart) {
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 400);
+            }
+        }
+
+        function toggleCollapse(contentId, headerEl) {
+            const content = document.getElementById(contentId);
+            const icon = headerEl.querySelector('.toggle-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                if (icon) icon.classList.remove('collapsed');
+                localStorage.setItem('collapse_' + contentId, 'open');
+                
+                // 強制重新調整圖表大小 (避免隱藏時大小為 0)
+                if (contentId === 'chart-content' && candlestickChart && volumeChart) {
+                    setTimeout(() => {
+                        window.dispatchEvent(new Event('resize'));
+                    }, 400);
+                }
+            } else {
+                content.classList.add('collapsed');
+                if (icon) icon.classList.add('collapsed');
+                localStorage.setItem('collapse_' + contentId, 'closed');
+            }
+        }
+
+        function restoreCollapses() {
+            // Sidebar state
+            const sidebarState = localStorage.getItem('sidebar_state');
+            if (sidebarState === 'closed') {
+                const grid = document.getElementById('main-grid');
+                if (grid) grid.classList.add('sidebar-collapsed');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (icon) icon.textContent = '▶';
+            }
+
+            // Accordion states
+            const list = ['settings-content', 'chart-content', 'advanced-analysis-content'];
+            list.forEach(id => {
+                const state = localStorage.getItem('collapse_' + id);
+                if (state === 'closed') {
+                    const content = document.getElementById(id);
+                    if (content) {
+                        content.classList.add('collapsed');
+                        // 尋找對應的 header 和 icon
+                        // 假設 header 的結構是在前面
+                        const header = document.querySelector(`[onclick*="'${id}'"]`);
+                        if (header) {
+                            const icon = header.querySelector('.toggle-icon');
+                            if (icon) icon.classList.add('collapsed');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 頁面加載時恢復靜態狀態
+        document.addEventListener('DOMContentLoaded', restoreCollapses);
 
         // ✨ V3.2: Toast 通知系統
         function showToast(message, type = 'info', duration = 3000) {
@@ -2521,6 +2687,11 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
 
                 <!-- 核心分析指標 -->
+                <div class="panel-title collapsible-header" onclick="toggleCollapse('advanced-analysis-content', this)" style="margin-top: 25px; margin-bottom: 15px;">
+                    <span>🔬 細部分析結果（多時間框架及以下）</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div id="advanced-analysis-content" class="collapsible-content">
                 ${mtfHtml}
                 ${volumeHtml}
 
@@ -2651,12 +2822,17 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
                 ` : ''}
 
+                </div> <!-- 結束 advanced-analysis-content -->
+
                 <div class="timestamp">
                     最後更新: ${new Date(data.timestamp).toLocaleString('zh-TW')}
                 </div>
             `;
 
             document.getElementById('results').innerHTML = html;
+
+            // 恢復折疊狀態
+            restoreCollapses();
 
             // ✨ V3.2: 渲染圖表
             renderChart(data);
