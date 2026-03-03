@@ -1481,7 +1481,32 @@ HTML_PAGE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>剝頭皮交易分析器 Pro V3 | Scalping Analyzer Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+
+        :root {
+            --color-primary: #635A54; /* Warm Mocha */
+            --color-accent: #9FAFA1; /* Dusty Sage */
+            --color-bg: #F7F5F0; /* Oatmeal */
+            --color-card: #FBFBF9; /* Linen */
+            --color-text-main: #635A54;
+            --color-text-muted: #8c857e;
+            --color-border: #e8e6e1;
+            
+            --color-buy: #82a88a;
+            --color-sell: #c98276;
+            --color-warning: #d4a373;
+            --color-wait: #a3a19b;
+            
+            --font-headings: 'Lora', serif;
+            --font-body: 'Nunito', -apple-system, sans-serif;
+            
+            --shadow-sm: 0 2px 8px rgba(99, 90, 84, 0.04);
+            --shadow-md: 0 8px 24px rgba(99, 90, 84, 0.08);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1489,8 +1514,9 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--font-body);
+            background: var(--color-bg);
+            color: var(--color-text-main);
             min-height: 100vh;
             padding: 20px;
         }
@@ -1501,22 +1527,23 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .header {
-            background: white;
+            background: var(--color-card);
             border-radius: 15px;
             padding: 15px 20px;
             margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-sm);
         }
 
         h1 {
-            color: #333;
+            color: var(--color-text-main);
             font-size: 24px;
             margin-bottom: 3px;
-        }
+        
+            font-family: var(--font-headings);}
 
         .version-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--color-buy);
             color: white;
             padding: 3px 10px;
             border-radius: 10px;
@@ -1526,7 +1553,7 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .subtitle {
-            color: #666;
+            color: var(--color-text-muted);
             font-size: 12px;
             margin-top: 5px;
         }
@@ -1539,8 +1566,8 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .feature-tag {
-            background: #f0f4ff;
-            color: #667eea;
+            background: var(--color-bg);
+            color: var(--color-accent);
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 10px;
@@ -1554,19 +1581,20 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .panel {
-            background: white;
+            background: var(--color-card);
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-md);
         }
 
         .panel-title {
+            font-family: var(--font-headings);
             font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: var(--color-text-main);
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 2px solid var(--color-border);
         }
 
         .form-group {
@@ -1577,14 +1605,14 @@ HTML_PAGE = """<!DOCTYPE html>
             display: block;
             font-size: 13px;
             font-weight: 600;
-            color: #555;
+            color: var(--color-text-main);
             margin-bottom: 5px;
         }
 
         input, select {
             width: 100%;
             padding: 10px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--color-border);
             border-radius: 8px;
             font-size: 14px;
             transition: border-color 0.3s;
@@ -1592,13 +1620,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
         input:focus, select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--color-accent);
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--color-accent);
             color: white;
             border: none;
             border-radius: 8px;
@@ -1638,7 +1666,7 @@ HTML_PAGE = """<!DOCTYPE html>
         .loading {
             text-align: center;
             padding: 50px;
-            color: #999;
+            color: var(--color-text-muted);
         }
 
         .spinner {
@@ -1657,7 +1685,7 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .price-display {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--color-accent);
             color: white;
             padding: 20px;
             border-radius: 12px;
@@ -1700,7 +1728,7 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .signal-card {
-            background: #f8f9ff;
+            background: var(--color-bg);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
@@ -1716,7 +1744,7 @@ HTML_PAGE = """<!DOCTYPE html>
         .signal-name {
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: var(--color-text-main);
         }
 
         .signal-badge {
@@ -1728,52 +1756,52 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .signal-badge.buy {
-            background: #10b981;
+            background: var(--color-buy);
             color: white;
         }
 
         .signal-badge.sell {
-            background: #ef4444;
+            background: var(--color-sell);
             color: white;
         }
 
         .signal-badge.bullish {
-            background: #34d399;
+            background: var(--color-buy);
             color: white;
         }
 
         .signal-badge.bearish {
-            background: #f87171;
+            background: var(--color-sell);
             color: white;
         }
 
         .signal-badge.neutral {
-            background: #9ca3af;
+            background: var(--color-wait);
             color: white;
         }
 
         .signal-badge.uptrend {
-            background: #10b981;
+            background: var(--color-buy);
             color: white;
         }
 
         .signal-badge.downtrend {
-            background: #ef4444;
+            background: var(--color-sell);
             color: white;
         }
 
         .signal-badge.strong {
-            background: #10b981;
+            background: var(--color-buy);
             color: white;
         }
 
         .signal-badge.normal {
-            background: #3b82f6;
+            background: var(--color-accent);
             color: white;
         }
 
         .signal-badge.weak {
-            background: #f59e0b;
+            background: var(--color-warning);
             color: white;
         }
 
@@ -1789,18 +1817,18 @@ HTML_PAGE = """<!DOCTYPE html>
 
         .detail-label {
             font-size: 11px;
-            color: #666;
+            color: var(--color-text-muted);
             margin-bottom: 5px;
         }
 
         .detail-value {
             font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: var(--color-text-main);
         }
 
         .action-card {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--color-buy);
             color: white;
             padding: 30px;
             border-radius: 12px;
@@ -1809,11 +1837,11 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .action-card.sell {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: var(--color-sell);
         }
 
         .action-card.wait {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            background: var(--color-wait);
         }
 
         .action-title {
@@ -1837,14 +1865,14 @@ HTML_PAGE = """<!DOCTYPE html>
 
         .strength-fill {
             height: 100%;
-            background: white;
+            background: var(--color-card);
             border-radius: 4px;
             transition: width 0.5s;
         }
 
         .sl-tp-card {
-            background: #fff7ed;
-            border: 2px solid #fb923c;
+            background: var(--color-bg);
+            border: 2px solid var(--color-warning);
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
@@ -1853,7 +1881,7 @@ HTML_PAGE = """<!DOCTYPE html>
         .sl-tp-title {
             font-size: 16px;
             font-weight: 600;
-            color: #ea580c;
+            color: var(--color-warning);
             margin-bottom: 15px;
             text-align: center;
         }
@@ -1865,7 +1893,7 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         .sl-tp-item {
-            background: white;
+            background: var(--color-card);
             padding: 15px;
             border-radius: 8px;
             text-align: center;
@@ -1873,26 +1901,26 @@ HTML_PAGE = """<!DOCTYPE html>
 
         .sl-tp-label {
             font-size: 12px;
-            color: #666;
+            color: var(--color-text-muted);
             margin-bottom: 8px;
         }
 
         .sl-tp-value {
             font-size: 24px;
             font-weight: bold;
-            color: #333;
+            color: var(--color-text-main);
         }
 
         .sl-tp-value.stop-loss {
-            color: #ef4444;
+            color: var(--color-sell);
         }
 
         .sl-tp-value.take-profit {
-            color: #10b981;
+            color: var(--color-buy);
         }
 
         .rr-ratio {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            background: var(--color-warning);
             color: white;
             padding: 10px;
             border-radius: 8px;
@@ -1903,13 +1931,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
         .timestamp {
             text-align: center;
-            color: #999;
+            color: var(--color-text-muted);
             font-size: 12px;
             margin-top: 20px;
         }
 
         .new-feature-badge {
-            background: #10b981;
+            background: var(--color-buy);
             color: white;
             font-size: 10px;
             padding: 2px 6px;
@@ -1932,17 +1960,17 @@ HTML_PAGE = """<!DOCTYPE html>
             border-radius: 20px;
             font-size: 12px;
             background: rgba(255,255,255,0.1);
-            color: #999;
+            color: var(--color-text-muted);
             transition: all 0.3s ease;
         }
         .progress-step.active {
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
+            background: rgba(159, 175, 161, 0.2);
+            color: var(--color-accent);
             font-weight: 600;
         }
         .progress-step.done {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
+            background: rgba(130, 168, 138, 0.2);
+            color: var(--color-buy);
         }
         .progress-step .step-dot {
             width: 8px;
@@ -1956,7 +1984,7 @@ HTML_PAGE = """<!DOCTYPE html>
             animation: pulse-dot 1s infinite;
         }
         .progress-step.done .step-dot {
-            background: #10b981;
+            background: var(--color-buy);
         }
         @keyframes pulse-dot {
             0%, 100% { transform: scale(1); opacity: 1; }
@@ -2012,13 +2040,13 @@ HTML_PAGE = """<!DOCTYPE html>
             margin-bottom: 15px;
         }
         .error-display .error-message {
-            color: #ef4444;
+            color: var(--color-sell);
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
         }
         .error-display .error-hint {
-            color: #999;
+            color: var(--color-text-muted);
             font-size: 13px;
             margin-bottom: 20px;
         }
@@ -2065,7 +2093,7 @@ HTML_PAGE = """<!DOCTYPE html>
             display: flex;
             align-items: center;
             gap: 4px;
-            color: #999;
+            color: var(--color-text-muted);
         }
         #chart-container .chart-legend .legend-dot {
             width: 8px;
@@ -2085,7 +2113,7 @@ HTML_PAGE = """<!DOCTYPE html>
         .chart-unavailable {
             text-align: center;
             padding: 30px;
-            color: #666;
+            color: var(--color-text-muted);
             font-size: 14px;
         }
 
@@ -2148,7 +2176,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         <option value="DOGEUSDT">DOGE/USDT</option>
                         <option value="MATICUSDT">MATIC/USDT</option>
                     </select>
-                    <button onclick="showAddSymbolDialog()" style="margin-top: 10px; width: 100%; padding: 8px; background: #10b981; font-size: 12px;">
+                    <button onclick="showAddSymbolDialog()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-size: 12px; font-weight: normal;">
                         ➕ 添加自定義商品
                     </button>
                 </div>
@@ -2165,13 +2193,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 <div class="panel-title" style="margin-top: 20px;">⚡ 快速預設</div>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
-                    <button onclick="loadPreset('scalping')" style="padding: 8px 5px; background: #ef4444; font-size: 11px; white-space: nowrap;">
+                    <button onclick="loadPreset('scalping')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; white-space: nowrap; font-weight: normal; box-shadow: none;">
                         🔥 超短線
                     </button>
-                    <button onclick="loadPreset('daytrading')" style="padding: 8px 5px; background: #3b82f6; font-size: 11px;">
+                    <button onclick="loadPreset('daytrading')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
                         📊 短線
                     </button>
-                    <button onclick="loadPreset('conservative')" style="padding: 8px 5px; background: #10b981; font-size: 11px;">
+                    <button onclick="loadPreset('conservative')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
                         🛡️ 穩健
                     </button>
                 </div>
@@ -2231,11 +2259,11 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 <div class="panel-title" style="margin-top: 25px;">🔧 進階功能</div>
 
-                <button onclick="showSnapshotManager()" style="margin-top: 10px; background: #8b5cf6;">
+                <button onclick="showSnapshotManager()" style="margin-top: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                     📸 快照管理
                 </button>
 
-                <button onclick="showAlertManager()" style="margin-top: 10px; background: #f59e0b;">
+                <button onclick="showAlertManager()" style="margin-top: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                     🔔 警報設定
                 </button>
             </div>
@@ -2484,10 +2512,10 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 <!-- 📸 快照管理按鈕 -->
                 <div style="margin: 20px 0; text-align: center; padding: 15px; background: #f0f4ff; border-radius: 12px;">
-                    <button onclick="saveSnapshot()" style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); margin-right: 10px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">
+                    <button onclick="saveSnapshot()" style="width: auto; padding: 12px 30px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); margin-right: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: none;">
                         📸 保存當前策略快照
                     </button>
-                    <button onclick="showSnapshots()" style="width: auto; padding: 12px 30px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">
+                    <button onclick="showSnapshots()" style="width: auto; padding: 12px 30px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: none;">
                         📋 查看歷史快照
                     </button>
                 </div>
@@ -2951,7 +2979,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 modal.innerHTML = `
                     <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; width: 90%;">
                         ${html}
-                        <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 15px; background: #667eea;">關閉</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 15px; background: var(--color-accent);">關閉</button>
                     </div>
                 `;
                 document.body.appendChild(modal);
@@ -3019,13 +3047,13 @@ HTML_PAGE = """<!DOCTYPE html>
                     <h2 style="margin-bottom: 20px;">📸 快照管理器</h2>
 
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                        <button onclick="exportSnapshots()" style="padding: 10px; background: #10b981;">
+                        <button onclick="exportSnapshots()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                             📥 匯出 CSV
                         </button>
-                        <button onclick="showSearchDialog()" style="padding: 10px; background: #3b82f6;">
+                        <button onclick="showSearchDialog()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                             🔍 搜尋篩選
                         </button>
-                        <button onclick="loadSnapshotsInModal()" style="padding: 10px; background: #8b5cf6;">
+                        <button onclick="loadSnapshotsInModal()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                             🔄 重新載入
                         </button>
                     </div>
@@ -3034,7 +3062,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         <p style="text-align: center; color: #666;">載入中...</p>
                     </div>
 
-                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: #667eea;">關閉</button>
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">關閉</button>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -3062,7 +3090,7 @@ HTML_PAGE = """<!DOCTYPE html>
                                     <strong>${snapshot.symbol}</strong> - ${snapshot.action}
                                     <span style="margin-left: 10px;">⭐ ${snapshot.quality_score}</span>
                                 </div>
-                                <button onclick="deleteSnapshot(${snapshot.id})" style="padding: 5px 10px; background: #ef4444; font-size: 12px;">
+                                <button onclick="deleteSnapshot(${snapshot.id})" style="padding: 5px 10px; background: var(--color-sell); font-size: 12px;">
                                     🗑️ 刪除
                                 </button>
                             </div>
@@ -3158,7 +3186,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div style="background: white; padding: 30px; border-radius: 20px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
                     <h2 style="margin-bottom: 20px;">🔔 警報設定</h2>
 
-                    <button onclick="showAddAlertDialog()" style="width: 100%; margin-bottom: 20px; background: #10b981;">
+                    <button onclick="showAddAlertDialog()" style="width: 100%; margin-bottom: 20px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
                         ➕ 新增警報
                     </button>
 
@@ -3166,7 +3194,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         <p style="text-align: center; color: #666;">載入中...</p>
                     </div>
 
-                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: #667eea;">關閉</button>
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">關閉</button>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -3191,17 +3219,17 @@ HTML_PAGE = """<!DOCTYPE html>
                     const status = alert.enabled ? '✅ 啟用' : '❌ 停用';
 
                     html += `
-                        <div style="border: 2px solid ${alert.enabled ? '#10b981' : '#6b7280'}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="border: 2px solid ${alert.enabled ? 'var(--color-buy)' : '#6b7280'}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <strong>${typeText}</strong> ${condText} ${alert.value}
                                     ${alert.symbol ? '(' + alert.symbol + ')' : '(所有商品)'}
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button onclick="toggleAlert(${alert.id}, ${!alert.enabled})" style="padding: 5px 10px; background: ${alert.enabled ? '#f59e0b' : '#10b981'}; font-size: 12px;">
+                                    <button onclick="toggleAlert(${alert.id}, ${!alert.enabled})" style="padding: 5px 10px; background: ${alert.enabled ? 'var(--color-warning)' : 'var(--color-buy)'}; font-size: 12px;">
                                         ${alert.enabled ? '暫停' : '啟用'}
                                     </button>
-                                    <button onclick="deleteAlert(${alert.id})" style="padding: 5px 10px; background: #ef4444; font-size: 12px;">
+                                    <button onclick="deleteAlert(${alert.id})" style="padding: 5px 10px; background: var(--color-sell); font-size: 12px;">
                                         刪除
                                     </button>
                                 </div>
