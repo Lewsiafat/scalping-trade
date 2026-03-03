@@ -2648,7 +2648,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
             // 🔔 瀏覽器通知 - 高品質信號時觸發
             if (signals.quality_score >= 4 && (signals.action.includes('強烈買入') || signals.action.includes('強烈賣出'))) {
-                sendNotification(`🚨 ${data.symbol} 高品質信號！`, `${signals.action} | 品質: ${signals.quality_score}/5 ⭐`);
+                sendNotification(`🚨 ${data.symbol} 高品質信號！`, `${signals.action} | 品質: ${signals.quality_score}/5 ⭐`, `quality_${data.symbol}`);
             }
 
             const html = `
@@ -2840,7 +2840,7 @@ HTML_PAGE = """<!DOCTYPE html>
             // 檢查並顯示觸發的警報
             if (data.triggered_alerts && data.triggered_alerts.length > 0) {
                 data.triggered_alerts.forEach(a => {
-                    sendNotification('🔔 警報觸發', a.message);
+                    sendNotification('🔔 警報觸發', a.message, `alert_${a.id}`);
                 });
             }
         }
@@ -3004,8 +3004,24 @@ HTML_PAGE = """<!DOCTYPE html>
             }
         }
 
+        // 🔔 瀏覽器通知冷卻機制
+        const notificationCooldowns = {};
+        const NOTIFICATION_COOLDOWN_MS = 60 * 1000; // 1 分鐘的冷卻時間
+
         // 🔔 瀏覽器通知功能
-        function sendNotification(title, body) {
+        function sendNotification(title, body, customKey = null) {
+            const key = customKey || (title + "|" + body);
+            const now = Date.now();
+
+            // 檢查冷卻時間
+            if (notificationCooldowns[key] && (now - notificationCooldowns[key] < NOTIFICATION_COOLDOWN_MS)) {
+                console.log(`[通知冷卻中] 略過發送: ${title}, key: ${key}`);
+                return;
+            }
+
+            // 更新最後發送時間
+            notificationCooldowns[key] = now;
+
             // 請求通知權限
             if (!("Notification" in window)) {
                 console.log("此瀏覽器不支援通知");
@@ -3016,8 +3032,6 @@ HTML_PAGE = """<!DOCTYPE html>
                 // 已授權，發送通知
                 new Notification(title, {
                     body: body,
-                    icon: "📈",
-                    badge: "⭐",
                     vibrate: [200, 100, 200],
                     requireInteraction: true
                 });
@@ -3026,9 +3040,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 Notification.requestPermission().then(function (permission) {
                     if (permission === "granted") {
                         new Notification(title, {
-                            body: body,
-                            icon: "📈",
-                            badge: "⭐"
+                            body: body
                         });
                     }
                 });
