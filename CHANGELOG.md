@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [3.4.1] - 2026-03-03
+
+### Added
+- Feature: Added a cooldown mechanism to browser notifications to prevent spamming.
+
+### Changed
+- UX: Replaced native `prompt()` dialogs with custom HTML Modals for adding Custom Symbols and configuring Alerts, improving user experience and input validation.
+
 ## [3.4.0] - 2026-03-03
 
 ### Added

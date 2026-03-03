@@ -342,7 +342,11 @@ Issues and improvement suggestions are welcome!
 
 ## 📝 Version History
 
-### V3.4 (2026-03-03) ✨ Latest
+### V3.4.1 (2026-03-03) ✨ Latest
+- 💬 **Enhanced UI Dialogs**: Replaced native browser `prompt()` dialogs with customized HTML Modals for Custom Symbols and Alerts.
+- 🔔 **Notification Cooldown**: Added a cooldown mechanism to browser desktop notifications.
+
+### V3.4 (2026-03-03)
 - 🎨 **Custom UI Themes**: Implemented dynamic CSS variable management with a new "Soft Minimalist" aesthetic theme.
 - ↔️ **Interactive Layouts**: The main settings sidebar can now be collapsed horizontally, and detailed analysis sections can be folded vertically. UI structural states are saved into `localStorage`.
 
@@ -489,4 +493,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*Last updated: 2026-03-03 | Version: v3.4.0*
+*Last updated: 2026-03-03 | Version: v3.4.1*
