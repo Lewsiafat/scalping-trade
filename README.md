@@ -342,7 +342,7 @@ Issues and improvement suggestions are welcome!
 
 ## 📝 Version History
 
-### V3.4.1 (2026-03-03) ✨ Latest
+### V3.4.2 (2026-03-04) ✨ Latest
 - 💬 **Enhanced UI Dialogs**: Replaced native browser `prompt()` dialogs with customized HTML Modals for Custom Symbols and Alerts.
 - 🔔 **Notification Cooldown**: Added a cooldown mechanism to browser desktop notifications.
 
@@ -493,4 +493,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*Last updated: 2026-03-03 | Version: v3.4.1*
+*Last updated: 2026-03-04 | Version: v3.4.2*
