@@ -60,52 +60,49 @@ def parse_prefix():
 
 PREFIX = parse_prefix()
 BINANCE_API = "https://api.binance.com/api/v3"
+BINANCE_FAPI = "https://fapi.binance.com/fapi/v1"
 
 
-def fetch_with_retry(url, ctx=None, max_retries=3, base_timeout=10):
-    """帶重試機制的 HTTP 請求（指數退避）"""
+def fetch_with_retry(url, ctx=None, max_retries=3, base_timeout=10, is_kline_req=False):
+    """帶重試機制的 HTTP 請求（指數退避）。如果是 K 線請求且現貨失敗，則嘗試合約 API。"""
     if ctx is None:
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
 
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, context=ctx, timeout=base_timeout) as response:
-                return json.loads(response.read().decode())
-        except urllib.error.HTTPError as e:
-            last_error = e
-            # 400 無效交易對，不重試
-            if e.code == 400:
+    def _do_fetch(req_url):
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                req = urllib.request.Request(req_url)
+                with urllib.request.urlopen(req, context=ctx, timeout=base_timeout) as response:
+                    return json.loads(response.read().decode())
+            except urllib.error.HTTPError as e:
+                last_error = e
+                if e.code == 400:
+                    raise  # 400 不重試同一 URL
+                if e.code == 429:
+                    time.sleep(2 ** attempt * 2)
+                    continue
+                if e.code >= 500:
+                    time.sleep(2 ** attempt * 0.5)
+                    continue
                 raise
-            # 429 限速，延長等待
-            if e.code == 429:
-                time.sleep(2 ** attempt * 2)
-                continue
-            # 5xx 伺服器錯誤，重試
-            if e.code >= 500:
-                time.sleep(2 ** attempt * 0.5)
-                continue
-            raise
-        except urllib.error.URLError as e:
-            last_error = e
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt * 0.5)
-                continue
-        except TimeoutError:
-            last_error = TimeoutError("連線逾時")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt * 0.5)
-                continue
-        except Exception as e:
-            last_error = e
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt * 0.5)
-                continue
+            except (urllib.error.URLError, TimeoutError, Exception) as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt * 0.5)
+                    continue
+        raise last_error
 
-    raise last_error
+    try:
+        return _do_fetch(url)
+    except urllib.error.HTTPError as e:
+        if e.code == 400 and is_kline_req and url.startswith(BINANCE_API):
+            # 現貨失敗，嘗試轉換 URL 為合約
+            fapi_url = url.replace(BINANCE_API, BINANCE_FAPI)
+            return _do_fetch(fapi_url)
+        raise
 
 
 def classify_error(e):
@@ -538,11 +535,49 @@ class SymbolManager:
     def add_symbol(symbol, name):
         """添加自定義商品"""
         try:
+            symbol = symbol.strip().upper()
+            
+            # 準備驗證函數
+            def validate_symbol(sym):
+                spot_url = f"{BINANCE_API}/ticker/price?symbol={sym}"
+                fapi_url = f"{BINANCE_FAPI}/ticker/price?symbol={sym}"
+                
+                def _check_url(u):
+                    try:
+                        ctx = ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode = ssl.CERT_NONE
+                        req = urllib.request.Request(u)
+                        with urllib.request.urlopen(req, context=ctx, timeout=5) as response:
+                            return True
+                    except urllib.error.HTTPError as e:
+                        if e.code == 400:
+                            return False
+                        raise
+                    except Exception:
+                        return False
+
+                # 只要現貨或合約其一是有效的代碼，就視為正確
+                return _check_url(spot_url) or _check_url(fapi_url)
+                    
+            # 驗證代碼
+            is_valid = validate_symbol(symbol)
+            
+            # 若無效且未包含 USDT，嘗試補上 USDT
+            if not is_valid and 'USDT' not in symbol:
+                test_symbol = symbol + 'USDT'
+                if validate_symbol(test_symbol):
+                    symbol = test_symbol
+                    is_valid = True
+                    
+            if not is_valid:
+                return {'success': False, 'error': f'無效的交易對代碼 (找不到 {symbol})，請確認 Binance 是否支援'}
+
             symbols = SymbolManager.get_symbols()
 
             # 檢查是否已存在
             if any(s['symbol'] == symbol for s in symbols):
-                return {'success': False, 'error': 'Symbol already exists'}
+                return {'success': False, 'error': f'商品 {symbol} 已經存在'}
 
             symbols.append({
                 'symbol': symbol,
@@ -836,7 +871,7 @@ class ScalpingAnalyzerPro:
 
             # 獲取更大時間框架數據（使用帶重試的請求）
             url = f"{BINANCE_API}/klines?symbol={symbol}&interval={higher_tf}&limit=50"
-            data = fetch_with_retry(url)
+            data = fetch_with_retry(url, is_kline_req=True)
 
             closes = [float(k[4]) for k in data]
 
@@ -1116,6 +1151,8 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_api_snapshots()
         elif self.path.startswith(p + '/api/symbols'):
             self.handle_api_symbols()
+        elif self.path.startswith(p + '/api/supported_symbols'):
+            self.handle_api_supported_symbols()
         elif self.path.startswith(p + '/api/alerts'):
             self.handle_api_alerts()
         elif self.path.startswith(p + '/api/presets'):
@@ -1166,7 +1203,7 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
 
             # 獲取 K 線數據（使用帶重試的請求）
             url = f"{BINANCE_API}/klines?symbol={symbol}&interval={interval}&limit=100"
-            data = fetch_with_retry(url)
+            data = fetch_with_retry(url, is_kline_req=True)
 
             # 分析參數
             analysis_params = {
@@ -1285,6 +1322,24 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(json.dumps({'success': True, 'symbols': symbols}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, str(e))
+
+    def handle_api_supported_symbols(self):
+        """獲取所有支援的 Binance USDT 商品"""
+        try:
+            file_path = 'supported_symbols.json'
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    symbols = json.load(f)
+            else:
+                symbols = []
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': True, 'supported_symbols': symbols}, ensure_ascii=False).encode('utf-8'))
         except Exception as e:
             self.send_error(500, str(e))
 
@@ -2432,8 +2487,9 @@ HTML_PAGE = """<!DOCTYPE html>
                 
                 <div class="form-group">
                     <label>交易對代碼 (Symbol)</label>
-                    <input type="text" id="new_symbol_code" placeholder="例如: DOGEUSDT, WIFUSDT" style="text-transform: uppercase;">
-                    <div style="font-size: 11px; color: #666; margin-top: 5px;">請輸入 Binance 支援的精確代碼。</div>
+                    <input type="text" id="new_symbol_code" list="supported-symbols-list" placeholder="例如: BTCUSDT, DOGE (自動補 USDT)" style="text-transform: uppercase;">
+                    <datalist id="supported-symbols-list"></datalist>
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;">建議輸入完整代碼，可透過下拉選單搜尋挑選。若未包含 USDT 將嘗試自動補齊。</div>
                 </div>
 
                 <div class="form-group">
@@ -3624,8 +3680,27 @@ HTML_PAGE = """<!DOCTYPE html>
             }
         }
 
-        function showAddSymbolDialog() {
+        let supportedSymbolsLoaded = false;
+        async function showAddSymbolDialog() {
             document.getElementById('add-symbol-modal').style.display = 'flex';
+            if (!supportedSymbolsLoaded) {
+                try {
+                    const response = await fetch(APP_PREFIX + '/api/supported_symbols');
+                    const result = await response.json();
+                    if (result.success && result.supported_symbols) {
+                        const datalist = document.getElementById('supported-symbols-list');
+                        datalist.innerHTML = '';
+                        result.supported_symbols.forEach(symbol => {
+                            const option = document.createElement('option');
+                            option.value = symbol;
+                            datalist.appendChild(option);
+                        });
+                        supportedSymbolsLoaded = true;
+                    }
+                } catch (e) {
+                    console.error('Failed to load supported symbols', e);
+                }
+            }
         }
 
         function submitNewSymbol() {
