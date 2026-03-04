@@ -5,7 +5,7 @@
     "symbol": "",
     "condition": "above",
     "value": "4",
-    "enabled": true,
+    "enabled": false,
     "created_at": "2026-03-01T21:17:32.558854",
     "triggered_count": 51,
     "last_triggered": "2026-03-03T17:39:00.658966"
@@ -20,5 +20,16 @@
     "created_at": "2026-03-01T21:17:58.090959",
     "triggered_count": 161,
     "last_triggered": "2026-03-03T16:12:10.664127"
+  },
+  {
+    "id": 3,
+    "type": "quality",
+    "symbol": "",
+    "condition": "above",
+    "value": "5",
+    "enabled": true,
+    "created_at": "2026-03-03T17:43:46.396079",
+    "triggered_count": 2,
+    "last_triggered": "2026-03-04T15:29:45.023210"
   }
 ]

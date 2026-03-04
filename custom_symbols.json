@@ -1,27 +1,32 @@
 [
   {
     "symbol": "SOLUSDT",
-    "name": "Solana",
-    "added_at": "2026-03-03T16:32:02.262756"
+    "name": "SOL",
+    "added_at": "2026-03-04T14:19:14.053970"
   },
   {
-    "symbol": "SHIBUSDT",
-    "name": "SHIB",
-    "added_at": "2026-03-03T17:05:14.811067"
+    "symbol": "XRPUSDT",
+    "name": "Ripple",
+    "added_at": "2026-03-04T14:19:14.183032"
   },
   {
-    "symbol": "WIFIUSDT",
-    "name": "WIFI",
-    "added_at": "2026-03-03T17:16:54.181949"
+    "symbol": "ADAUSDT",
+    "name": "Cardano",
+    "added_at": "2026-03-04T14:19:14.613325"
   },
   {
     "symbol": "XAUUSDT",
-    "name": "黃金",
-    "added_at": "2026-03-03T17:19:07.598975"
+    "name": "Gold",
+    "added_at": "2026-03-04T15:25:31.955835"
   },
   {
-    "symbol": "BCHUSDT",
-    "name": "BCH",
-    "added_at": "2026-03-03T17:20:54.834099"
+    "symbol": "1000PEPEUSDT",
+    "name": "Pepe",
+    "added_at": "2026-03-04T15:25:32.243312"
+  },
+  {
+    "symbol": "XAGUSDT",
+    "name": "AG",
+    "added_at": "2026-03-04T15:31:25.242935"
   }
 ]
