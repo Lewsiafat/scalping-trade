@@ -1531,11 +1531,11 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
 
 
 HTML_PAGE = """<!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>剝頭皮交易分析器 Pro V3 | Scalping Analyzer Pro</title>
+    <title>Scalping Analyzer Pro V3 | 剝頭皮交易分析器</title>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
 
@@ -2273,40 +2273,46 @@ HTML_PAGE = """<!DOCTYPE html>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📊 剝頭皮交易分析器 Pro<span class="version-badge">V3.2</span></h1>
-            <p class="subtitle">Professional Scalping Trading System - 專業級實時交易信號分析</p>
-            <div class="feature-tags">
-                <span class="feature-tag">📈 即時圖表</span>
-                <span class="feature-tag">✨ 成交量分析</span>
-                <span class="feature-tag">📈 多時間框架確認</span>
-                <span class="feature-tag">🎯 動態止損止盈</span>
-                <span class="feature-tag">⭐ 信號品質評分</span>
-                <span class="feature-tag">🔔 瀏覽器通知</span>
-                <span class="feature-tag">📊 Bollinger Bands</span>
-                <span class="feature-tag">📉 Stochastic</span>
-                <span class="feature-tag">📐 Fibonacci</span>
-                <span class="feature-tag">📸 策略快照</span>
-                <span class="feature-tag">➕ 自定義商品</span>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+            <div style="flex: 1;">
+                <h1>📊 Scalping Analyzer Pro<span class="version-badge">V3.2</span></h1>
+                <p class="subtitle" data-i18n="subtitle">Professional Scalping Trading System - Real-time Signal Analysis</p>
+                <div class="feature-tags">
+                    <span class="feature-tag" data-i18n="tag_chart">📈 Live Chart</span>
+                    <span class="feature-tag" data-i18n="tag_volume">✨ Volume Analysis</span>
+                    <span class="feature-tag" data-i18n="tag_mtf">📈 Multi-Timeframe</span>
+                    <span class="feature-tag" data-i18n="tag_sltp">🎯 Dynamic SL/TP</span>
+                    <span class="feature-tag" data-i18n="tag_quality">⭐ Signal Quality</span>
+                    <span class="feature-tag" data-i18n="tag_notify">🔔 Browser Alerts</span>
+                    <span class="feature-tag">📊 Bollinger Bands</span>
+                    <span class="feature-tag">📉 Stochastic</span>
+                    <span class="feature-tag">📐 Fibonacci</span>
+                    <span class="feature-tag" data-i18n="tag_snapshot">📸 Snapshots</span>
+                    <span class="feature-tag" data-i18n="tag_custom">➕ Custom Symbols</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <button id="lang-en-btn" onclick="switchLang('en')" style="padding: 5px 12px; font-size: 12px; background: var(--color-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; width: auto;">EN</button>
+                <button id="lang-zh-btn" onclick="switchLang('zh_TW')" style="padding: 5px 12px; font-size: 12px; background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: 6px; cursor: pointer; font-weight: 600; width: auto;">中文</button>
             </div>
         </div>
 
         <div style="text-align: left;">
             <button class="sidebar-toggle-btn" onclick="toggleMainSidebar()">
-                <span id="sidebar-toggle-icon">◀</span> 交易設定
+                <span id="sidebar-toggle-icon">◀</span> <span data-i18n="settings_title">Settings</span>
             </button>
         </div>
 
         <div class="main-grid" id="main-grid">
             <div class="panel sidebar">
                 <div class="panel-title collapsible-header" onclick="toggleCollapse('settings-content', this)">
-                    <span>⚙️ 交易設定</span>
+                    <span>⚙️ <span data-i18n="settings_title">Settings</span></span>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div id="settings-content" class="collapsible-content">
 
                 <div class="form-group">
-                    <label>交易對 Symbol</label>
+                    <label data-i18n="label_symbol">Trading Pair Symbol</label>
                     <select id="symbol">
                         <option value="BTCUSDT">BTC/USDT</option>
                         <option value="ETHUSDT">ETH/USDT</option>
@@ -2318,109 +2324,109 @@ HTML_PAGE = """<!DOCTYPE html>
                         <option value="MATICUSDT">MATIC/USDT</option>
                     </select>
                     <button onclick="showAddSymbolDialog()" style="margin-top: 10px; width: 100%; padding: 8px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-size: 12px; font-weight: normal;">
-                        ➕ 添加自定義商品
+                        ➕ <span data-i18n="btn_add_symbol">Add Custom Symbol</span>
                     </button>
                 </div>
 
                 <div class="form-group">
-                    <label>時間框架 Interval</label>
+                    <label data-i18n="label_interval">Interval</label>
                     <select id="interval">
-                        <option value="1m">1 分鐘</option>
-                        <option value="3m">3 分鐘</option>
-                        <option value="5m" selected>5 分鐘</option>
-                        <option value="15m">15 分鐘</option>
+                        <option value="1m" data-i18n="interval_1m">1 min</option>
+                        <option value="3m" data-i18n="interval_3m">3 min</option>
+                        <option value="5m" selected data-i18n="interval_5m">5 min</option>
+                        <option value="15m" data-i18n="interval_15m">15 min</option>
                     </select>
                 </div>
 
-                <div class="panel-title" style="margin-top: 20px;">⚡ 快速預設</div>
+                <div class="panel-title" style="margin-top: 20px;">⚡ <span data-i18n="presets_title">Quick Presets</span></div>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
                     <button onclick="loadPreset('scalping')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; white-space: nowrap; font-weight: normal; box-shadow: none;">
-                        🔥 超短線
+                        🔥 <span data-i18n="preset_scalping">Scalping</span>
                     </button>
                     <button onclick="loadPreset('daytrading')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
-                        📊 短線
+                        📊 <span data-i18n="preset_daytrading">Swing</span>
                     </button>
                     <button onclick="loadPreset('conservative')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
-                        🛡️ 穩健
+                        🛡️ <span data-i18n="preset_conservative">Stable</span>
                     </button>
                 </div>
 
-                <div class="panel-title" style="margin-top: 30px;">📈 RSI 設定</div>
+                <div class="panel-title" style="margin-top: 30px;">📈 <span data-i18n="rsi_title">RSI Settings</span></div>
 
                 <div class="form-group">
-                    <label>RSI 週期</label>
+                    <label data-i18n="label_rsi_period">RSI Period</label>
                     <input type="number" id="rsi_period" value="14" min="5" max="30">
                 </div>
 
                 <div class="form-group">
-                    <label>超買線</label>
+                    <label data-i18n="label_rsi_overbought">Overbought</label>
                     <input type="number" id="rsi_overbought" value="70" min="60" max="90">
                 </div>
 
                 <div class="form-group">
-                    <label>超賣線</label>
+                    <label data-i18n="label_rsi_oversold">Oversold</label>
                     <input type="number" id="rsi_oversold" value="30" min="10" max="40">
                 </div>
 
-                <div class="panel-title" style="margin-top: 30px;">📉 EMA 設定</div>
+                <div class="panel-title" style="margin-top: 30px;">📉 <span data-i18n="ema_title">EMA Settings</span></div>
 
                 <div class="form-group">
-                    <label>快速 EMA</label>
+                    <label data-i18n="label_ema_fast">Fast EMA</label>
                     <input type="number" id="ema_fast" value="5" min="3" max="20">
                 </div>
 
                 <div class="form-group">
-                    <label>慢速 EMA</label>
+                    <label data-i18n="label_ema_slow">Slow EMA</label>
                     <input type="number" id="ema_slow" value="20" min="10" max="50">
                 </div>
 
-                <div class="panel-title" style="margin-top: 30px;">📊 MACD 設定</div>
+                <div class="panel-title" style="margin-top: 30px;">📊 <span data-i18n="macd_title">MACD Settings</span></div>
 
                 <div class="form-group">
-                    <label>MACD 快線</label>
+                    <label data-i18n="label_macd_fast">MACD Fast</label>
                     <input type="number" id="macd_fast" value="5" min="3" max="20">
                 </div>
 
                 <div class="form-group">
-                    <label>MACD 慢線</label>
+                    <label data-i18n="label_macd_slow">MACD Slow</label>
                     <input type="number" id="macd_slow" value="20" min="15" max="40">
                 </div>
 
                 <div class="form-group">
-                    <label>MACD 信號線</label>
+                    <label data-i18n="label_macd_signal">MACD Signal</label>
                     <input type="number" id="macd_signal" value="5" min="3" max="15">
                 </div>
 
-                <button onclick="analyze()" style="margin-top: 20px;">🔍 分析入場信號</button>
+                <button onclick="analyze()" style="margin-top: 20px;">🔍 <span data-i18n="btn_analyze">Analyze Signal</span></button>
 
                 <div class="auto-refresh">
                     <input type="checkbox" id="auto_refresh" onchange="toggleAutoRefresh()">
-                    <label for="auto_refresh">自動刷新 (10秒)</label>
+                    <label for="auto_refresh" data-i18n="auto_refresh">Auto-refresh (10s)</label>
                 </div>
 
-                <div class="panel-title" style="margin-top: 25px;">🔧 進階功能</div>
+                <div class="panel-title" style="margin-top: 25px;">🔧 <span data-i18n="advanced_title">Advanced</span></div>
 
                 <button onclick="showSnapshotManager()" style="margin-top: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                    📸 快照管理
+                    📸 <span data-i18n="btn_snapshot">Snapshot Manager</span>
                 </button>
 
                 <button onclick="showAlertManager()" style="margin-top: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                    🔔 警報設定
+                    🔔 <span data-i18n="btn_alerts">Alert Settings</span>
                 </button>
                 </div>
             </div>
 
             <div class="panel result-panel">
-                <div class="panel-title">📊 分析結果</div>
+                <div class="panel-title">📊 <span data-i18n="results_title">Analysis Results</span></div>
                 <div id="chart-container">
                     <div class="chart-header collapsible-header" onclick="toggleCollapse('chart-content', this)">
-                        <div class="chart-title">K 線圖表</div>
+                        <div class="chart-title" data-i18n="chart_title">Candlestick Chart</div>
                         <div class="chart-legend" style="pointer-events: none; flex-grow: 1; justify-content: flex-end; margin-right: 15px;">
                             <span><span class="legend-dot" style="background:#f0b90b"></span>EMA Fast</span>
                             <span><span class="legend-dot" style="background:#2962ff"></span>EMA Slow</span>
-                            <span><span class="legend-dot" style="background:#ab47bc"></span>布林通道</span>
-                            <span><span class="legend-dot" style="background:#ef4444"></span>止損</span>
-                            <span><span class="legend-dot" style="background:#10b981"></span>止盈</span>
+                            <span><span class="legend-dot" style="background:#ab47bc"></span><span data-i18n="legend_bb">Bollinger</span></span>
+                            <span><span class="legend-dot" style="background:#ef4444"></span><span data-i18n="legend_sl">Stop Loss</span></span>
+                            <span><span class="legend-dot" style="background:#10b981"></span><span data-i18n="legend_tp">Take Profit</span></span>
                         </div>
                         <span class="toggle-icon">▼</span>
                     </div>
@@ -2432,75 +2438,75 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div id="results">
                     <div class="loading">
                         <div style="font-size: 48px; margin-bottom: 20px;">📈</div>
-                        <p>請點擊「分析入場信號」開始分析</p>
-                        <p style="margin-top: 10px; color: #10b981; font-weight: 600;">✨ V3.2：即時圖表 + 智能錯誤處理 + 進度指示器</p>
+                        <p data-i18n="hint_start">Click "Analyze Signal" to start analysis</p>
+                        <p style="margin-top: 10px; color: #10b981; font-weight: 600;">✨ V3.2: Live Chart + Smart Error Handling + Progress Indicator</p>
                     </div>
                 </div>
             </div>
             </div>
         </div>
 
-        <!-- 新增警報 Modal -->
+        <!-- Add Alert Modal -->
         <div id="add-alert-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center; padding: 20px;">
             <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 100%;">
-                <h3 style="margin-bottom: 20px;">➕ 新增警報設定</h3>
+                <h3 style="margin-bottom: 20px;">➕ <span data-i18n="modal_alert_title">Add Alert</span></h3>
                 
                 <div class="form-group">
-                    <label>警報類型</label>
+                    <label data-i18n="label_alert_type">Alert Type</label>
                     <select id="new_alert_type" onchange="updateAlertConditionOptions()">
-                        <option value="price">💰 價格警報 (例如: BTC大於 70000)</option>
-                        <option value="quality">⭐ 品質評分警報 (例如: 綜合星等大於 4)</option>
-                        <option value="signal">📊 信號警報 (例如: 出現強烈買入)</option>
+                        <option value="price" data-i18n="alert_type_price">💰 Price Alert (e.g. BTC above 70000)</option>
+                        <option value="quality" data-i18n="alert_type_quality">⭐ Quality Alert (e.g. Score above 4)</option>
+                        <option value="signal" data-i18n="alert_type_signal">📊 Signal Alert (e.g. Strong Buy appears)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>指定交易對 (留空則套用所有商品)</label>
-                    <input type="text" id="new_alert_symbol" placeholder="例如: BTCUSDT" style="text-transform: uppercase;">
+                    <label data-i18n="label_alert_symbol">Symbol (leave empty for all)</label>
+                    <input type="text" id="new_alert_symbol" placeholder="e.g. BTCUSDT" style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group">
-                    <label>觸發條件</label>
+                    <label data-i18n="label_alert_condition">Condition</label>
                     <select id="new_alert_condition">
-                        <option value="above">大於 / 高於 (Above)</option>
-                        <option value="below">小於 / 低於 (Below)</option>
+                        <option value="above" data-i18n="condition_above">Above / Greater than</option>
+                        <option value="below" data-i18n="condition_below">Below / Less than</option>
                     </select>
                 </div>
 
                 <div class="form-group" id="new_alert_value_group">
-                    <label id="new_alert_value_label">目標數值</label>
-                    <input type="text" id="new_alert_value" placeholder="輸入觸發數值...">
+                    <label id="new_alert_value_label" data-i18n="label_alert_value">Target Value</label>
+                    <input type="text" id="new_alert_value" placeholder="Enter trigger value...">
                     <div id="new_alert_value_hint" style="font-size: 11px; color: #666; margin-top: 5px;"></div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button onclick="submitNewAlert()" style="background: var(--color-buy); flex: 1;">📝 儲存警報</button>
-                    <button onclick="document.getElementById('add-alert-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;">取消</button>
+                    <button onclick="submitNewAlert()" style="background: var(--color-buy); flex: 1;">📝 <span data-i18n="btn_save_alert">Save Alert</span></button>
+                    <button onclick="document.getElementById('add-alert-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;" data-i18n="btn_cancel">Cancel</button>
                 </div>
             </div>
         </div>
 
-        <!-- 添加自定義商品 Modal -->
+        <!-- Add Custom Symbol Modal -->
         <div id="add-symbol-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center; padding: 20px;">
             <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 100%;">
-                <h3 style="margin-bottom: 20px;">➕ 添加自定義商品</h3>
+                <h3 style="margin-bottom: 20px;">➕ <span data-i18n="modal_symbol_title">Add Custom Symbol</span></h3>
                 
                 <div class="form-group">
-                    <label>交易對代碼 (Symbol)</label>
-                    <input type="text" id="new_symbol_code" list="supported-symbols-list" placeholder="例如: BTCUSDT, DOGE (自動補 USDT)" style="text-transform: uppercase;">
+                    <label data-i18n="label_symbol_code">Symbol Code</label>
+                    <input type="text" id="new_symbol_code" list="supported-symbols-list" placeholder="e.g. BTCUSDT, DOGE (auto-appends USDT)" style="text-transform: uppercase;">
                     <datalist id="supported-symbols-list"></datalist>
-                    <div style="font-size: 11px; color: #666; margin-top: 5px;">建議輸入完整代碼，可透過下拉選單搜尋挑選。若未包含 USDT 將嘗試自動補齊。</div>
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;" data-i18n="hint_symbol_code">Enter full code or search via dropdown. USDT will be appended if missing.</div>
                 </div>
 
                 <div class="form-group">
-                    <label>顯示名稱 (Display Name)</label>
-                    <input type="text" id="new_symbol_name" placeholder="例如: DOGE/USDT, 狗狗幣">
-                    <div style="font-size: 11px; color: #666; margin-top: 5px;">在選單中顯示的可讀名稱。</div>
+                    <label data-i18n="label_symbol_name">Display Name</label>
+                    <input type="text" id="new_symbol_name" placeholder="e.g. DOGE/USDT">
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;" data-i18n="hint_symbol_name">Human-readable name shown in the selector.</div>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button onclick="submitNewSymbol()" style="background: var(--color-buy); flex: 1;">✅ 確認添加</button>
-                    <button onclick="document.getElementById('add-symbol-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;">取消</button>
+                    <button onclick="submitNewSymbol()" style="background: var(--color-buy); flex: 1;">✅ <span data-i18n="btn_confirm_add">Confirm Add</span></button>
+                    <button onclick="document.getElementById('add-symbol-modal').style.display='none'" style="background: var(--color-bg); color: var(--color-text-main); border: 1px solid var(--color-border); flex: 1;" data-i18n="btn_cancel">Cancel</button>
                 </div>
             </div>
         </div>
@@ -2512,6 +2518,458 @@ HTML_PAGE = """<!DOCTYPE html>
         let candlestickChart = null;
         let volumeChart = null;
         let lastVisibleRange = null;
+
+        // ===== i18n System =====
+        const LANG = {
+            en: {
+                subtitle: 'Professional Scalping Trading System - Real-time Signal Analysis',
+                tag_chart: '📈 Live Chart',
+                tag_volume: '✨ Volume Analysis',
+                tag_mtf: '📈 Multi-Timeframe',
+                tag_sltp: '🎯 Dynamic SL/TP',
+                tag_quality: '⭐ Signal Quality',
+                tag_notify: '🔔 Browser Alerts',
+                tag_snapshot: '📸 Snapshots',
+                tag_custom: '➕ Custom Symbols',
+                settings_title: 'Settings',
+                label_symbol: 'Trading Pair Symbol',
+                btn_add_symbol: 'Add Custom Symbol',
+                label_interval: 'Interval',
+                interval_1m: '1 min',
+                interval_3m: '3 min',
+                interval_5m: '5 min',
+                interval_15m: '15 min',
+                presets_title: 'Quick Presets',
+                preset_scalping: 'Scalping',
+                preset_daytrading: 'Swing',
+                preset_conservative: 'Stable',
+                rsi_title: 'RSI Settings',
+                label_rsi_period: 'RSI Period',
+                label_rsi_overbought: 'Overbought',
+                label_rsi_oversold: 'Oversold',
+                ema_title: 'EMA Settings',
+                label_ema_fast: 'Fast EMA',
+                label_ema_slow: 'Slow EMA',
+                macd_title: 'MACD Settings',
+                label_macd_fast: 'MACD Fast',
+                label_macd_slow: 'MACD Slow',
+                label_macd_signal: 'MACD Signal',
+                btn_analyze: 'Analyze Signal',
+                auto_refresh: 'Auto-refresh (10s)',
+                advanced_title: 'Advanced',
+                btn_snapshot: 'Snapshot Manager',
+                btn_alerts: 'Alert Settings',
+                results_title: 'Analysis Results',
+                chart_title: 'Candlestick Chart',
+                legend_bb: 'Bollinger',
+                legend_sl: 'Stop Loss',
+                legend_tp: 'Take Profit',
+                hint_start: 'Click "Analyze Signal" to start analysis',
+                modal_alert_title: 'Add Alert',
+                label_alert_type: 'Alert Type',
+                alert_type_price: '💰 Price Alert (e.g. BTC above 70000)',
+                alert_type_quality: '⭐ Quality Alert (e.g. Score above 4)',
+                alert_type_signal: '📊 Signal Alert (e.g. Strong Buy appears)',
+                label_alert_symbol: 'Symbol (leave empty for all)',
+                label_alert_condition: 'Condition',
+                condition_above: 'Above / Greater than',
+                condition_below: 'Below / Less than',
+                label_alert_value: 'Target Value',
+                btn_save_alert: 'Save Alert',
+                btn_cancel: 'Cancel',
+                modal_symbol_title: 'Add Custom Symbol',
+                label_symbol_code: 'Symbol Code',
+                hint_symbol_code: 'Enter full code or search via dropdown. USDT will be appended if missing.',
+                label_symbol_name: 'Display Name',
+                hint_symbol_name: 'Human-readable name shown in the selector.',
+                btn_confirm_add: 'Confirm Add',
+                // --- analyze loading ---
+                analyzing: 'Analyzing...',
+                step_fetch: 'Fetching Data',
+                step_calc: 'Calculating',
+                step_suggest: 'Generating',
+                network_error: 'Network error, please check connection',
+                // --- analysis results ---
+                suggested_action: '💡 Suggested Action',
+                signal_strength: 'Signal Strength',
+                quality: 'Quality',
+                quality_score_label: 'Signal Quality Score',
+                save_snapshot_btn: '📸 Save Snapshot',
+                view_snapshot_btn: '📋 View History',
+                detail_section: '🔬 Detailed Analysis',
+                // --- MTF ---
+                mtf_title: '📈 Multi-Timeframe Confirmation',
+                mtf_uptrend: 'Uptrend',
+                mtf_downtrend: 'Downtrend',
+                mtf_neutral: 'Neutral',
+                mtf_timeframe: 'Timeframe',
+                mtf_strength: 'Trend Strength',
+                // --- Volume ---
+                vol_title: '📊 Volume Analysis',
+                vol_strong: 'High Volume',
+                vol_weak: 'Low Volume',
+                vol_normal: 'Normal',
+                vol_ratio: 'Vol Ratio',
+                vol_cvd: 'CVD Trend',
+                vol_cvd_bull: '📈 Bullish',
+                vol_cvd_bear: '📉 Bearish',
+                vol_current: 'Current Vol',
+                // --- SL/TP ---
+                sltp_title: '🎯 Suggested SL/TP (ATR-based)',
+                sltp_sl: '⛔ Stop Loss',
+                sltp_risk: 'Risk',
+                sltp_tp1: '🎯 Target 1 (50%)',
+                sltp_tp2: '🎯 Target 2 (100%)',
+                sltp_reward: 'Reward',
+                sltp_atr: '📊 ATR',
+                rr_ratio: 'Risk/Reward R:R',
+                // --- Indicators ---
+                rsi_label: 'RSI Value',
+                ema_fast_label: 'Fast EMA',
+                ema_slow_label: 'Slow EMA',
+                macd_line: 'MACD Line',
+                macd_signal_line: 'Signal Line',
+                macd_hist: 'Histogram',
+                bb_upper: 'Upper Band',
+                bb_middle: 'Middle Band',
+                bb_lower: 'Lower Band',
+                stoch_state: 'State',
+                stoch_oversold: 'Oversold',
+                stoch_overbought: 'Overbought',
+                stoch_neutral: 'Neutral',
+                fib_high: '0.0 (High)',
+                fib_low: '1.0 (Low)',
+                last_updated: 'Last updated',
+                // --- action translations (API returns Chinese) ---
+                action_strong_buy: '🟢 Strong Buy',
+                action_buy: '🟡 Consider Buying',
+                action_strong_sell: '🔴 Strong Sell',
+                action_sell: '🟠 Consider Selling',
+                action_wait: '⏸️ Wait / Observe',
+                // --- Snapshot Manager ---
+                snap_mgr_title: '📸 Snapshot Manager',
+                snap_export: '📥 Export CSV',
+                snap_search: '🔍 Search',
+                snap_reload: '🔄 Reload',
+                snap_loading: 'Loading...',
+                snap_empty: 'No snapshots yet',
+                snap_close: 'Close',
+                snap_delete: '🗑️ Delete',
+                snap_time: 'Time',
+                snap_price: 'Price',
+                snap_sl: 'SL',
+                snap_tp: 'TP',
+                snap_sltp_title: '📊 Suggested SL/TP',
+                snap_stop_loss: 'Stop Loss',
+                snap_target1: 'Target 1',
+                snap_target2: 'Target 2',
+                snap_risk: 'Risk',
+                snap_reward: 'Reward',
+                snap_no_match: 'No snapshots match the criteria',
+                snap_found: 'Found',
+                snap_results: 'results',
+                snap_saved: 'Snapshot saved! ID: ',
+                snap_save_fail: 'Save failed: ',
+                snap_deleted: 'Snapshot deleted',
+                snap_delete_fail: 'Delete failed',
+                snap_load_fail: 'Load failed: ',
+                snap_search_fail: 'Search failed: ',
+                snap_confirm_delete: 'Delete this snapshot?',
+                snap_strength: 'Strength',
+                snap_history_title: '📋 Snapshot History',
+                // --- Alert Manager ---
+                alert_mgr_title: '🔔 Alert Settings',
+                alert_add_btn: '➕ Add Alert',
+                alert_loading: 'Loading...',
+                alert_empty: 'No alerts configured',
+                alert_close: 'Close',
+                alert_type_price_short: '💰 Price',
+                alert_type_quality_short: '⭐ Quality',
+                alert_type_signal_short: '📊 Signal',
+                alert_above: 'above',
+                alert_below: 'below',
+                alert_equal: 'equals',
+                alert_all_symbols: '(All symbols)',
+                alert_enabled: '✅ Enabled',
+                alert_disabled: '❌ Disabled',
+                alert_triggers: 'Triggers',
+                alert_pause: 'Pause',
+                alert_enable: 'Enable',
+                alert_delete: 'Delete',
+                alert_added: 'Alert added!',
+                alert_add_fail: 'Add failed: ',
+                alert_toggled: 'Alert updated',
+                alert_toggle_fail: 'Update failed',
+                alert_deleted: 'Alert deleted',
+                alert_delete_fail: 'Delete failed',
+                alert_load_fail: 'Load failed',
+                alert_value_required: '❌ Please enter target value',
+                // --- alert condition options (dynamic dropdown) ---
+                cond_price_above: 'Above / Higher (Above)',
+                cond_price_below: 'Below / Lower (Below)',
+                cond_quality_above: 'Above / Equal (>=)',
+                cond_quality_below: 'Below / Less than (<)',
+                cond_signal_equal: 'Contains Signal (Contains)',
+                price_label: 'Target Price',
+                price_placeholder: 'e.g. 65000 or 0.52',
+                price_hint: 'Triggers when price meets this condition.',
+                quality_label: 'Quality Score (0~5)',
+                quality_placeholder: 'e.g. 4',
+                quality_hint: '0 = weakest, 5⭐ = strongest signal.',
+                signal_label: 'Signal Type',
+                signal_placeholder: 'e.g. Buy, Sell, Strong Buy',
+                signal_hint: 'Triggers when action text contains this keyword.',
+                // --- symbol ---
+                symbol_added: 'Symbol added!',
+                symbol_add_fail: 'Add failed: ',
+                symbol_code_required: '❌ Please enter symbol code',
+                symbol_name_required: '❌ Please enter display name',
+            },
+            zh_TW: {
+                subtitle: '專業級實時交易信號分析系統',
+                tag_chart: '📈 即時圖表',
+                tag_volume: '✨ 成交量分析',
+                tag_mtf: '📈 多時間框架確認',
+                tag_sltp: '🎯 動態止損止盈',
+                tag_quality: '⭐ 信號品質評分',
+                tag_notify: '🔔 瀏覽器通知',
+                tag_snapshot: '📸 策略快照',
+                tag_custom: '➕ 自定義商品',
+                settings_title: '交易設定',
+                label_symbol: '交易對 Symbol',
+                btn_add_symbol: '添加自定義商品',
+                label_interval: '時間框架 Interval',
+                interval_1m: '1 分鐘',
+                interval_3m: '3 分鐘',
+                interval_5m: '5 分鐘',
+                interval_15m: '15 分鐘',
+                presets_title: '快速預設',
+                preset_scalping: '超短線',
+                preset_daytrading: '短線',
+                preset_conservative: '穩健',
+                rsi_title: 'RSI 設定',
+                label_rsi_period: 'RSI 週期',
+                label_rsi_overbought: '超買線',
+                label_rsi_oversold: '超賣線',
+                ema_title: 'EMA 設定',
+                label_ema_fast: '快速 EMA',
+                label_ema_slow: '慢速 EMA',
+                macd_title: 'MACD 設定',
+                label_macd_fast: 'MACD 快線',
+                label_macd_slow: 'MACD 慢線',
+                label_macd_signal: 'MACD 信號線',
+                btn_analyze: '分析入場信號',
+                auto_refresh: '自動刷新 (10秒)',
+                advanced_title: '進階功能',
+                btn_snapshot: '快照管理',
+                btn_alerts: '警報設定',
+                results_title: '分析結果',
+                chart_title: 'K 線圖表',
+                legend_bb: '布林通道',
+                legend_sl: '止損',
+                legend_tp: '止盈',
+                hint_start: '請點擊「分析入場信號」開始分析',
+                modal_alert_title: '新增警報設定',
+                label_alert_type: '警報類型',
+                alert_type_price: '💰 價格警報 (例如: BTC大於 70000)',
+                alert_type_quality: '⭐ 品質評分警報 (例如: 綜合星等大於 4)',
+                alert_type_signal: '📊 信號警報 (例如: 出現強烈買入)',
+                label_alert_symbol: '指定交易對 (留空則套用所有商品)',
+                label_alert_condition: '觸發條件',
+                condition_above: '大於 / 高於 (Above)',
+                condition_below: '小於 / 低於 (Below)',
+                label_alert_value: '目標數值',
+                btn_save_alert: '儲存警報',
+                btn_cancel: '取消',
+                modal_symbol_title: '添加自定義商品',
+                label_symbol_code: '交易對代碼 (Symbol)',
+                hint_symbol_code: '建議輸入完整代碼，可透過下拉選單搜尋挑選。若未包含 USDT 將嘗試自動補齊。',
+                label_symbol_name: '顯示名稱 (Display Name)',
+                hint_symbol_name: '在選單中顯示的可讀名稱。',
+                btn_confirm_add: '確認添加',
+                // --- analyze loading ---
+                analyzing: '分析中...',
+                step_fetch: '獲取數據',
+                step_calc: '計算指標',
+                step_suggest: '生成建議',
+                network_error: '網路連線失敗，請檢查網路狀態',
+                // --- analysis results ---
+                suggested_action: '💡 建議操作',
+                signal_strength: '信號強度',
+                quality: '品質',
+                quality_score_label: '信號品質評分',
+                save_snapshot_btn: '📸 保存當前策略快照',
+                view_snapshot_btn: '📋 查看歷史快照',
+                detail_section: '🔬 細部分析結果',
+                // --- MTF ---
+                mtf_title: '📈 多時間框架確認',
+                mtf_uptrend: '上升趨勢',
+                mtf_downtrend: '下降趨勢',
+                mtf_neutral: '中性',
+                mtf_timeframe: '時間框架',
+                mtf_strength: '趨勢強度',
+                // --- Volume ---
+                vol_title: '📊 成交量分析',
+                vol_strong: '放量',
+                vol_weak: '縮量',
+                vol_normal: '正常',
+                vol_ratio: '成交量比率',
+                vol_cvd: 'CVD 趨勢',
+                vol_cvd_bull: '📈 看漲',
+                vol_cvd_bear: '📉 看跌',
+                vol_current: '當前成交量',
+                // --- SL/TP ---
+                sltp_title: '🎯 建議止損止盈 (基於 ATR)',
+                sltp_sl: '⛔ 止損 Stop Loss',
+                sltp_risk: '風險',
+                sltp_tp1: '🎯 目標1 (50%)',
+                sltp_tp2: '🎯 目標2 (100%)',
+                sltp_reward: '報酬',
+                sltp_atr: '📊 ATR (波幅)',
+                rr_ratio: '風險報酬比 R:R',
+                // --- Indicators ---
+                rsi_label: 'RSI 值',
+                ema_fast_label: '快速 EMA',
+                ema_slow_label: '慢速 EMA',
+                macd_line: 'MACD 線',
+                macd_signal_line: '信號線',
+                macd_hist: '柱狀圖',
+                bb_upper: '上軌',
+                bb_middle: '中軌',
+                bb_lower: '下軌',
+                stoch_state: '狀態',
+                stoch_oversold: '超賣',
+                stoch_overbought: '超買',
+                stoch_neutral: '中性',
+                fib_high: '0.0 (高點)',
+                fib_low: '1.0 (低點)',
+                last_updated: '最後更新',
+                // --- action translations ---
+                action_strong_buy: '🟢 強烈買入 BUY',
+                action_buy: '🟡 考慮買入',
+                action_strong_sell: '🔴 強烈賣出 SELL',
+                action_sell: '🟠 考慮賣出',
+                action_wait: '⏸️ 觀望 WAIT',
+                // --- Snapshot Manager ---
+                snap_mgr_title: '📸 快照管理器',
+                snap_export: '📥 匯出 CSV',
+                snap_search: '🔍 搜尋篩選',
+                snap_reload: '🔄 重新載入',
+                snap_loading: '載入中...',
+                snap_empty: '暫無快照記錄',
+                snap_close: '關閉',
+                snap_delete: '🗑️ 刪除',
+                snap_time: '時間',
+                snap_price: '價格',
+                snap_sl: '止損',
+                snap_tp: '止盈',
+                snap_sltp_title: '📊 建議止損止盈',
+                snap_stop_loss: '止損',
+                snap_target1: '目標1',
+                snap_target2: '目標2',
+                snap_risk: '風險',
+                snap_reward: '報酬',
+                snap_no_match: '沒有符合條件的快照',
+                snap_found: '找到',
+                snap_results: '筆結果',
+                snap_saved: '策略快照已保存！ID: ',
+                snap_save_fail: '保存失敗: ',
+                snap_deleted: '快照已刪除',
+                snap_delete_fail: '刪除失敗',
+                snap_load_fail: '載入失敗: ',
+                snap_search_fail: '搜尋失敗: ',
+                snap_confirm_delete: '確定要刪除此快照嗎？',
+                snap_strength: '強度',
+                snap_history_title: '📋 歷史策略快照',
+                // --- Alert Manager ---
+                alert_mgr_title: '🔔 警報設定',
+                alert_add_btn: '➕ 新增警報',
+                alert_loading: '載入中...',
+                alert_empty: '暫無警報設定',
+                alert_close: '關閉',
+                alert_type_price_short: '💰 價格',
+                alert_type_quality_short: '⭐ 品質',
+                alert_type_signal_short: '📊 信號',
+                alert_above: '高於',
+                alert_below: '低於',
+                alert_equal: '等於',
+                alert_all_symbols: '(所有商品)',
+                alert_enabled: '✅ 啟用',
+                alert_disabled: '❌ 停用',
+                alert_triggers: '觸發次數',
+                alert_pause: '暫停',
+                alert_enable: '啟用',
+                alert_delete: '刪除',
+                alert_added: '警報已新增！',
+                alert_add_fail: '新增失敗: ',
+                alert_toggled: '警報已更新',
+                alert_toggle_fail: '更新失敗',
+                alert_deleted: '警報已刪除',
+                alert_delete_fail: '刪除失敗',
+                alert_load_fail: '載入失敗',
+                alert_value_required: '❌ 請輸入目標數值',
+                // --- alert condition options (dynamic dropdown) ---
+                cond_price_above: '大於 / 高於 (Above)',
+                cond_price_below: '小於 / 低於 (Below)',
+                cond_quality_above: '大於 / 等於 (>=)',
+                cond_quality_below: '小於 / 低於 (<)',
+                cond_signal_equal: '包含此信號 (Contains)',
+                price_label: '目標價格',
+                price_placeholder: '例如: 65000 或者 0.52',
+                price_hint: '當商品價格達到此數值條件時觸發通知。',
+                quality_label: '品質評分 (0~5)',
+                quality_placeholder: '例如: 4',
+                quality_hint: '0分最弱，5分(⭐⭐⭐⭐⭐)表示最強烈信號。',
+                signal_label: '信號類型',
+                signal_placeholder: '例如: 買入, 賣出, 強烈買入',
+                signal_hint: '當分析結果的「行動建議」包含此關鍵字時觸發。',
+                // --- symbol ---
+                symbol_added: '商品已添加！',
+                symbol_add_fail: '添加失敗: ',
+                symbol_code_required: '❌ 請輸入交易對代碼！',
+                symbol_name_required: '❌ 請輸入顯示名稱！',
+            }
+        };
+
+        let currentLang = localStorage.getItem('app_lang') || 'en';
+
+        function applyLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('app_lang', lang);
+            const dict = LANG[lang] || LANG['en'];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key] !== undefined) {
+                    el.textContent = dict[key];
+                }
+            });
+            // Update html lang attribute
+            document.documentElement.lang = lang === 'zh_TW' ? 'zh-TW' : 'en';
+            // Update language button styles
+            const enBtn = document.getElementById('lang-en-btn');
+            const zhBtn = document.getElementById('lang-zh-btn');
+            if (enBtn && zhBtn) {
+                if (lang === 'en') {
+                    enBtn.style.background = 'var(--color-accent)';
+                    enBtn.style.color = 'white';
+                    enBtn.style.border = 'none';
+                    zhBtn.style.background = 'var(--color-bg)';
+                    zhBtn.style.color = 'var(--color-text-muted)';
+                    zhBtn.style.border = '1px solid var(--color-border)';
+                } else {
+                    zhBtn.style.background = 'var(--color-accent)';
+                    zhBtn.style.color = 'white';
+                    zhBtn.style.border = 'none';
+                    enBtn.style.background = 'var(--color-bg)';
+                    enBtn.style.color = 'var(--color-text-muted)';
+                    enBtn.style.border = '1px solid var(--color-border)';
+                }
+            }
+        }
+
+        function switchLang(lang) {
+            applyLang(lang);
+        }
 
         // UI Collapse Logic
         function toggleMainSidebar() {
@@ -2586,8 +3044,11 @@ HTML_PAGE = """<!DOCTYPE html>
             });
         }
         
-        // 頁面加載時恢復靜態狀態
-        document.addEventListener('DOMContentLoaded', restoreCollapses);
+        // 頁面加載時恢復靜態狀態與語言
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreCollapses();
+            applyLang(currentLang);
+        });
 
         // ✨ V3.2: Toast 通知系統
         function showToast(message, type = 'info', duration = 3000) {
@@ -2640,11 +3101,11 @@ HTML_PAGE = """<!DOCTYPE html>
             document.getElementById('results').innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>分析中...</p>
+                    <p>${LANG[currentLang].analyzing}</p>
                     <div class="progress-steps">
-                        <div class="progress-step active"><span class="step-dot"></span>獲取數據</div>
-                        <div class="progress-step"><span class="step-dot"></span>計算指標</div>
-                        <div class="progress-step"><span class="step-dot"></span>生成建議</div>
+                        <div class="progress-step active"><span class="step-dot"></span>${LANG[currentLang].step_fetch}</div>
+                        <div class="progress-step"><span class="step-dot"></span>${LANG[currentLang].step_calc}</div>
+                        <div class="progress-step"><span class="step-dot"></span>${LANG[currentLang].step_suggest}</div>
                     </div>
                 </div>
             `;
@@ -2665,7 +3126,7 @@ HTML_PAGE = """<!DOCTYPE html>
                     showError(data.error, data.error_type);
                 }
             } catch (error) {
-                showError('網路連線失敗，請檢查網路狀態', 'network');
+                showError(LANG[currentLang].network_error, 'network');
             }
         }
 
@@ -2675,9 +3136,22 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const signals = data.signals;
 
+            // 根據 overall 或 action 字串判斷類型
+            const overall = signals.overall || '';
             let actionClass = 'wait';
-            if (signals.action.includes('買入')) actionClass = 'buy';
-            else if (signals.action.includes('賣出')) actionClass = 'sell';
+            if (overall === 'strong_buy' || overall === 'buy') actionClass = 'buy';
+            else if (overall === 'strong_sell' || overall === 'sell') actionClass = 'sell';
+
+            // 翻譯 action 字串
+            function translateAction(action) {
+                if (!action) return action;
+                if (action.includes('強烈買入') || overall === 'strong_buy') return LANG[currentLang].action_strong_buy;
+                if (action.includes('考慮買入') || overall === 'buy') return LANG[currentLang].action_buy;
+                if (action.includes('強烈賣出') || overall === 'strong_sell') return LANG[currentLang].action_strong_sell;
+                if (action.includes('考慮賣出') || overall === 'sell') return LANG[currentLang].action_sell;
+                if (action.includes('觀望') || overall === 'neutral') return LANG[currentLang].action_wait;
+                return action;
+            }
 
             const strengthPercent = (signals.strength / 3 * 100).toFixed(0);
             const qualityStars = '⭐'.repeat(Math.round(signals.quality_score));
@@ -2687,16 +3161,16 @@ HTML_PAGE = """<!DOCTYPE html>
             const mtfHtml = mtf ? `
                 <div class="signal-card">
                     <div class="signal-header">
-                        <span class="signal-name">📈 多時間框架確認 <span class="new-feature-badge">NEW</span></span>
-                        <span class="signal-badge ${mtf.trend}">${mtf.trend === 'uptrend' ? '上升趨勢' : (mtf.trend === 'downtrend' ? '下降趨勢' : '中性')}</span>
+                        <span class="signal-name">${LANG[currentLang].mtf_title} <span class="new-feature-badge">NEW</span></span>
+                        <span class="signal-badge ${mtf.trend}">${mtf.trend === 'uptrend' ? LANG[currentLang].mtf_uptrend : (mtf.trend === 'downtrend' ? LANG[currentLang].mtf_downtrend : LANG[currentLang].mtf_neutral)}</span>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">時間框架</div>
+                            <div class="detail-label">${LANG[currentLang].mtf_timeframe}</div>
                             <div class="detail-value">${mtf.timeframe}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">趨勢強度</div>
+                            <div class="detail-label">${LANG[currentLang].mtf_strength}</div>
                             <div class="detail-value">${mtf.trend_strength}%</div>
                         </div>
                         <div class="detail-item">
@@ -2716,20 +3190,20 @@ HTML_PAGE = """<!DOCTYPE html>
             const volumeHtml = volume ? `
                 <div class="signal-card">
                     <div class="signal-header">
-                        <span class="signal-name">📊 成交量分析 <span class="new-feature-badge">NEW</span></span>
-                        <span class="signal-badge ${volume.signal}">${volume.signal === 'strong' ? '放量' : (volume.signal === 'weak' ? '縮量' : '正常')}</span>
+                        <span class="signal-name">${LANG[currentLang].vol_title} <span class="new-feature-badge">NEW</span></span>
+                        <span class="signal-badge ${volume.signal}">${volume.signal === 'strong' ? LANG[currentLang].vol_strong : (volume.signal === 'weak' ? LANG[currentLang].vol_weak : LANG[currentLang].vol_normal)}</span>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">成交量比率</div>
+                            <div class="detail-label">${LANG[currentLang].vol_ratio}</div>
                             <div class="detail-value">${volume.volume_ratio}x</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">CVD 趨勢</div>
-                            <div class="detail-value">${volume.cvd_trend === 'bullish' ? '📈 看漲' : '📉 看跌'}</div>
+                            <div class="detail-label">${LANG[currentLang].vol_cvd}</div>
+                            <div class="detail-value">${volume.cvd_trend === 'bullish' ? LANG[currentLang].vol_cvd_bull : LANG[currentLang].vol_cvd_bear}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">當前成交量</div>
+                            <div class="detail-label">${LANG[currentLang].vol_current}</div>
                             <div class="detail-value">${volume.current_volume.toLocaleString()}</div>
                         </div>
                     </div>
@@ -2740,47 +3214,51 @@ HTML_PAGE = """<!DOCTYPE html>
             const sltp = signals.stop_loss_take_profit;
             const sltpHtml = sltp ? `
                 <div class="sl-tp-card">
-                    <div class="sl-tp-title">🎯 建議止損止盈 (基於 ATR)<span class="new-feature-badge">NEW</span></div>
+                    <div class="sl-tp-title">${LANG[currentLang].sltp_title}<span class="new-feature-badge">NEW</span></div>
                     <div class="sl-tp-grid">
                         <div class="sl-tp-item">
-                            <div class="sl-tp-label">⛔ 止損 Stop Loss</div>
+                            <div class="sl-tp-label">${LANG[currentLang].sltp_sl}</div>
                             <div class="sl-tp-value stop-loss">$${sltp.stop_loss.toLocaleString()}</div>
-                            <div class="detail-label" style="margin-top: 5px;">風險: $${sltp.risk_amount}</div>
+                            <div class="detail-label" style="margin-top: 5px;">${LANG[currentLang].sltp_risk}: $${sltp.risk_amount}</div>
                         </div>
                         <div class="sl-tp-item">
-                            <div class="sl-tp-label">🎯 目標1 (50%)</div>
+                            <div class="sl-tp-label">${LANG[currentLang].sltp_tp1}</div>
                             <div class="sl-tp-value take-profit">$${sltp.take_profit_1.toLocaleString()}</div>
                         </div>
                         <div class="sl-tp-item">
-                            <div class="sl-tp-label">🎯 目標2 (100%)</div>
+                            <div class="sl-tp-label">${LANG[currentLang].sltp_tp2}</div>
                             <div class="sl-tp-value take-profit">$${sltp.take_profit_2.toLocaleString()}</div>
-                            <div class="detail-label" style="margin-top: 5px;">報酬: $${sltp.reward_amount}</div>
+                            <div class="detail-label" style="margin-top: 5px;">${LANG[currentLang].sltp_reward}: $${sltp.reward_amount}</div>
                         </div>
                         <div class="sl-tp-item">
-                            <div class="sl-tp-label">📊 ATR (波幅)</div>
+                            <div class="sl-tp-label">${LANG[currentLang].sltp_atr}</div>
                             <div class="sl-tp-value">$${sltp.atr}</div>
                         </div>
                     </div>
                     <div class="rr-ratio">
-                        風險報酬比 R:R = 1:${sltp.risk_reward_ratio}
+                        ${LANG[currentLang].rr_ratio} = 1:${sltp.risk_reward_ratio}
                     </div>
                 </div>
             ` : '';
 
             // 🔔 瀏覽器通知 - 高品質信號時觸發
-            if (signals.quality_score >= 4 && (signals.action.includes('強烈買入') || signals.action.includes('強烈賣出'))) {
-                sendNotification(`🚨 ${data.symbol} 高品質信號！`, `${signals.action} | 品質: ${signals.quality_score}/5 ⭐`, `quality_${data.symbol}`);
+            if (signals.quality_score >= 4 && (overall === 'strong_buy' || overall === 'strong_sell')) {
+                sendNotification(
+                    `🚨 ${data.symbol} ${currentLang === 'en' ? 'High Quality Signal!' : '高品質信號！'}`,
+                    `${translateAction(signals.action)} | ${currentLang === 'en' ? 'Quality' : '品質'}: ${signals.quality_score}/5 ⭐`,
+                    `quality_${data.symbol}`
+                );
             }
 
             const html = `
                 <!-- 🔥 最重要：建議操作放在最上面 -->
                 <div class="action-card ${actionClass}">
-                    <div class="action-title">💡 建議操作</div>
-                    <div class="action-text">${signals.action}</div>
+                    <div class="action-title">${LANG[currentLang].suggested_action}</div>
+                    <div class="action-text">${translateAction(signals.action)}</div>
                     <div class="strength-bar">
                         <div class="strength-fill" style="width: ${strengthPercent}%"></div>
                     </div>
-                    <div style="margin-top: 10px; font-size: 14px;">信號強度: ${signals.strength}/3 | 品質: ${signals.quality_score}/5</div>
+                    <div style="margin-top: 10px; font-size: 14px;">${LANG[currentLang].signal_strength}: ${signals.strength}/3 | ${LANG[currentLang].quality}: ${signals.quality_score}/5</div>
                 </div>
 
                 <!-- 價格與品質評分 -->
@@ -2788,7 +3266,7 @@ HTML_PAGE = """<!DOCTYPE html>
                     <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">${data.symbol}</div>
                     <div class="price-value">$${data.price.toLocaleString()}</div>
                     <div class="quality-score">
-                        <div class="quality-score-label">信號品質評分</div>
+                        <div class="quality-score-label">${LANG[currentLang].quality_score_label}</div>
                         <div class="quality-score-value">${signals.quality_score}/5</div>
                         <div class="score-stars">${qualityStars}</div>
                     </div>
@@ -2800,16 +3278,16 @@ HTML_PAGE = """<!DOCTYPE html>
                 <!-- 📸 快照管理按鈕 -->
                 <div style="margin: 20px 0; text-align: center; padding: 15px; background: #f0f4ff; border-radius: 12px;">
                     <button onclick="saveSnapshot()" style="width: auto; padding: 12px 30px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); margin-right: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: none;">
-                        📸 保存當前策略快照
+                        ${LANG[currentLang].save_snapshot_btn}
                     </button>
                     <button onclick="showSnapshots()" style="width: auto; padding: 12px 30px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: none;">
-                        📋 查看歷史快照
+                        ${LANG[currentLang].view_snapshot_btn}
                     </button>
                 </div>
 
                 <!-- 核心分析指標 -->
                 <div class="panel-title collapsible-header" onclick="toggleCollapse('advanced-analysis-content', this)" style="margin-top: 25px; margin-bottom: 15px;">
-                    <span>🔬 細部分析結果（多時間框架及以下）</span>
+                    <span>${LANG[currentLang].detail_section}</span>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div id="advanced-analysis-content" class="collapsible-content">
@@ -2823,7 +3301,7 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">RSI 值</div>
+                            <div class="detail-label">${LANG[currentLang].rsi_label}</div>
                             <div class="detail-value">${signals.rsi.value || 'N/A'}</div>
                         </div>
                     </div>
@@ -2836,11 +3314,11 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">快速 EMA</div>
+                            <div class="detail-label">${LANG[currentLang].ema_fast_label}</div>
                             <div class="detail-value">${signals.ema.fast || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">慢速 EMA</div>
+                            <div class="detail-label">${LANG[currentLang].ema_slow_label}</div>
                             <div class="detail-value">${signals.ema.slow || 'N/A'}</div>
                         </div>
                     </div>
@@ -2853,15 +3331,15 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">MACD 線</div>
+                            <div class="detail-label">${LANG[currentLang].macd_line}</div>
                             <div class="detail-value">${signals.macd.line || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">信號線</div>
+                            <div class="detail-label">${LANG[currentLang].macd_signal_line}</div>
                             <div class="detail-value">${signals.macd.signal || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">柱狀圖</div>
+                            <div class="detail-label">${LANG[currentLang].macd_hist}</div>
                             <div class="detail-value">${signals.macd.histogram || 'N/A'}</div>
                         </div>
                     </div>
@@ -2875,15 +3353,15 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">上軌</div>
+                            <div class="detail-label">${LANG[currentLang].bb_upper}</div>
                             <div class="detail-value">${signals.bollinger.upper}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">中軌</div>
+                            <div class="detail-label">${LANG[currentLang].bb_middle}</div>
                             <div class="detail-value">${signals.bollinger.middle}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">下軌</div>
+                            <div class="detail-label">${LANG[currentLang].bb_lower}</div>
                             <div class="detail-value">${signals.bollinger.lower}</div>
                         </div>
                     </div>
@@ -2906,8 +3384,8 @@ HTML_PAGE = """<!DOCTYPE html>
                             <div class="detail-value">${signals.stochastic.d}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">狀態</div>
-                            <div class="detail-value">${signals.stochastic.k < 20 ? '超賣' : (signals.stochastic.k > 80 ? '超買' : '中性')}</div>
+                            <div class="detail-label">${LANG[currentLang].stoch_state}</div>
+                            <div class="detail-value">${signals.stochastic.k < 20 ? LANG[currentLang].stoch_oversold : (signals.stochastic.k > 80 ? LANG[currentLang].stoch_overbought : LANG[currentLang].stoch_neutral)}</div>
                         </div>
                     </div>
                 </div>
@@ -2920,7 +3398,7 @@ HTML_PAGE = """<!DOCTYPE html>
                     </div>
                     <div class="signal-details">
                         <div class="detail-item">
-                            <div class="detail-label">0.0 (高點)</div>
+                            <div class="detail-label">${LANG[currentLang].fib_high}</div>
                             <div class="detail-value">${signals.fibonacci['0.0']}</div>
                         </div>
                         <div class="detail-item">
@@ -2936,7 +3414,7 @@ HTML_PAGE = """<!DOCTYPE html>
                             <div class="detail-value">${signals.fibonacci['0.618']}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">1.0 (低點)</div>
+                            <div class="detail-label">${LANG[currentLang].fib_low}</div>
                             <div class="detail-value">${signals.fibonacci['1.0']}</div>
                         </div>
                     </div>
@@ -2946,7 +3424,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div> <!-- 結束 advanced-analysis-content -->
 
                 <div class="timestamp">
-                    最後更新: ${new Date(data.timestamp).toLocaleString('zh-TW')}
+                    ${LANG[currentLang].last_updated}: ${new Date(data.timestamp).toLocaleString()}
                 </div>
             `;
 
@@ -3206,12 +3684,12 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const result = await response.json();
                 if (result.success) {
-                    showToast('策略快照已保存！ID: ' + result.snapshot_id, 'success');
+                    showToast(LANG[currentLang].snap_saved + result.snapshot_id, 'success');
                 } else {
-                    showToast('保存失敗: ' + result.error, 'error');
+                    showToast(LANG[currentLang].snap_save_fail + result.error, 'error');
                 }
             } catch (error) {
-                showToast('保存失敗: ' + error.message, 'error');
+                showToast(LANG[currentLang].snap_save_fail + error.message, 'error');
             }
         }
 
@@ -3222,12 +3700,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 const result = await response.json();
 
                 if (!result.success || result.snapshots.length === 0) {
-                    showToast('暫無快照記錄', 'info');
+                    showToast(LANG[currentLang].snap_empty, 'info');
                     return;
                 }
 
                 let html = '<div style="max-height: 500px; overflow-y: auto;">';
-                html += '<h3 style="margin-bottom: 15px;">📋 歷史策略快照</h3>';
+                html += `<h3 style="margin-bottom: 15px;">${LANG[currentLang].snap_history_title}</h3>`;
 
                 result.snapshots.forEach(snap => {
                     const time = new Date(snap.timestamp).toLocaleString('zh-TW');
@@ -3252,28 +3730,28 @@ HTML_PAGE = """<!DOCTYPE html>
                                 <div style="text-align: right;">
                                     <div style="font-size: 18px; font-weight: 600; color: ${borderColor};">${snap.action}</div>
                                     <div style="margin-top: 4px;">${stars} ${snap.quality_score}/5</div>
-                                    <div style="font-size: 12px; color: #666; margin-top: 2px;">強度: ${snap.strength}/3</div>
+                                    <div style="font-size: 12px; color: #666; margin-top: 2px;">${LANG[currentLang].snap_strength}: ${snap.strength}/3</div>
                                 </div>
                             </div>
                             ${sltp ? `
                             <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px;">
-                                <div style="font-size: 13px; font-weight: 600; color: #666; margin-bottom: 8px;">📊 建議止損止盈</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #666; margin-bottom: 8px;">${LANG[currentLang].snap_sltp_title}</div>
                                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;">
                                     <div>
-                                        <div style="color: #999;">止損</div>
+                                        <div style="color: #999;">${LANG[currentLang].snap_stop_loss}</div>
                                         <div style="color: #ef4444; font-weight: 600;">$${sltp.stop_loss?.toLocaleString()}</div>
                                     </div>
                                     <div>
-                                        <div style="color: #999;">目標1</div>
+                                        <div style="color: #999;">${LANG[currentLang].snap_target1}</div>
                                         <div style="color: #10b981; font-weight: 600;">$${sltp.take_profit_1?.toLocaleString()}</div>
                                     </div>
                                     <div>
-                                        <div style="color: #999;">目標2</div>
+                                        <div style="color: #999;">${LANG[currentLang].snap_target2}</div>
                                         <div style="color: #10b981; font-weight: 600;">$${sltp.take_profit_2?.toLocaleString()}</div>
                                     </div>
                                 </div>
                                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666;">
-                                    風險: $${sltp.risk_amount} | 報酬: $${sltp.reward_amount} | R:R = 1:${sltp.risk_reward_ratio}
+                                    ${LANG[currentLang].snap_risk}: $${sltp.risk_amount} | ${LANG[currentLang].snap_reward}: $${sltp.reward_amount} | R:R = 1:${sltp.risk_reward_ratio}
                                 </div>
                             </div>
                             ` : ''}
@@ -3288,12 +3766,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 modal.innerHTML = `
                     <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; width: 90%;">
                         ${html}
-                        <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 15px; background: var(--color-accent);">關閉</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 15px; background: var(--color-accent);">${LANG[currentLang].snap_close}</button>
                     </div>
                 `;
                 document.body.appendChild(modal);
             } catch (error) {
-                showToast('載入失敗: ' + error.message, 'error');
+                showToast(LANG[currentLang].snap_load_fail + error.message, 'error');
             }
         }
 
@@ -3353,25 +3831,25 @@ HTML_PAGE = """<!DOCTYPE html>
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
             modal.innerHTML = `
                 <div style="background: white; padding: 30px; border-radius: 20px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;">
-                    <h2 style="margin-bottom: 20px;">📸 快照管理器</h2>
+                    <h2 style="margin-bottom: 20px;">${LANG[currentLang].snap_mgr_title}</h2>
 
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
                         <button onclick="exportSnapshots()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                            📥 匯出 CSV
+                            ${LANG[currentLang].snap_export}
                         </button>
                         <button onclick="showSearchDialog()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                            🔍 搜尋篩選
+                            ${LANG[currentLang].snap_search}
                         </button>
                         <button onclick="loadSnapshotsInModal()" style="padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                            🔄 重新載入
+                            ${LANG[currentLang].snap_reload}
                         </button>
                     </div>
 
                     <div id="snapshotList" style="min-height: 200px;">
-                        <p style="text-align: center; color: #666;">載入中...</p>
+                        <p style="text-align: center; color: #666;">${LANG[currentLang].snap_loading}</p>
                     </div>
 
-                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">關閉</button>
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">${LANG[currentLang].snap_close}</button>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -3385,7 +3863,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const listDiv = document.getElementById('snapshotList');
                 if (!result.success || result.snapshots.length === 0) {
-                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">暫無快照記錄</p>';
+                    listDiv.innerHTML = `<p style="text-align: center; color: #666;">${LANG[currentLang].snap_empty}</p>`;
                     return;
                 }
 
@@ -3400,14 +3878,14 @@ HTML_PAGE = """<!DOCTYPE html>
                                     <span style="margin-left: 10px;">⭐ ${snapshot.quality_score}</span>
                                 </div>
                                 <button onclick="deleteSnapshot(${snapshot.id})" style="padding: 5px 10px; background: var(--color-sell); font-size: 12px;">
-                                    🗑️ 刪除
+                                    ${LANG[currentLang].snap_delete}
                                 </button>
                             </div>
                             <div style="font-size: 12px; color: #666;">
-                                時間: ${new Date(snapshot.timestamp).toLocaleString('zh-TW')}
+                                ${LANG[currentLang].snap_time}: ${new Date(snapshot.timestamp).toLocaleString()}
                             </div>
                             <div style="font-size: 12px; margin-top: 5px;">
-                                價格: $${snapshot.price} | 止損: $${snapshot.signals.stop_loss_take_profit?.stop_loss} | 止盈: $${snapshot.signals.stop_loss_take_profit?.take_profit_2}
+                                ${LANG[currentLang].snap_price}: $${snapshot.price} | ${LANG[currentLang].snap_sl}: $${snapshot.signals.stop_loss_take_profit?.stop_loss} | ${LANG[currentLang].snap_tp}: $${snapshot.signals.stop_loss_take_profit?.take_profit_2}
                             </div>
                         </div>
                     `;
@@ -3415,7 +3893,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 listDiv.innerHTML = html;
             } catch (error) {
-                document.getElementById('snapshotList').innerHTML = '<p style="text-align: center; color: #ef4444;">載入失敗</p>';
+                document.getElementById('snapshotList').innerHTML = `<p style="text-align: center; color: #ef4444;">${LANG[currentLang].snap_load_fail}</p>`;
             }
         }
 
@@ -3429,20 +3907,20 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         async function deleteSnapshot(id) {
-            if (!confirm('確定要刪除此快照嗎？')) return;
+            if (!confirm(LANG[currentLang].snap_confirm_delete)) return;
 
             try {
                 const response = await fetch(APP_PREFIX + '/api/snapshot/' + id, { method: 'DELETE' });
                 const result = await response.json();
 
                 if (result.success) {
-                    showToast('快照已刪除', 'success');
+                    showToast(LANG[currentLang].snap_deleted, 'success');
                     loadSnapshotsInModal();
                 } else {
-                    showToast('刪除失敗', 'error');
+                    showToast(LANG[currentLang].snap_delete_fail, 'error');
                 }
             } catch (error) {
-                showToast('刪除失敗: ' + error.message, 'error');
+                showToast(LANG[currentLang].snap_delete_fail + ': ' + error.message, 'error');
             }
         }
 
@@ -3466,11 +3944,11 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const listDiv = document.getElementById('snapshotList');
                 if (!result.success || result.snapshots.length === 0) {
-                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">沒有符合條件的快照</p>';
+                    listDiv.innerHTML = `<p style="text-align: center; color: #666;">${LANG[currentLang].snap_no_match}</p>`;
                     return;
                 }
 
-                let html = '<p style="color: #10b981; margin-bottom: 15px;">找到 ' + result.snapshots.length + ' 筆結果</p>';
+                let html = `<p style="color: #10b981; margin-bottom: 15px;">${LANG[currentLang].snap_found} ${result.snapshots.length} ${LANG[currentLang].snap_results}</p>`;
                 result.snapshots.forEach(snapshot => {
                     const borderColor = snapshot.action.includes('買入') ? '#10b981' : (snapshot.action.includes('賣出') ? '#ef4444' : '#6b7280');
                     html += `
@@ -3483,7 +3961,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 listDiv.innerHTML = html;
             } catch (error) {
-                showToast('搜尋失敗: ' + error.message, 'error');
+                showToast(LANG[currentLang].snap_search_fail + error.message, 'error');
             }
         }
 
@@ -3493,17 +3971,17 @@ HTML_PAGE = """<!DOCTYPE html>
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
             modal.innerHTML = `
                 <div style="background: white; padding: 30px; border-radius: 20px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
-                    <h2 style="margin-bottom: 20px;">🔔 警報設定</h2>
+                    <h2 style="margin-bottom: 20px;">${LANG[currentLang].alert_mgr_title}</h2>
 
                     <button onclick="showAddAlertDialog()" style="width: 100%; margin-bottom: 20px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); box-shadow: none; font-weight: normal;">
-                        ➕ 新增警報
+                        ${LANG[currentLang].alert_add_btn}
                     </button>
 
                     <div id="alertList" style="min-height: 200px;">
-                        <p style="text-align: center; color: #666;">載入中...</p>
+                        <p style="text-align: center; color: #666;">${LANG[currentLang].alert_loading}</p>
                     </div>
 
-                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">關閉</button>
+                    <button onclick="this.closest('div').parentElement.remove()" style="width: 100%; margin-top: 20px; background: var(--color-accent);">${LANG[currentLang].alert_close}</button>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -3517,34 +3995,34 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const listDiv = document.getElementById('alertList');
                 if (!result.success || result.alerts.length === 0) {
-                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">暫無警報設定</p>';
+                    listDiv.innerHTML = `<p style="text-align: center; color: #666;">${LANG[currentLang].alert_empty}</p>`;
                     return;
                 }
 
                 let html = '';
                 result.alerts.forEach(alert => {
-                    const typeText = alert.type === 'price' ? '💰 價格' : (alert.type === 'quality' ? '⭐ 品質' : '📊 信號');
-                    const condText = alert.condition === 'above' ? '高於' : (alert.condition === 'below' ? '低於' : '等於');
-                    const status = alert.enabled ? '✅ 啟用' : '❌ 停用';
+                    const typeText = alert.type === 'price' ? LANG[currentLang].alert_type_price_short : (alert.type === 'quality' ? LANG[currentLang].alert_type_quality_short : LANG[currentLang].alert_type_signal_short);
+                    const condText = alert.condition === 'above' ? LANG[currentLang].alert_above : (alert.condition === 'below' ? LANG[currentLang].alert_below : LANG[currentLang].alert_equal);
+                    const status = alert.enabled ? LANG[currentLang].alert_enabled : LANG[currentLang].alert_disabled;
 
                     html += `
                         <div style="border: 2px solid ${alert.enabled ? 'var(--color-buy)' : '#6b7280'}; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <strong>${typeText}</strong> ${condText} ${alert.value}
-                                    ${alert.symbol ? '(' + alert.symbol + ')' : '(所有商品)'}
+                                    ${alert.symbol ? '(' + alert.symbol + ')' : LANG[currentLang].alert_all_symbols}
                                 </div>
                                 <div style="display: flex; gap: 5px;">
                                     <button onclick="toggleAlert(${alert.id}, ${!alert.enabled})" style="padding: 5px 10px; background: ${alert.enabled ? 'var(--color-warning)' : 'var(--color-buy)'}; font-size: 12px;">
-                                        ${alert.enabled ? '暫停' : '啟用'}
+                                        ${alert.enabled ? LANG[currentLang].alert_pause : LANG[currentLang].alert_enable}
                                     </button>
                                     <button onclick="deleteAlert(${alert.id})" style="padding: 5px 10px; background: var(--color-sell); font-size: 12px;">
-                                        刪除
+                                        ${LANG[currentLang].alert_delete}
                                     </button>
                                 </div>
                             </div>
                             <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                觸發次數: ${alert.triggered_count || 0} | ${status}
+                                ${LANG[currentLang].alert_triggers}: ${alert.triggered_count || 0} | ${status}
                             </div>
                         </div>
                     `;
@@ -3552,7 +4030,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 listDiv.innerHTML = html;
             } catch (error) {
-                document.getElementById('alertList').innerHTML = '<p style="text-align: center; color: #ef4444;">載入失敗</p>';
+                document.getElementById('alertList').innerHTML = `<p style="text-align: center; color: #ef4444;">${LANG[currentLang].alert_load_fail}</p>`;
             }
         }
 
@@ -3572,34 +4050,34 @@ HTML_PAGE = """<!DOCTYPE html>
             
             if (type === 'price') {
                 conditionSelect.innerHTML = `
-                    <option value="above">大於 / 高於 (Above)</option>
-                    <option value="below">小於 / 低於 (Below)</option>
+                    <option value="above">${LANG[currentLang].cond_price_above}</option>
+                    <option value="below">${LANG[currentLang].cond_price_below}</option>
                 `;
-                valueLabel.textContent = '目標價格';
-                valueInput.placeholder = '例如: 65000 或者 0.52';
+                valueLabel.textContent = LANG[currentLang].price_label;
+                valueInput.placeholder = LANG[currentLang].price_placeholder;
                 valueInput.type = 'number';
                 valueInput.step = 'any';
-                valueHint.innerHTML = '當商品價格達到此數值條件時觸發通知。';
+                valueHint.innerHTML = LANG[currentLang].price_hint;
             } else if (type === 'quality') {
                 conditionSelect.innerHTML = `
-                    <option value="above">大於 / 等於 (>=)</option>
-                    <option value="below">小於 / 低於 (<)</option>
+                    <option value="above">${LANG[currentLang].cond_quality_above}</option>
+                    <option value="below">${LANG[currentLang].cond_quality_below}</option>
                 `;
-                valueLabel.textContent = '品質評分 (0~5)';
-                valueInput.placeholder = '例如: 4';
+                valueLabel.textContent = LANG[currentLang].quality_label;
+                valueInput.placeholder = LANG[currentLang].quality_placeholder;
                 valueInput.type = 'number';
                 valueInput.step = '0.5';
                 valueInput.min = '0';
                 valueInput.max = '5';
-                valueHint.innerHTML = '0分最弱，5分(⭐⭐⭐⭐⭐)表示最強烈信號。';
+                valueHint.innerHTML = LANG[currentLang].quality_hint;
             } else if (type === 'signal') {
                 conditionSelect.innerHTML = `
-                    <option value="equal">包含此信號 (Contains)</option>
+                    <option value="equal">${LANG[currentLang].cond_signal_equal}</option>
                 `;
-                valueLabel.textContent = '信號類型';
+                valueLabel.textContent = LANG[currentLang].signal_label;
                 valueInput.type = 'text';
-                valueInput.placeholder = '例如: 買入, 賣出, 強烈買入';
-                valueHint.innerHTML = '當分析結果的「行動建議」包含此關鍵字時觸發。';
+                valueInput.placeholder = LANG[currentLang].signal_placeholder;
+                valueHint.innerHTML = LANG[currentLang].signal_hint;
             }
         }
 
@@ -3610,7 +4088,7 @@ HTML_PAGE = """<!DOCTYPE html>
             const value = document.getElementById('new_alert_value').value.trim();
 
             if (!value) {
-                alert('❌ 請輸入目標數值');
+                alert(LANG[currentLang].alert_value_required);
                 return;
             }
 
@@ -3633,13 +4111,13 @@ HTML_PAGE = """<!DOCTYPE html>
 
                 const result = await response.json();
                 if (result.success) {
-                    showToast('警報已新增！', 'success');
+                    showToast(LANG[currentLang].alert_added, 'success');
                     loadAlertsInModal();
                 } else {
-                    showToast('新增失敗: ' + result.error, 'error');
+                    showToast(LANG[currentLang].alert_add_fail + result.error, 'error');
                 }
             } catch (error) {
-                showToast('新增失敗: ' + error.message, 'error');
+                showToast(LANG[currentLang].alert_add_fail + error.message, 'error');
             }
         }
 
