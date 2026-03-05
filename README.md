@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V3.4
+# 📈 Scalping Trade Analyzer Pro V3.5
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -31,6 +31,7 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 - **🔗 Nginx Sub-path Support** – `--prefix <PATH>` for reverse-proxy path prefix ✨ V3.3 NEW
 - **🎨 Custom UI Theme** – Soft Minimalist aesthetic with dynamic CSS variable management ✨ V3.4 NEW
 - **↔️ Interactive Layouts** – Collapsible sidebar and vertically folding analysis panels for maximum chart space ✨ V3.4 NEW
+- **🌐 i18n Support** – EN (default) / Traditional Chinese (ZH_TW) language switching with localStorage persistence ✨ V3.5 NEW
 - **📱 Responsive Design** – Supports both desktop and mobile devices
 
 ## 🚀 Quick Start
@@ -342,7 +343,12 @@ Issues and improvement suggestions are welcome!
 
 ## 📝 Version History
 
-### V3.4.2 (2026-03-04) ✨ Latest
+### V3.5.0 (2026-03-05) ✨ Latest
+- **i18n Support**: Full internationalization with EN (default) / ZH_TW language switching
+- Language switcher in header; all static and dynamic UI text translated
+- `translateAction()` safely maps API action strings without breaking business logic
+
+### V3.4.2 (2026-03-04)
 - 💬 **Enhanced UI Dialogs**: Replaced native browser `prompt()` dialogs with customized HTML Modals for Custom Symbols and Alerts.
 - 🔔 **Notification Cooldown**: Added a cooldown mechanism to browser desktop notifications.
 
@@ -493,4 +499,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*Last updated: 2026-03-04 | Version: v3.4.2*
+*Last updated: 2026-03-05 | Version: v3.5.0*

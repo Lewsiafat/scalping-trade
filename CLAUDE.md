@@ -68,6 +68,7 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 - Progress indicator during analysis
 - Custom UI Themes: Dynamic CSS variable management with "Soft Minimalist" aesthetic theme
 - Interactive Layouts: Horizontal sidebar folding and vertical analysis panels with `localStorage` state saving
+- **i18n**: EN (default) / ZH_TW language switcher. Static text via `data-i18n` + `applyLang()`. Dynamic text via `LANG[currentLang].key`. `translateAction()` converts API action strings (always Chinese) to current language for display only.
 
 ## Key Technical Details
 
@@ -82,4 +83,4 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 
 ## Language
 
-This project uses Traditional Chinese (繁體中文) for all UI text, comments, and documentation.
+UI text is bilingual (EN/ZH_TW) via the i18n system. Backend Python code, API responses, and stored data always use Traditional Chinese (繁體中文). Comments and documentation use Traditional Chinese.

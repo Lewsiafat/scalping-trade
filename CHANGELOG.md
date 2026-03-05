@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [3.5.0] - 2026-03-05
+
+### Added
+- **i18n Support**: Full internationalization with English (EN, default) and Traditional Chinese (ZH_TW) language switching.
+  - Language switcher buttons (EN / 中文) in the header.
+  - Static UI text translated via `data-i18n` attributes and `applyLang()` function.
+  - Dynamic content translated: analysis results, SL/TP, MTF, volume analysis, RSI/EMA/MACD/Bollinger/Stochastic/Fibonacci indicators.
+  - Snapshot Manager and Alert Settings modals fully translated.
+  - `translateAction()` function maps API action strings (觀望/考慮買入/強烈買入/考慮賣出/強烈賣出) to current language.
+  - Language preference persisted in `localStorage`.
+
 ## [3.4.2] - 2026-03-04
+
 
 ### Fixed
 - Improve symbol addition stability.
