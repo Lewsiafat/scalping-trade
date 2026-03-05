@@ -2640,6 +2640,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 fib_high: '0.0 (High)',
                 fib_low: '1.0 (Low)',
                 last_updated: 'Last updated',
+                // --- action translations (API returns Chinese) ---
+                action_strong_buy: '🟢 Strong Buy',
+                action_buy: '🟡 Consider Buying',
+                action_strong_sell: '🔴 Strong Sell',
+                action_sell: '🟠 Consider Selling',
+                action_wait: '⏸️ Wait / Observe',
                 // --- Snapshot Manager ---
                 snap_mgr_title: '📸 Snapshot Manager',
                 snap_export: '📥 Export CSV',
@@ -2838,6 +2844,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 fib_high: '0.0 (高點)',
                 fib_low: '1.0 (低點)',
                 last_updated: '最後更新',
+                // --- action translations ---
+                action_strong_buy: '🟢 強烈買入 BUY',
+                action_buy: '🟡 考慮買入',
+                action_strong_sell: '🔴 強烈賣出 SELL',
+                action_sell: '🟠 考慮賣出',
+                action_wait: '⏸️ 觀望 WAIT',
                 // --- Snapshot Manager ---
                 snap_mgr_title: '📸 快照管理器',
                 snap_export: '📥 匯出 CSV',
@@ -3124,9 +3136,22 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const signals = data.signals;
 
+            // 根據 overall 或 action 字串判斷類型
+            const overall = signals.overall || '';
             let actionClass = 'wait';
-            if (signals.action.includes('買入')) actionClass = 'buy';
-            else if (signals.action.includes('賣出')) actionClass = 'sell';
+            if (overall === 'strong_buy' || overall === 'buy') actionClass = 'buy';
+            else if (overall === 'strong_sell' || overall === 'sell') actionClass = 'sell';
+
+            // 翻譯 action 字串
+            function translateAction(action) {
+                if (!action) return action;
+                if (action.includes('強烈買入') || overall === 'strong_buy') return LANG[currentLang].action_strong_buy;
+                if (action.includes('考慮買入') || overall === 'buy') return LANG[currentLang].action_buy;
+                if (action.includes('強烈賣出') || overall === 'strong_sell') return LANG[currentLang].action_strong_sell;
+                if (action.includes('考慮賣出') || overall === 'sell') return LANG[currentLang].action_sell;
+                if (action.includes('觀望') || overall === 'neutral') return LANG[currentLang].action_wait;
+                return action;
+            }
 
             const strengthPercent = (signals.strength / 3 * 100).toFixed(0);
             const qualityStars = '⭐'.repeat(Math.round(signals.quality_score));
@@ -3225,7 +3250,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 <!-- 🔥 最重要：建議操作放在最上面 -->
                 <div class="action-card ${actionClass}">
                     <div class="action-title">${LANG[currentLang].suggested_action}</div>
-                    <div class="action-text">${signals.action}</div>
+                    <div class="action-text">${translateAction(signals.action)}</div>
                     <div class="strength-bar">
                         <div class="strength-fill" style="width: ${strengthPercent}%"></div>
                     </div>
