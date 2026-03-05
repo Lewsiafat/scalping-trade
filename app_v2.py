@@ -59,6 +59,7 @@ def parse_prefix():
     return ''  # 預設無前綴
 
 PREFIX = parse_prefix()
+VERSION = "3.5.0"
 BINANCE_API = "https://api.binance.com/api/v3"
 BINANCE_FAPI = "https://fapi.binance.com/fapi/v1"
 
@@ -1137,9 +1138,9 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             html = HTML_PAGE.replace(
                 '<head>',
-                f'<head><script>window.APP_PREFIX = "{PREFIX}";</script>',
+                f'<head><script>window.APP_PREFIX = "{PREFIX}"; window.APP_VERSION = "{VERSION}";</script>',
                 1
-            )
+            ).replace('V3.2', f'V{VERSION}')
             self.wfile.write(html.encode('utf-8'))
         elif self.path.startswith(p + '/api/analyze'):
             self.handle_api_analyze()
@@ -1535,7 +1536,7 @@ HTML_PAGE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scalping Analyzer Pro V3 | 剝頭皮交易分析器</title>
+    <title>Scalping Analyzer Pro V3.5 | 剝頭皮交易分析器</title>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
 
@@ -4229,10 +4230,9 @@ HTML_PAGE = """<!DOCTYPE html>
 if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), ScalpingHandler) as httpd:
-        print(f"✅ 剝頭皮交易分析器 Pro V3.2 已啟動！")
-        print(f"🌐 訪問: http://localhost:{PORT}")
-        print(f"")
-        print(f"✨ V3.2 新增功能:")
+        print(f"✅ 剝頭皮交易分析器 Pro V{VERSION} 已啟動！")
+        print(f"🏠 伺服器地址: http://localhost:{PORT}{PREFIX}")
+        print(f"✨ V{VERSION} 更新已就緒")
         print(f"  📈 即時 K 線圖表 (TradingView Lightweight Charts)")
         print(f"  🔄 智能重試機制 (指數退避)")
         print(f"  🌐 中文錯誤訊息 + 錯誤分類")
