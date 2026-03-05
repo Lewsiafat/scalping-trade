@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Snapshot Manager and Alert Settings modals fully translated.
   - `translateAction()` function maps API action strings (觀望/考慮買入/強烈買入/考慮賣出/強烈賣出) to current language.
   - Language preference persisted in `localStorage`.
+- **Version Display**: Added internal versioning mechanism (`VERSION` constant in `app_v2.py`) and UI display in header and page title.
 
 ## [3.4.2] - 2026-03-04
 

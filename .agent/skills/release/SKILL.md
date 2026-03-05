@@ -36,6 +36,8 @@ description: >
    **README.md** — Update Architecture & Files section. Add new entry points or public APIs.
 
    **README.zh-TW.md** — Mirror all README.md changes in Traditional Chinese.
+    
+   **app_v2.py** — Update the `VERSION` constant at the top of the file to match the new release version.
 
 4. **Commit** with format:
    ```
