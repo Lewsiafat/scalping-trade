@@ -3242,8 +3242,12 @@ HTML_PAGE = """<!DOCTYPE html>
             ` : '';
 
             // 🔔 瀏覽器通知 - 高品質信號時觸發
-            if (signals.quality_score >= 4 && (signals.action.includes('強烈買入') || signals.action.includes('強烈賣出'))) {
-                sendNotification(`🚨 ${data.symbol} 高品質信號！`, `${signals.action} | 品質: ${signals.quality_score}/5 ⭐`, `quality_${data.symbol}`);
+            if (signals.quality_score >= 4 && (overall === 'strong_buy' || overall === 'strong_sell')) {
+                sendNotification(
+                    `🚨 ${data.symbol} ${currentLang === 'en' ? 'High Quality Signal!' : '高品質信號！'}`,
+                    `${translateAction(signals.action)} | ${currentLang === 'en' ? 'Quality' : '品質'}: ${signals.quality_score}/5 ⭐`,
+                    `quality_${data.symbol}`
+                );
             }
 
             const html = `
