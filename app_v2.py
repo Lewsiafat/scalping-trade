@@ -1746,10 +1746,90 @@ HTML_PAGE = """<!DOCTYPE html>
             align-items: center;
             gap: 10px;
             margin-top: 15px;
+            position: relative;
         }
 
         .auto-refresh label {
             margin-bottom: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* ✨ Refresh & Global Settings Popover/Modal */
+        .header-settings-btn {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px 10px !important;
+            border-radius: 6px;
+            color: var(--color-text-main);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .header-settings-btn:hover {
+            border-color: var(--color-accent);
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .global-settings-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85); /* 提高透明度 */
+            backdrop-filter: blur(8px); /* 增加毛玻璃效果避免看到後面 */
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10005;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .global-settings-modal.show {
+            display: flex;
+        }
+        
+        .global-settings-content {
+            background: var(--color-bg); /* 改用不透明底色取代 panel-bg */
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .settings-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+        
+        .settings-control input[type="number"], .settings-control select {
+            width: 100px;
+            padding: 8px 12px;
+            font-size: 16px;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            color: var(--color-accent);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
         }
 
         input[type="checkbox"] {
@@ -2293,15 +2373,25 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <button class="header-settings-btn" onclick="toggleGlobalSettings()" title="Global Settings">⚙️</button>
                 <button id="lang-en-btn" onclick="switchLang('en')" style="padding: 5px 12px; font-size: 12px; background: var(--color-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; width: auto;">EN</button>
                 <button id="lang-zh-btn" onclick="switchLang('zh_TW')" style="padding: 5px 12px; font-size: 12px; background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: 6px; cursor: pointer; font-weight: 600; width: auto;">中文</button>
             </div>
         </div>
 
-        <div style="text-align: left;">
-            <button class="sidebar-toggle-btn" onclick="toggleMainSidebar()">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="sidebar-toggle-btn" onclick="toggleMainSidebar()" style="margin: 0; padding: 10px 15px; font-size: 15px; border-radius: 8px; background: var(--color-panel-bg); color: var(--color-text-main); border: 1px solid var(--color-border); cursor: pointer; font-weight: bold; transition: all 0.3s ease;">
                 <span id="sidebar-toggle-icon">◀</span> <span data-i18n="settings_title">Settings</span>
             </button>
+            <button onclick="analyze()" style="margin: 0; padding: 10px 20px; font-size: 16px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;">
+                🔍 <span data-i18n="btn_analyze">Analyze Signal</span>
+            </button>
+            <div class="auto-refresh-large" style="display: flex; align-items: center; gap: 8px; background: var(--color-panel-bg); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--color-border);">
+                <input type="checkbox" id="auto_refresh" onchange="toggleAutoRefresh()" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-buy); margin: 0;">
+                <label for="auto_refresh" id="auto_refresh_label" style="margin: 0; font-size: 15px; font-weight: 600; cursor: pointer; user-select: none; color: var(--color-text-main);">
+                    <span data-i18n="auto_refresh">Auto-refresh</span> (<span id="refresh_sec_display">10</span>s)
+                </label>
+            </div>
         </div>
 
         <div class="main-grid" id="main-grid">
@@ -2398,12 +2488,6 @@ HTML_PAGE = """<!DOCTYPE html>
                     <input type="number" id="macd_signal" value="5" min="3" max="15">
                 </div>
 
-                <button onclick="analyze()" style="margin-top: 20px;">🔍 <span data-i18n="btn_analyze">Analyze Signal</span></button>
-
-                <div class="auto-refresh">
-                    <input type="checkbox" id="auto_refresh" onchange="toggleAutoRefresh()">
-                    <label for="auto_refresh" data-i18n="auto_refresh">Auto-refresh (10s)</label>
-                </div>
 
                 <div class="panel-title" style="margin-top: 25px;">🔧 <span data-i18n="advanced_title">Advanced</span></div>
 
@@ -2511,11 +2595,41 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
             </div>
         </div>
+        <!-- Global Settings Modal -->
+        <div id="global-settings-modal" class="global-settings-modal">
+            <div class="global-settings-content">
+                <h3 style="margin-bottom: 25px; text-align: center; font-size: 20px;">⚙️ <span data-i18n="global_settings_title">Global Settings</span></h3>
+                
+                <div class="settings-row">
+                    <div class="settings-label" data-i18n="refresh_interval">Refresh Interval (s):</div>
+                    <div class="settings-control">
+                        <input type="number" id="refresh_interval_input" min="2" max="10" value="10" oninput="updateRefreshInterval()">
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label" data-i18n="alert_cooldown">Alert Cooldown:</div>
+                    <div class="settings-control">
+                        <select id="alert_cooldown_select" onchange="updateAlertCooldown()">
+                            <option value="30000" data-i18n="cooldown_30s">30 sec</option>
+                            <option value="60000" selected data-i18n="cooldown_1m">1 min</option>
+                            <option value="180000" data-i18n="cooldown_3m">3 min</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="toggleGlobalSettings()" style="width: 100%; margin-top: 15px; padding: 12px; font-size: 16px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main);">
+                    <span data-i18n="btn_close">Close</span>
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script>
         const APP_PREFIX = window.APP_PREFIX || '';
         let autoRefreshInterval = null;
+        let currentRefreshSeconds = 10;
         let candlestickChart = null;
         let volumeChart = null;
         let lastVisibleRange = null;
@@ -2556,7 +2670,14 @@ HTML_PAGE = """<!DOCTYPE html>
                 label_macd_slow: 'MACD Slow',
                 label_macd_signal: 'MACD Signal',
                 btn_analyze: 'Analyze Signal',
-                auto_refresh: 'Auto-refresh (10s)',
+                auto_refresh: 'Auto-refresh',
+                refresh_interval: 'Refresh Interval (s):',
+                alert_cooldown: 'Alert Cooldown:',
+                cooldown_30s: '30 sec',
+                cooldown_1m: '1 min',
+                cooldown_3m: '3 min',
+                global_settings_title: 'Global Settings',
+                btn_close: 'Close',
                 advanced_title: 'Advanced',
                 btn_snapshot: 'Snapshot Manager',
                 btn_alerts: 'Alert Settings',
@@ -2760,7 +2881,14 @@ HTML_PAGE = """<!DOCTYPE html>
                 label_macd_slow: 'MACD 慢線',
                 label_macd_signal: 'MACD 信號線',
                 btn_analyze: '分析入場信號',
-                auto_refresh: '自動刷新 (10秒)',
+                auto_refresh: '自動刷新',
+                refresh_interval: '刷新間隔 (秒):',
+                alert_cooldown: '警報冷卻時間:',
+                cooldown_30s: '30 秒',
+                cooldown_1m: '1 分鐘',
+                cooldown_3m: '3 分鐘',
+                global_settings_title: '全域設定',
+                btn_close: '關閉',
                 advanced_title: '進階功能',
                 btn_snapshot: '快照管理',
                 btn_alerts: '警報設定',
@@ -3595,7 +3723,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
             if (checkbox.checked) {
                 analyze();
-                autoRefreshInterval = setInterval(analyze, 10000);
+                autoRefreshInterval = setInterval(analyze, currentRefreshSeconds * 1000);
             } else {
                 if (autoRefreshInterval) {
                     clearInterval(autoRefreshInterval);
@@ -3604,9 +3732,52 @@ HTML_PAGE = """<!DOCTYPE html>
             }
         }
 
+        function toggleRefreshSettings(event) {
+            // Deprecated inline version, kept for fallback if anything was bound.
+        }
+
+        function toggleGlobalSettings() {
+            const modal = document.getElementById('global-settings-modal');
+            modal.classList.toggle('show');
+            // Ensure inputs correctly reflect state when opening
+            if(modal.classList.contains('show')) {
+                document.getElementById('refresh_interval_input').value = currentRefreshSeconds;
+            }
+        }
+
+        // 點擊外部區域關閉 Global Settings 
+        document.getElementById('global-settings-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.classList.remove('show');
+            }
+        });
+
+        function updateRefreshInterval() {
+            let val = parseInt(document.getElementById('refresh_interval_input').value);
+            if (isNaN(val)) return;
+            
+            // 限制 2~10 秒
+            if (val < 2) val = 2;
+            if (val > 10) val = 10;
+            
+            currentRefreshSeconds = val;
+            document.getElementById('refresh_sec_display').textContent = val;
+
+            // 如果目前正在運行自動刷新，立刻重設計時器套用新時間
+            const checkbox = document.getElementById('auto_refresh');
+            if (checkbox.checked && autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = setInterval(analyze, currentRefreshSeconds * 1000);
+            }
+        }
+
         // 🔔 瀏覽器通知冷卻機制
         const notificationCooldowns = {};
-        const NOTIFICATION_COOLDOWN_MS = 60 * 1000; // 1 分鐘的冷卻時間
+        let NOTIFICATION_COOLDOWN_MS = 60000; // 預設 1 分鐘
+
+        function updateAlertCooldown() {
+            NOTIFICATION_COOLDOWN_MS = parseInt(document.getElementById('alert_cooldown_select').value);
+        }
 
         // 🔔 瀏覽器通知功能
         function sendNotification(title, body, customKey = null) {

@@ -7,8 +7,8 @@
     "value": "4",
     "enabled": true,
     "created_at": "2026-03-01T21:17:32.558854",
-    "triggered_count": 56,
-    "last_triggered": "2026-03-05T15:51:10.679041"
+    "triggered_count": 101,
+    "last_triggered": "2026-03-06T17:38:19.677299"
   },
   {
     "id": 2,
@@ -29,7 +29,7 @@
     "value": "5",
     "enabled": true,
     "created_at": "2026-03-03T17:43:46.396079",
-    "triggered_count": 17,
-    "last_triggered": "2026-03-04T15:50:00.079757"
+    "triggered_count": 56,
+    "last_triggered": "2026-03-06T17:14:59.511582"
   }
 ]
