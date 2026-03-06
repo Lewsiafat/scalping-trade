@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [3.6.0] - 2026-03-06
+
+### Added
+- **Global Settings Modal**: A new centralized settings interface accessible via the gear icon in the header.
+- **Refresh Interval Control**: Users can now customize the auto-refresh interval between 2 to 10 seconds via the Global Settings.
+- **Alert Cooldown Control**: Browser notification cooldown is now configurable with options for 30s, 1m, and 3m.
+
+### Changed
+- Moved the "Analyze Signal" button and "Auto-refresh" toggle from the settings sidebar to the top action bar for better accessibility.
+- Enlarged the click target areas for analysis and auto-refresh controls.
+- Enhanced the modal background with a darker opacity and a blur backdrop-filter to improve focus and readability over the charts.
+
 ## [3.5.0] - 2026-03-05
 
 ### Added

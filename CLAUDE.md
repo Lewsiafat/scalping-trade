@@ -68,6 +68,7 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 - Progress indicator during analysis
 - Custom UI Themes: Dynamic CSS variable management with "Soft Minimalist" aesthetic theme
 - Interactive Layouts: Horizontal sidebar folding and vertical analysis panels with `localStorage` state saving
+- Global Settings Modal: Centralized settings for customizing auto-refresh intervals and alert cooldown times.
 - **i18n**: EN (default) / ZH_TW language switcher. Static text via `data-i18n` + `applyLang()`. Dynamic text via `LANG[currentLang].key`. `translateAction()` converts API action strings (always Chinese) to current language for display only.
 
 ## Key Technical Details
@@ -78,8 +79,9 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 - URL path prefix configurable via `--prefix <PATH>` for nginx reverse proxy (default: empty)
 - Signal quality scoring combines 8 indicators with weighted contributions, capped at 0-5
 - MACD uses a simplified signal line calculation (not full EMA-based)
-- Frontend auto-refreshes every 10 seconds when enabled
+- Frontend auto-refreshes based on customizable interval (2-10 seconds, default 10s) defined in Global Settings.
 - API requests use exponential backoff retry (max 3 attempts) with error classification
+- Browser alert notifications respect a configurable cooldown duration (default 1 min) to prevent spamming.
 
 ## Language
 

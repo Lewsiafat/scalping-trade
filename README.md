@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V3.5
+# 📈 Scalping Trade Analyzer Pro V3.6
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -26,7 +26,8 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 - **🔔 Smart Alert System** – Three alert types: price, quality, and signal
 - **⚡ Quick Parameter Presets** – One-click switch between scalp / short-term / conservative strategies
 - **🎨 Custom Trading Pairs** – Add and manage a personalized instrument list
-- **🔄 Auto Refresh** – Market data auto-updates every 10 seconds
+- **🔄 Auto Refresh** – Market data auto-updates based on a customizable interval (2-10s)
+- **⚙️ Global Settings** – Centralized configuration modal for refresh intervals and notification cooldowns ✨ V3.6 NEW
 - **🌐 CLI Port Selection** – `--port <N>` / `-p <N>` to specify the listening port ✨ V3.3 NEW
 - **🔗 Nginx Sub-path Support** – `--prefix <PATH>` for reverse-proxy path prefix ✨ V3.3 NEW
 - **🎨 Custom UI Theme** – Soft Minimalist aesthetic with dynamic CSS variable management ✨ V3.4 NEW
@@ -343,7 +344,12 @@ Issues and improvement suggestions are welcome!
 
 ## 📝 Version History
 
-### V3.5.0 (2026-03-05) ✨ Latest
+### V3.6.0 (2026-03-06) ✨ Latest
+- **⚙️ Global Settings Modal**: Centralized user interface for configuring application-wide settings.
+- **🔄 Customizable Refresh & Cooldown**: Auto-refresh intervals can be set between 2-10 seconds. Browser notification cooldowns can be set to 30s, 1m, or 3m to prevent spam.
+- **🎨 UI Improvements**: Relocated Auto-Refresh and Analyze buttons to the top action bar with enlarged click areas for better usability. Enhanced modal background with a blur backdrop-filter.
+
+### V3.5.0 (2026-03-05)
 - **i18n Support**: Full internationalization with EN (default) / ZH_TW language switching
 - Language switcher in header; all static and dynamic UI text translated
 - `translateAction()` safely maps API action strings without breaking business logic
@@ -499,4 +505,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*Last updated: 2026-03-05 | Version: v3.5.0*
+*Last updated: 2026-03-06 | Version: v3.6.0*

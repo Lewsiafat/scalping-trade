@@ -59,7 +59,7 @@ def parse_prefix():
     return ''  # 預設無前綴
 
 PREFIX = parse_prefix()
-VERSION = "3.5.0"
+VERSION = "3.6.0"
 BINANCE_API = "https://api.binance.com/api/v3"
 BINANCE_FAPI = "https://fapi.binance.com/fapi/v1"
 
@@ -2356,7 +2356,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <div class="container">
         <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
             <div style="flex: 1;">
-                <h1>📊 Scalping Analyzer Pro<span class="version-badge">V3.2</span></h1>
+                <h1>📊 Scalping Analyzer Pro<span class="version-badge">V{VERSION}</span></h1>
                 <p class="subtitle" data-i18n="subtitle">Professional Scalping Trading System - Real-time Signal Analysis</p>
                 <div class="feature-tags">
                     <span class="feature-tag" data-i18n="tag_chart">📈 Live Chart</span>
