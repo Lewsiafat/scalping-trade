@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V3.6
+# 📈 Scalping Trade Analyzer Pro V4.0
 
 > 專業級實時剝頭皮交易信號分析系統 | Professional Real-time Scalping Trading Signal Analysis System
 
@@ -12,11 +12,14 @@ Scalping Trade Analyzer Pro 是一個專為剝頭皮交易者設計的實時信�
 
 ### ✨ 核心功能
 
-- **📊 8大技術指標** - RSI、EMA、MACD、ATR、布林通道、隨機指標、斐波那契
-- **📈 成交量分析** - CVD趨勢指標、成交量比率分析
+- **🏗️ SMC 引擎** - Smart Money Concepts: Order Block、Break of Structure、Fair Value Gap、Liquidity Sweep ✨ V4.0 NEW
+- **📊 三維信號評分** - 趨勢/結構/動量三維度評分（各 0-100） ✨ V4.0 NEW
+- **⚠️ 兩階段信號** - 預警→確認信號，含自動過期機制 ✨ V4.0 NEW
+- **📊 7大技術指標** - RSI（Wilder's）、EMA、MACD、ATR、布林通道、隨機指標
+- **📈 成交量分析** - CVD趨勢指標（taker_buy_base_volume）、成交量比率分析
 - **⏱️ 多時間框架確認** - 自動檢查更高時間框架趨勢，過濾假信號
-- **🎯 動態止損止盈** - 基於ATR指標自動計算風險報酬比
-- **⭐ 信號品質評分** - 0-5星智能評分系統
+- **🎯 動態止損止盈** - 結構錨點止損止盈 + ATR clamp，R:R 驗證 ✨ V4.0 NEW
+- **⭐ 信號品質評分** - 舊版 0-5 星（三維平均映射）+ 新版三維進度條
 - **📉 即時 K 線圖表** - TradingView Lightweight Charts 即時顯示 <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **🔄 智能重試機制** - 指數退避 + 錯誤分類，API 請求更穩定 <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **💬 Toast 通知系統** - 取代原生 alert()，進度指示器 <span style="color: #ef4444;">✨ V3.2 NEW</span>
@@ -49,13 +52,13 @@ git clone git@github.com:Lewsiafat/scalping-trade.git
 cd scalping-trade
 
 # 2. 直接運行（無需安裝依賴）
-python3 app_v2.py
+python3 app_v3.py
 
 # 可選：指定 port（預設 80）
-python3 app_v2.py --port 8080
+python3 app_v3.py --port 8080
 
 # 可選：nginx 子路徑部署（例如 /scalping）
-python3 app_v2.py --port 9000 --prefix /scalping
+python3 app_v3.py --port 9000 --prefix /scalping
 
 # 3. 訪問應用
 # 在瀏覽器開啟: http://localhost:80
@@ -72,20 +75,20 @@ python3 app_v2.py --port 9000 --prefix /scalping
 - **用途**: 判斷市場超買超賣狀態
 
 ### 2. EMA（指數移動平均）
-- **快速 EMA**: 5（適合剝頭皮）
-- **慢速 EMA**: 20
+- **快速 EMA**: 9（適合剝頭皮）
+- **慢速 EMA**: 21
 - **用途**: 判斷短期趨勢方向
 
 ### 3. MACD（平滑異同移動平均）
-- **快線**: 5
-- **慢線**: 20
-- **信號線**: 5
+- **快線**: 12
+- **慢線**: 26
+- **信號線**: 9（EMA 計算）
 - **用途**: 捕捉動能變化與交叉信號
 
 ### 4. ATR（平均真實波幅）
 - **週期**: 14
-- **止損距離**: 1.5倍ATR
-- **風險報酬比**: 1:2（可調整）
+- **止損距離**: 結構錨點 + ATR clamp(1.0, 2.5)
+- **風險報酬比**: ≥ 1:1（低於此值不發信號）
 
 ### 5. 布林通道 ✨ V3 NEW
 - **週期**: 20
@@ -100,17 +103,12 @@ python3 app_v2.py --port 9000 --prefix /scalping
 - **超賣線**: 20
 - **用途**: 動量指標，判斷超買超賣
 
-### 7. 斐波那契回撤 ✨ V3 NEW
-- **關鍵水平**: 0.236, 0.382, 0.5, 0.618, 0.786
-- **用途**: 識別潛在支撐與壓力位
-- **計算**: 基於最近50根K線的高低點
-
-### 8. 成交量分析
+### 7. 成交量分析
 - **成交量比率**: 當前成交量 / 平均成交量
 - **CVD趨勢**: 累積成交量差異（Cumulative Volume Delta）
 - **信號分級**: 強/正常/弱
 
-### 9. 多時間框架
+### 8. 多時間框架
 - **1分鐘** → 檢查 5分鐘趨勢
 - **5分鐘** → 檢查 15分鐘趨勢
 - **15分鐘** → 檢查 1小時趨勢
@@ -283,13 +281,15 @@ TP2: $65,450 (報酬 $450)
 
 ```
 scalping-trade/
-├── app_v2.py           # 主程式（包含前後端）
+├── app_v3.py           # 主程式 v4.0.0（前後端 + SMC 引擎）
+├── app_v2.py           # 舊版 v3.6.0（保留參考）
 ├── README.md           # 專案說明（英文）
 ├── README.zh-TW.md     # 專案說明（繁體中文）
 ├── CLAUDE.md           # Claude Code 專案指引
 ├── CHANGELOG.md        # 版本變更記錄（英文）
 ├── CHANGELOG.zh-TW.md  # 版本變更記錄（繁體中文）
 ├── SPEC.md            # 技術規格
+├── specs/             # 任務規格與 walkthrough
 ├── docs/
 │   └── improv_plan.md  # 改善計畫
 └── LICENSE            # MIT 授權
@@ -342,7 +342,16 @@ scalping-trade/
 
 ## 📝 版本歷史
 
-### V3.6.0 (2026-03-06) ✨ 最新版本
+### V4.0.0 (2026-03-09) ✨ 最新版本
+- **🏗️ SMC 引擎**: Smart Money Concepts — Swing Points、BOS、Order Block、FVG、Liquidity Sweep。
+- **📊 三維信號評分**: 趨勢/結構/動量（各 0-100），取代舊版星級評分。
+- **⚠️ 兩階段信號**: 預警（接近結構）→ 確認信號，含自動過期機制。
+- **🎯 動態止損止盈**: 結構錨點 + ATR clamp，R:R < 1.0 不發信號。
+- **🔧 指標修正**: RSI（Wilder's）、MACD（EMA 信號線 12/26/9）、Stoch（SMA %D）、EMA（9/21）。刪除 Fibonacci。
+- **🎨 新前端**: 三維進度條、預警橘色 UI、信號類型標籤、R:R 視覺提示。
+- **📦 新入口**: `app_v3.py` (v4.0.0)，原 `app_v2.py` 保留為 v3.6.0 參考。
+
+### V3.6.0 (2026-03-06)
 - **⚙️ 全域設定視窗**: 在頁首新增集中式設定介面。
 - **🔄 自訂自動刷新與冷卻時間**: 使用者能自訂 2 到 10 秒的自動刷新頻率，並可調整 30秒、1分鐘 或 3分鐘的瀏覽器通知冷卻時間以防止洗版。
 - **🎨 UI 介面優化**: 將「分析入場信號」與「自動刷新」移至頂部主要按鈕列，放大點擊區域。浮動視窗背景加上毛玻璃效果，增強閱讀性。
@@ -503,4 +512,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*最後更新: 2026-03-06 | 版本: v3.6.0*
+*最後更新: 2026-03-09 | 版本: v4.0.0*

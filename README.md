@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V3.6
+# 📈 Scalping Trade Analyzer Pro V4.0
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -14,11 +14,14 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 
 ### ✨ Core Features
 
-- **📊 8 Technical Indicators** – RSI, EMA, MACD, ATR, Bollinger Bands, Stochastic, Fibonacci
-- **📈 Volume Analysis** – CVD trend indicator, volume ratio analysis
+- **🏗️ SMC Engine** – Smart Money Concepts: Order Blocks, Break of Structure, Fair Value Gaps, Liquidity Sweep ✨ V4.0 NEW
+- **📊 3D Signal Scoring** – Three-dimensional scoring (Trend / Structure / Momentum, each 0-100) ✨ V4.0 NEW
+- **⚠️ Two-Stage Signals** – Pre-alert → Confirmed signal with automatic expiry mechanism ✨ V4.0 NEW
+- **📊 7 Technical Indicators** – RSI (Wilder's), EMA, MACD, ATR, Bollinger Bands, Stochastic
+- **📈 Volume Analysis** – CVD trend (taker_buy_base_volume), volume ratio analysis
 - **⏱️ Multi-Timeframe Confirmation** – Automatically checks higher timeframe trends to filter false signals
-- **🎯 Dynamic Stop-Loss / Take-Profit** – Automatically calculates risk-reward ratio based on ATR
-- **⭐ Signal Quality Score** – Smart 0–5 star rating system
+- **🎯 Dynamic Stop-Loss / Take-Profit** – Structure-anchored SL/TP with ATR clamp and R:R validation ✨ V4.0 NEW
+- **⭐ Signal Quality Score** – Legacy 0–5 star rating (mapped from 3D average) + new 3D progress bars
 - **📉 Live Candlestick Chart** – Real-time display via TradingView Lightweight Charts <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **🔄 Smart Retry Mechanism** – Exponential backoff + error classification for stable API requests <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **💬 Toast Notification System** – Replaces native `alert()` with a progress indicator <span style="color: #ef4444;">✨ V3.2 NEW</span>
@@ -51,13 +54,13 @@ git clone git@github.com:Lewsiafat/scalping-trade.git
 cd scalping-trade
 
 # 2. Run directly (no dependencies needed)
-python3 app_v2.py
+python3 app_v3.py
 
 # Optional: specify a port (default: 80)
-python3 app_v2.py --port 8080
+python3 app_v3.py --port 8080
 
 # Optional: deploy under an nginx sub-path (e.g. /scalping)
-python3 app_v2.py --port 9000 --prefix /scalping
+python3 app_v3.py --port 9000 --prefix /scalping
 
 # 3. Open the application
 # Visit in browser: http://localhost:80
@@ -74,20 +77,20 @@ python3 app_v2.py --port 9000 --prefix /scalping
 - **Purpose**: Identifies overbought / oversold market conditions
 
 ### 2. EMA (Exponential Moving Average)
-- **Fast EMA**: 5 (optimized for scalping)
-- **Slow EMA**: 20
+- **Fast EMA**: 9 (optimized for scalping)
+- **Slow EMA**: 21
 - **Purpose**: Determines short-term trend direction
 
 ### 3. MACD (Moving Average Convergence Divergence)
-- **Fast Line**: 5
-- **Slow Line**: 20
-- **Signal Line**: 5
+- **Fast Line**: 12
+- **Slow Line**: 26
+- **Signal Line**: 9 (EMA-based)
 - **Purpose**: Captures momentum changes and crossover signals
 
 ### 4. ATR (Average True Range)
 - **Period**: 14
-- **Stop-Loss Distance**: 1.5× ATR
-- **Risk-Reward Ratio**: 1:2 (adjustable)
+- **Stop-Loss Distance**: Structure-anchored, ATR clamp(1.0, 2.5)
+- **Risk-Reward Ratio**: ≥ 1:1 required (signals rejected below)
 
 ### 5. Bollinger Bands ✨ V3 NEW
 - **Period**: 20
@@ -102,17 +105,12 @@ python3 app_v2.py --port 9000 --prefix /scalping
 - **Oversold**: 20
 - **Purpose**: Momentum indicator for identifying overbought/oversold levels
 
-### 7. Fibonacci Retracement ✨ V3 NEW
-- **Key Levels**: 0.236, 0.382, 0.5, 0.618, 0.786
-- **Purpose**: Identifies potential support and resistance levels
-- **Calculation**: Based on the high/low of the last 50 candles
-
-### 8. Volume Analysis
+### 7. Volume Analysis
 - **Volume Ratio**: Current volume / Average volume
 - **CVD Trend**: Cumulative Volume Delta
 - **Signal Grades**: Strong / Normal / Weak
 
-### 9. Multi-Timeframe
+### 8. Multi-Timeframe
 - **1m** → Checks 5m trend
 - **5m** → Checks 15m trend
 - **15m** → Checks 1h trend
@@ -285,13 +283,15 @@ Assume account balance: $10,000
 
 ```
 scalping-trade/
-├── app_v2.py            # Main application (frontend + backend)
+├── app_v3.py            # Main application v4.0.0 (frontend + backend, SMC engine)
+├── app_v2.py            # Legacy v3.6.0 (kept as reference)
 ├── README.md            # Project documentation (English)
 ├── README.zh-TW.md      # Project documentation (Traditional Chinese)
 ├── CLAUDE.md            # Claude Code project guide
 ├── CHANGELOG.md         # Version change log (English)
 ├── CHANGELOG.zh-TW.md   # Version change log (Traditional Chinese)
 ├── SPEC.md              # Technical specification
+├── specs/               # Task specs & walkthroughs
 ├── docs/
 │   └── improv_plan.md   # Improvement plan
 └── LICENSE              # MIT License
@@ -344,7 +344,16 @@ Issues and improvement suggestions are welcome!
 
 ## 📝 Version History
 
-### V3.6.0 (2026-03-06) ✨ Latest
+### V4.0.0 (2026-03-09) ✨ Latest
+- **🏗️ SMC Engine**: Smart Money Concepts — Swing Points, BOS, Order Blocks, FVG, Liquidity Sweep.
+- **📊 3D Signal Scoring**: Trend / Structure / Momentum (0-100 each), replacing old star rating.
+- **⚠️ Two-Stage Signals**: Pre-alert (approaching structure) → Confirmed signal with expiry.
+- **🎯 Dynamic SL/TP**: Structure-anchored with ATR clamp. R:R < 1.0 rejects signal.
+- **🔧 Indicator Fixes**: RSI (Wilder's), MACD (EMA signal 12/26/9), Stoch (SMA %D), EMA (9/21). Fibonacci removed.
+- **🎨 New Frontend**: 3D progress bars, pre-alert orange UI, signal type labels, R:R visual indicators.
+- **📦 New Entry Point**: `app_v3.py` (v4.0.0). Original `app_v2.py` preserved as v3.6.0 reference.
+
+### V3.6.0 (2026-03-06)
 - **⚙️ Global Settings Modal**: Centralized user interface for configuring application-wide settings.
 - **🔄 Customizable Refresh & Cooldown**: Auto-refresh intervals can be set between 2-10 seconds. Browser notification cooldowns can be set to 30s, 1m, or 3m to prevent spam.
 - **🎨 UI Improvements**: Relocated Auto-Refresh and Analyze buttons to the top action bar with enlarged click areas for better usability. Enhanced modal background with a blur backdrop-filter.
@@ -505,4 +514,4 @@ SOFTWARE.
 
 **Built with** ❤️ **by traders, for traders**
 
-*Last updated: 2026-03-06 | Version: v3.6.0*
+*Last updated: 2026-03-09 | Version: v4.0.0*

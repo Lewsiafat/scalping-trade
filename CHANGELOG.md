@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.0.0] - 2026-03-09
+
+### Added
+- **SMC Engine**: Smart Money Concepts analysis — Swing Points, Break of Structure (BOS), Order Blocks (OB), Fair Value Gaps (FVG), Liquidity Sweep detection.
+- **3D Signal Scoring**: Three-dimensional scoring system (Trend / Structure / Momentum, each 0-100) replaces the old 0-5 star quality score.
+- **Two-Stage Signals**: Pre-alert (approaching key structure) → Confirmed signal (3D thresholds + R:R met) with automatic expiry mechanism.
+- **Dynamic SL/TP**: Structure-anchored stop-loss/take-profit with ATR clamp(1.0, 2.5). Signals rejected when R:R < 1.0.
+- **Signal Labels**: Categorized signal types — OB Entry, Sweep Confirm, FVG Support, Indicator Confluence.
+- **3D Progress Bars**: Frontend tri-color progress bars (Trend purple / Structure gold / Momentum green) replacing star display.
+- **Pre-Alert UI**: Orange gradient action card for pre-alerts with structure proximity message.
+- **R:R Visual Indicator**: Risk-reward ratio display with status icons (≥2.0 ✅ / ≥1.5 🟡 / <1.5 ⚠️).
+- **app_v3.py**: New main entry point (v4.0.0). Original `app_v2.py` preserved as v3.6.0 reference.
+
+### Changed
+- **RSI**: Switched to Wilder's smoothing method.
+- **MACD**: Signal line changed to EMA(9), default parameters 12/26/9.
+- **Stochastic**: %D changed to SMA(%K, 3).
+- **EMA**: Default periods changed to 9/21.
+- **Volume CVD**: Now uses `taker_buy_base_volume` with window size 20.
+- **K-line requests**: Increased from 100 to 150 candles.
+- **Data pipeline**: Added `validate_kline_data()` validation layer and `fetch_klines_cached()` MTF memory cache.
+- **API response**: Added 7 new fields — `trend_score`, `structure_score`, `momentum_score`, `signal_label`, `signal_stage`, `pre_alert`, `smc`.
+- **i18n**: Added 13 new LANG keys per language for SMC terminology.
+
+### Removed
+- **Fibonacci Retracement**: Removed `calculate_fibonacci_levels()` method and all references (frontend UI included).
+
 ## [3.6.0] - 2026-03-06
 
 ### Added
