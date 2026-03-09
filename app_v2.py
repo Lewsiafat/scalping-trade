@@ -1140,7 +1140,7 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
                 '<head>',
                 f'<head><script>window.APP_PREFIX = "{PREFIX}"; window.APP_VERSION = "{VERSION}";</script>',
                 1
-            ).replace('V3.2', f'V{VERSION}')
+            ).replace('V{VERSION}', f'V{VERSION}')
             self.wfile.write(html.encode('utf-8'))
         elif self.path.startswith(p + '/api/analyze'):
             self.handle_api_analyze()
@@ -1536,7 +1536,7 @@ HTML_PAGE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scalping Analyzer Pro V3.5 | 剝頭皮交易分析器</title>
+    <title>Scalping Analyzer Pro V{VERSION} | 剝頭皮交易分析器</title>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
 
