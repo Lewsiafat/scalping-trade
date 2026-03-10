@@ -1496,7 +1496,7 @@ class ScalpingAnalyzerPro:
 
     @staticmethod
     def calc_momentum_score(rsi, macd_line, signal_line, histogram, stoch_k, stoch_d,
-                            volume_analysis, data):
+                            volume_analysis, data, prev_histogram=None, atr=None):
         """計算動量分數 (0-100)
         RSI 反轉(+20) + RSI 背離(+15) + MACD 柱翻(+20) + MACD 叉(+10) +
         Stoch 叉(+10) + 放量(+15) + 縮量(-10) + taker_buy>60%(+10)
@@ -1521,20 +1521,33 @@ class ScalpingAnalyzerPro:
             elif max(closes_recent) > max(closes_prev) and rsi < 65:
                 score += 15  # 看空背離
 
-        # MACD 柱翻 (+20)：histogram 從負轉正或從正轉負
+        # MACD 柱翻 (+20)：比較前後兩根 histogram 符號穿越（相對判斷，適用各價格資產）
         if histogram is not None:
-            if 0 < histogram < 0.5:
-                score += 20  # 剛從負轉正
-            elif -0.5 < histogram < 0:
-                score += 20  # 剛從正轉負
+            if prev_histogram is not None:
+                if prev_histogram <= 0 < histogram:
+                    score += 20  # 從負轉正（多頭柱翻）
+                elif prev_histogram >= 0 > histogram:
+                    score += 20  # 從正轉負（空頭柱翻）
+            elif atr and atr > 0 and abs(histogram) < atr * 0.05:
+                # fallback：histogram 極小代表接近穿越
+                score += 10
 
-        # MACD 叉 (+10)
+        # MACD 叉 (+10)：用 ATR 正規化閾值，避免絕對值問題
         if macd_line is not None and signal_line is not None:
             diff = macd_line - signal_line
-            if 0 < diff < 0.3:
-                score += 10  # 金叉
-            elif -0.3 < diff < 0:
-                score += 10  # 死叉
+            if atr and atr > 0:
+                threshold = atr * 0.1
+                if 0 < diff < threshold:
+                    score += 10  # 金叉（差距在 ATR 10% 內）
+                elif -threshold < diff < 0:
+                    score += 10  # 死叉
+            else:
+                # 無 ATR 時用相對比例
+                denom = abs(macd_line) + 1e-8
+                if 0 < diff / denom < 0.15:
+                    score += 10
+                elif -0.15 < diff / denom < 0:
+                    score += 10
 
         # Stochastic 叉 (+10)
         if stoch_k is not None and stoch_d is not None:
@@ -1841,6 +1854,10 @@ class ScalpingAnalyzerPro:
         macd_line, signal_line, histogram = ScalpingAnalyzerPro.calculate_macd(
             closes, params['macd_fast'], params['macd_slow'], params['macd_signal']
         )
+        # 取前一根 histogram 用於穿越判斷（相對判斷，避免絕對值問題）
+        _, _, prev_histogram = ScalpingAnalyzerPro.calculate_macd(
+            closes[:-1], params['macd_fast'], params['macd_slow'], params['macd_signal']
+        )
         atr = ScalpingAnalyzerPro.calculate_atr(data, 14)
         bb_upper, bb_middle, bb_lower = ScalpingAnalyzerPro.calculate_bollinger_bands(closes, 20, 2)
         stoch_k, stoch_d = ScalpingAnalyzerPro.calculate_stochastic(data, 14, 3)
@@ -1865,7 +1882,7 @@ class ScalpingAnalyzerPro:
         )
         momentum_score = ScalpingAnalyzerPro.calc_momentum_score(
             rsi, macd_line, signal_line, histogram, stoch_k, stoch_d,
-            volume_analysis, data
+            volume_analysis, data, prev_histogram=prev_histogram, atr=atr
         )
 
         # 向後相容：quality_score = 三維平均映射到 0-5
@@ -1923,10 +1940,14 @@ class ScalpingAnalyzerPro:
                         order_blocks, fvgs, sweeps, current_price, atr
                     )
             else:
-                # 三維達標但無預警 → 降級為觀望
-                overall = 'neutral'
-                action = '觀望 WAIT'
-                signal_type = None
+                # 方案 A：三維達標但無預警 → 仍發出信號，不帶 confirmed badge
+                sl_tp = ScalpingAnalyzerPro.calc_dynamic_sl_tp(
+                    current_price, atr, signal_type, order_blocks, fvgs, swing_points
+                )
+                signal_stage = None  # 無結構確認，無 badge
+                signal_label = ScalpingAnalyzerPro.determine_signal_label(
+                    order_blocks, fvgs, sweeps, current_price, atr
+                )
         elif pre_alert_triggered:
             signal_stage = 'pre_alert'
 
