@@ -1444,11 +1444,11 @@ class ScalpingAnalyzerPro:
                 score += 30
                 active_ob = ob
                 break
-            # 接近 OB（距離 ≤ ATR×0.5）
+            # 接近 OB（距離 ≤ ATR×0.5），放寬給分
             if atr and atr > 0:
                 dist_to_ob = min(abs(current_price - ob['top']), abs(current_price - ob['bottom']))
                 if dist_to_ob <= atr * 0.5:
-                    score += 20
+                    score += 25  # 提升接近 OB 的分數
                     active_ob = ob
                     break
 
@@ -1470,8 +1470,14 @@ class ScalpingAnalyzerPro:
                     for fvg in fvgs:
                         dist = min(abs(current_price - fvg['top']), abs(current_price - fvg['bottom']))
                         if dist <= atr * 0.5:
-                            score += 10
+                            score += 15  # 提升接近 FVG 的分數
                             break
+
+        # 基礎結構分數 (+10)
+        if active_ob and bos_list:
+             last_bos = bos_list[-1]
+             if active_ob['type'] == last_bos['direction']:
+                  score += 10
 
         # Sweep 確認 (+25)：最近有 Sweep 發生
         if sweeps:
@@ -1503,7 +1509,7 @@ class ScalpingAnalyzerPro:
         """
         score = 0
 
-        # RSI 反轉 (+20)：從超賣/超買區回來
+        # RSI 反轉 (+20) 或 合理區間 (+10)
         if rsi is not None:
             if 30 <= rsi <= 40:
                 score += 20  # 從超賣區反轉
@@ -1511,6 +1517,13 @@ class ScalpingAnalyzerPro:
                 score += 20  # 從超買區反轉
             elif rsi < 25 or rsi > 75:
                 score += 10  # 極端區域，可能反轉
+            elif 40 < rsi < 55:
+                # 合理偏離區間給予基礎分
+                if macd_line is not None and macd_line > 0:
+                    score += 10
+            elif 45 < rsi < 60:
+                if macd_line is not None and macd_line < 0:
+                    score += 10
 
         # RSI 背離 (+15)：簡化版 — 價格新低但 RSI 未新低（或反向）
         if rsi is not None and len(data) >= 20:
@@ -1532,7 +1545,7 @@ class ScalpingAnalyzerPro:
                 # fallback：histogram 極小代表接近穿越
                 score += 10
 
-        # MACD 叉 (+10)：用 ATR 正規化閾值，避免絕對值問題
+        # MACD 叉 (+10) 或 同向 (+10)：用 ATR 正規化閾值，避免絕對值問題
         if macd_line is not None and signal_line is not None:
             diff = macd_line - signal_line
             if atr and atr > 0:
@@ -1541,12 +1554,20 @@ class ScalpingAnalyzerPro:
                     score += 10  # 金叉（差距在 ATR 10% 內）
                 elif -threshold < diff < 0:
                     score += 10  # 死叉
+                elif diff > threshold and macd_line > 0:
+                    score += 10  # 同向做多基礎分
+                elif diff < -threshold and macd_line < 0:
+                    score += 10  # 同向做空基礎分
             else:
                 # 無 ATR 時用相對比例
                 denom = abs(macd_line) + 1e-8
                 if 0 < diff / denom < 0.15:
                     score += 10
                 elif -0.15 < diff / denom < 0:
+                    score += 10
+                elif diff / denom >= 0.15 and macd_line > 0:
+                    score += 10
+                elif diff / denom <= -0.15 and macd_line < 0:
                     score += 10
 
         # Stochastic 叉 (+10)
@@ -1556,10 +1577,12 @@ class ScalpingAnalyzerPro:
             elif stoch_k < stoch_d and stoch_k > 70:
                 score += 10  # 高位死叉
 
-        # 放量 (+15) / 縮量 (-10)
+        # 放量 (+15) / 普通 (+5) / 縮量 (-10)
         if volume_analysis:
             if volume_analysis.get('signal') == 'strong':
                 score += 15
+            elif volume_analysis.get('signal') == 'normal':
+                score += 5
             elif volume_analysis.get('signal') == 'weak':
                 score -= 10
 
@@ -1885,25 +1908,25 @@ class ScalpingAnalyzerPro:
             volume_analysis, data, prev_histogram=prev_histogram, atr=atr
         )
 
-        # 向後相容：quality_score = 三維平均映射到 0-5
-        quality_score = round((trend_score + structure_score + momentum_score) / 3 / 20, 1)
+        # 品質評分轉換 (Quality Score)：滿分 300 分
+        quality_score = round((trend_score + structure_score + momentum_score) / 2.5 / 20, 1)
         quality_score = max(0, min(5, quality_score))
 
-        # 信號判定
+        # 信號判定（調降門檻）
         signal_type = None
-        if trend_score >= 65 and structure_score >= 60 and momentum_score >= 55:
+        if trend_score >= 60 and structure_score >= 45 and momentum_score >= 45 and (structure_score + momentum_score) >= 100:
             overall = 'strong_buy'
             action = '強烈買入 BUY'
             signal_type = 'buy'
-        elif trend_score >= 55 and structure_score >= 45 and momentum_score >= 45:
+        elif trend_score >= 50 and structure_score >= 35 and momentum_score >= 35 and (structure_score + momentum_score) >= 80:
             overall = 'buy'
             action = '考慮買入'
             signal_type = 'buy'
-        elif trend_score <= 35 and structure_score >= 60 and momentum_score >= 55:
+        elif trend_score <= 40 and structure_score >= 45 and momentum_score >= 45 and (structure_score + momentum_score) >= 100:
             overall = 'strong_sell'
             action = '強烈賣出 SELL'
             signal_type = 'sell'
-        elif trend_score <= 45 and structure_score >= 45 and momentum_score >= 45:
+        elif trend_score <= 50 and structure_score >= 35 and momentum_score >= 35 and (structure_score + momentum_score) >= 80:
             overall = 'sell'
             action = '考慮賣出'
             signal_type = 'sell'
