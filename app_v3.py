@@ -2289,8 +2289,8 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
                 })
 
             # ✨ V3.2: 計算 overlay 序列
-            ema_fast_series = ScalpingAnalyzerPro.compute_ema_series(closes, ema_fast)
-            ema_slow_series = ScalpingAnalyzerPro.compute_ema_series(closes, ema_slow)
+            ema_fast_series = ScalpingAnalyzerPro.compute_ema_series(closes, FIXED_PARAMS['ema_fast'])
+            ema_slow_series = ScalpingAnalyzerPro.compute_ema_series(closes, FIXED_PARAMS['ema_slow'])
             bb_upper_series, bb_lower_series = ScalpingAnalyzerPro.compute_bb_series(closes, 20, 2)
 
             def build_time_series(values, kline_data):
