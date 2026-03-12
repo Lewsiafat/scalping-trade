@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.1
+# 📈 Scalping Trade Analyzer Pro V4.2
 
 > 專業級實時剝頭皮交易信號分析系統 | Professional Real-time Scalping Trading Signal Analysis System
 
@@ -26,7 +26,7 @@ Scalping Trade Analyzer Pro 是一個專為剝頭皮交易者設計的實時信�
 - **💬 Toast 通知系統** - 取代原生 alert()，進度指示器 <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **📸 策略快照增強** - 刪除、CSV匯出、多條件搜尋篩選
 - **🔔 智能警報系統** - 價格/品質/信號三種警報類型
-- **⚡ 參數快速預設** - 超短線/短線/穩健三種策略一鍵切換
+- **⚡ 固定 5m+15m 框架** - 針對手動剝頭皮最佳化，15m MTF 確認 ✨ V4.2 簡化
 - **🎨 自訂交易對** - 新增與管理個人化交易商品清單
 - **🔄 自動刷新** - 自動更新市場數據，可自訂頻率 (2-10秒)
 - **⚙️ 全域設定視窗** - 集中式設定介面供調整更新頻率及警報冷卻時間 ✨ V3.6 NEW
@@ -282,7 +282,7 @@ TP2: $65,450 (報酬 $450)
 
 ```
 scalping-trade/
-├── app_v3.py              # 主程式 v4.1.0（前後端 + SMC 引擎）
+├── app_v3.py              # 主程式 v4.2.0（前後端 + SMC 引擎，固定 5m+15m）
 ├── app_v2.py              # 舊版 v3.6.0（保留參考）
 ├── signal_engine_b.py     # 方案 B 條件累積引擎（A/B 測試用）
 ├── test_signal_compare.py # A/B 信號引擎對比測試腳本

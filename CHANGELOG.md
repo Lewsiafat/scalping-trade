@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.2.0] - 2026-03-12
+
+### Removed
+- **PresetManager**: Removed `PresetManager` class and `/api/presets` endpoint. Three presets (scalping/daytrading/conservative) caused parameter-threshold mismatch and added unnecessary complexity.
+- **Interval Selection**: Removed interval dropdown and all interval-related API parameters. Manual scalping on 1m is impractical (signal expires before order placement).
+- **Indicator Parameter Controls**: Removed RSI/EMA/MACD settings UI. Parameters are now fixed and optimized for the 5m+15m combination.
+
+### Changed
+- **Fixed 5m Framework**: Analysis now uses fixed 5m interval with 15m MTF confirmation. All scoring thresholds are aligned to this combination.
+- **Simplified API**: `/api/analyze` only requires `symbol` parameter. All indicator parameters use `FIXED_PARAMS` (RSI 14, EMA 9/21, MACD 12/26/9).
+- **Simplified Sidebar**: Only trading pair selector, analyze button, auto-refresh, and advanced tools remain.
+
 ## [4.1.0] - 2026-03-12
 
 ### Added

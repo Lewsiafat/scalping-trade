@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.1
+# 📈 Scalping Trade Analyzer Pro V4.2
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -28,7 +28,7 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 - **💬 Toast Notification System** – Replaces native `alert()` with a progress indicator <span style="color: #ef4444;">✨ V3.2 NEW</span>
 - **📸 Enhanced Strategy Snapshots** – Delete, CSV export, multi-condition search & filter
 - **🔔 Smart Alert System** – Three alert types: price, quality, and signal
-- **⚡ Quick Parameter Presets** – One-click switch between scalp / short-term / conservative strategies
+- **⚡ Fixed 5m+15m Framework** – Optimized for manual scalping with 15m MTF confirmation ✨ V4.2 SIMPLIFIED
 - **🎨 Custom Trading Pairs** – Add and manage a personalized instrument list
 - **🔄 Auto Refresh** – Market data auto-updates based on a customizable interval (2-10s)
 - **⚙️ Global Settings** – Centralized configuration modal for refresh intervals and notification cooldowns ✨ V3.6 NEW
@@ -284,7 +284,7 @@ Assume account balance: $10,000
 
 ```
 scalping-trade/
-├── app_v3.py            # Main application v4.1.0 (frontend + backend, SMC engine)
+├── app_v3.py            # Main application v4.2.0 (frontend + backend, SMC engine, fixed 5m+15m)
 ├── app_v2.py            # Legacy v3.6.0 (kept as reference)
 ├── signal_engine_b.py   # Alternative signal engine (boolean condition accumulation) for A/B testing
 ├── test_signal_compare.py # A/B signal engine comparison test script

@@ -6,6 +6,18 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.2.0] - 2026-03-12
+
+### 移除
+- **PresetManager**：移除 `PresetManager` class 和 `/api/presets` endpoint。三套預設（超短線/當沖/穩健）造成參數與閾值不匹配。
+- **Interval 選擇**：移除時間框架下拉選單及相關 API 參數。1m 手動下單根本來不及。
+- **指標參數調整**：移除 RSI/EMA/MACD 設定 UI。參數固定並針對 5m+15m 最佳化。
+
+### 變更
+- **固定 5m 框架**：分析使用固定 5m 主框架 + 15m MTF 確認，所有評分閾值對齊此組合。
+- **API 簡化**：`/api/analyze` 只需 `symbol` 參數，指標參數使用 `FIXED_PARAMS`。
+- **側邊欄簡化**：僅保留交易對選擇、分析按鈕、自動刷新、進階工具。
+
 ## [4.1.0] - 2026-03-12
 
 ### 新增

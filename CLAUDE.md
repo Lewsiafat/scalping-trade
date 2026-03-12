@@ -23,7 +23,7 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 
 ## Architecture
 
-**Current version**: `app_v3.py` (v4.1.0). Legacy `app_v2.py` (v3.6.0) kept as reference.
+**Current version**: `app_v3.py` (v4.2.0). Legacy `app_v2.py` (v3.6.0) kept as reference.
 
 **Single-file monolith** (`app_v3.py`): Backend HTTP server + embedded frontend (HTML/CSS/JS as string literals) in one file.
 
