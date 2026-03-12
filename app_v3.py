@@ -540,73 +540,19 @@ class AlertManager:
             return []
 
 
-class PresetManager:
-    """參數預設組合管理器"""
 
-    # 預設參數組合
-    PRESETS = {
-        'scalping': {
-            'name': '超短線剝頭皮',
-            'description': '適合1-3分鐘快速進出，高頻交易',
-            'params': {
-                'interval': '1m',
-                'rsi_period': 7,
-                'rsi_overbought': 75,
-                'rsi_oversold': 25,
-                'ema_fast': 3,
-                'ema_slow': 10,
-                'macd_fast': 3,
-                'macd_slow': 10,
-                'macd_signal': 3,
-                'atr_period': 7,
-                'risk_reward': 1.5
-            }
-        },
-        'daytrading': {
-            'name': '短線當沖',
-            'description': '適合5-15分鐘，日內交易',
-            'params': {
-                'interval': '5m',
-                'rsi_period': 14,
-                'rsi_overbought': 70,
-                'rsi_oversold': 30,
-                'ema_fast': 9,
-                'ema_slow': 21,
-                'macd_fast': 12,
-                'macd_slow': 26,
-                'macd_signal': 9,
-                'atr_period': 14,
-                'risk_reward': 2
-            }
-        },
-        'conservative': {
-            'name': '穩健策略',
-            'description': '適合15分鐘以上，降低假信號',
-            'params': {
-                'interval': '15m',
-                'rsi_period': 21,
-                'rsi_overbought': 65,
-                'rsi_oversold': 35,
-                'ema_fast': 8,
-                'ema_slow': 34,
-                'macd_fast': 12,
-                'macd_slow': 26,
-                'macd_signal': 9,
-                'atr_period': 21,
-                'risk_reward': 2.5
-            }
-        }
-    }
-
-    @staticmethod
-    def get_presets():
-        """獲取所有預設組合"""
-        return PresetManager.PRESETS
-
-    @staticmethod
-    def get_preset(preset_name):
-        """獲取特定預設組合"""
-        return PresetManager.PRESETS.get(preset_name)
+# 固定分析參數（5m 主框架，針對手動剝頭皮最佳化）
+FIXED_PARAMS = {
+    'interval': '5m',
+    'rsi_period': 14,
+    'rsi_overbought': 70,
+    'rsi_oversold': 30,
+    'ema_fast': 9,
+    'ema_slow': 21,
+    'macd_fast': 12,
+    'macd_slow': 26,
+    'macd_signal': 9,
+}
 
 
 class SymbolManager:
@@ -948,18 +894,10 @@ class ScalpingAnalyzerPro:
         }
 
     @staticmethod
-    def multi_timeframe_analysis(symbol, current_interval):
-        """✨ 功能2: 多時間框架分析"""
+    def multi_timeframe_analysis(symbol, current_interval='5m'):
+        """✨ 功能2: 多時間框架分析（固定 15m 確認）"""
         try:
-            # 根據當前時間框架，選擇更大的時間框架
-            timeframe_map = {
-                '1m': '5m',
-                '3m': '15m',
-                '5m': '15m',
-                '15m': '1h'
-            }
-
-            higher_tf = timeframe_map.get(current_interval, '15m')
+            higher_tf = '15m'  # 固定 15m 作為 MTF 確認
 
             # 獲取更大時間框架數據（使用快取）
             data = fetch_klines_cached(symbol, higher_tf, limit=50)
@@ -2021,7 +1959,7 @@ class ScalpingAnalyzerPro:
         """綜合信號分析 — SMC + 三維評分 + 兩階段信號"""
         closes = [float(k[4]) for k in data]
         current_price = closes[-1]
-        interval = params.get('interval', '5m')
+        interval = '5m'  # 固定 5m 主框架
 
         # 基礎指標計算
         rsi = ScalpingAnalyzerPro.calculate_rsi(closes, params['rsi_period'])
@@ -2040,9 +1978,8 @@ class ScalpingAnalyzerPro:
         volume_analysis = ScalpingAnalyzerPro.analyze_volume(data)
         mtf_analysis = ScalpingAnalyzerPro.multi_timeframe_analysis(symbol, interval)
 
-        # SMC 引擎
-        swing_n = 5 if interval == '15m' else 3
-        swing_points = ScalpingAnalyzerPro.find_swing_points(data, n=swing_n)
+        # SMC 引擎（固定 n=3，適合 5m）
+        swing_points = ScalpingAnalyzerPro.find_swing_points(data, n=3)
         bos_list = ScalpingAnalyzerPro.detect_bos(data, swing_points)
         order_blocks = ScalpingAnalyzerPro.identify_order_blocks(data, bos_list)
         fvgs = ScalpingAnalyzerPro.identify_fvg(data)
@@ -2281,8 +2218,6 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_api_supported_symbols()
         elif self.path.startswith(p + '/api/alerts'):
             self.handle_api_alerts()
-        elif self.path.startswith(p + '/api/presets'):
-            self.handle_api_presets()
         else:
             self.send_error(404)
 
@@ -2311,44 +2246,22 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def handle_api_analyze(self):
-        """處理分析請求"""
+        """處理分析請求（固定 5m 框架）"""
         try:
             query = urllib.parse.urlparse(self.path).query
             params = urllib.parse.parse_qs(query)
 
             symbol = params.get('symbol', ['BTCUSDT'])[0]
-            interval = params.get('interval', ['5m'])[0]
-            rsi_period = int(params.get('rsi_period', [14])[0])
-            rsi_overbought = int(params.get('rsi_overbought', [70])[0])
-            rsi_oversold = int(params.get('rsi_oversold', [30])[0])
-            ema_fast = int(params.get('ema_fast', [9])[0])
-            ema_slow = int(params.get('ema_slow', [21])[0])
-            macd_fast = int(params.get('macd_fast', [12])[0])
-            macd_slow = int(params.get('macd_slow', [26])[0])
-            macd_signal = int(params.get('macd_signal', [9])[0])
 
-            # 獲取 K 線數據（使用快取 + 重試）
-            data = fetch_klines_cached(symbol, interval, limit=150)
+            # 固定 5m 框架 + 標準參數
+            data = fetch_klines_cached(symbol, '5m', limit=150)
 
             # 數據驗證
             is_valid, data, data_warnings = validate_kline_data(data, min_count=50)
             if not is_valid:
                 raise ValueError(data_warnings[0] if data_warnings else 'K 線數據驗證失敗')
 
-            # 分析參數
-            analysis_params = {
-                'rsi_period': rsi_period,
-                'rsi_overbought': rsi_overbought,
-                'rsi_oversold': rsi_oversold,
-                'ema_fast': ema_fast,
-                'ema_slow': ema_slow,
-                'macd_fast': macd_fast,
-                'macd_slow': macd_slow,
-                'macd_signal': macd_signal,
-                'interval': interval
-            }
-
-            signals = ScalpingAnalyzerPro.analyze_entry_signal(data, analysis_params, symbol)
+            signals = ScalpingAnalyzerPro.analyze_entry_signal(data, FIXED_PARAMS, symbol)
 
             # 當前價格
             current_price = float(data[-1][4])
@@ -2648,18 +2561,6 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self.send_error(500, str(e))
 
-    def handle_api_presets(self):
-        """獲取參數預設組合"""
-        try:
-            presets = PresetManager.get_presets()
-
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json; charset=utf-8')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps({'success': True, 'presets': presets}, ensure_ascii=False).encode('utf-8'))
-        except Exception as e:
-            self.send_error(500, str(e))
 
 
 HTML_PAGE = """<!DOCTYPE html>
@@ -3674,75 +3575,9 @@ HTML_PAGE = """<!DOCTYPE html>
                     </button>
                 </div>
 
-                <div class="form-group">
-                    <label data-i18n="label_interval">Interval</label>
-                    <select id="interval">
-                        <option value="1m" data-i18n="interval_1m">1 min</option>
-                        <option value="3m" data-i18n="interval_3m">3 min</option>
-                        <option value="5m" selected data-i18n="interval_5m">5 min</option>
-                        <option value="15m" data-i18n="interval_15m">15 min</option>
-                    </select>
+                <div style="margin-top: 10px; padding: 8px 12px; background: var(--color-card); border-radius: 8px; font-size: 12px; color: var(--color-text-muted); text-align: center;">
+                    5m + 15m MTF
                 </div>
-
-                <div class="panel-title" style="margin-top: 20px;">⚡ <span data-i18n="presets_title">Quick Presets</span></div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
-                    <button onclick="loadPreset('scalping')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; white-space: nowrap; font-weight: normal; box-shadow: none;">
-                        🔥 <span data-i18n="preset_scalping">Scalping</span>
-                    </button>
-                    <button onclick="loadPreset('daytrading')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
-                        📊 <span data-i18n="preset_daytrading">Swing</span>
-                    </button>
-                    <button onclick="loadPreset('conservative')" style="padding: 8px 5px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-main); font-size: 11px; font-weight: normal; box-shadow: none;">
-                        🛡️ <span data-i18n="preset_conservative">Stable</span>
-                    </button>
-                </div>
-
-                <div class="panel-title" style="margin-top: 30px;">📈 <span data-i18n="rsi_title">RSI Settings</span></div>
-
-                <div class="form-group">
-                    <label data-i18n="label_rsi_period">RSI Period</label>
-                    <input type="number" id="rsi_period" value="14" min="5" max="30">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="label_rsi_overbought">Overbought</label>
-                    <input type="number" id="rsi_overbought" value="70" min="60" max="90">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="label_rsi_oversold">Oversold</label>
-                    <input type="number" id="rsi_oversold" value="30" min="10" max="40">
-                </div>
-
-                <div class="panel-title" style="margin-top: 30px;">📉 <span data-i18n="ema_title">EMA Settings</span></div>
-
-                <div class="form-group">
-                    <label data-i18n="label_ema_fast">Fast EMA</label>
-                    <input type="number" id="ema_fast" value="9" min="3" max="20">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="label_ema_slow">Slow EMA</label>
-                    <input type="number" id="ema_slow" value="21" min="10" max="50">
-                </div>
-
-                <div class="panel-title" style="margin-top: 30px;">📊 <span data-i18n="macd_title">MACD Settings</span></div>
-
-                <div class="form-group">
-                    <label data-i18n="label_macd_fast">MACD Fast</label>
-                    <input type="number" id="macd_fast" value="12" min="3" max="20">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="label_macd_slow">MACD Slow</label>
-                    <input type="number" id="macd_slow" value="26" min="15" max="40">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="label_macd_signal">MACD Signal</label>
-                    <input type="number" id="macd_signal" value="9" min="3" max="15">
-                </div>
-
 
                 <div class="panel-title" style="margin-top: 25px;">🔧 <span data-i18n="advanced_title">Advanced</span></div>
 
@@ -4497,15 +4332,6 @@ HTML_PAGE = """<!DOCTYPE html>
 
         async function analyze() {
             const symbol = document.getElementById('symbol').value;
-            const interval = document.getElementById('interval').value;
-            const rsi_period = document.getElementById('rsi_period').value;
-            const rsi_overbought = document.getElementById('rsi_overbought').value;
-            const rsi_oversold = document.getElementById('rsi_oversold').value;
-            const ema_fast = document.getElementById('ema_fast').value;
-            const ema_slow = document.getElementById('ema_slow').value;
-            const macd_fast = document.getElementById('macd_fast').value;
-            const macd_slow = document.getElementById('macd_slow').value;
-            const macd_signal = document.getElementById('macd_signal').value;
 
             // 保存圖表時間軸範圍（自動刷新時用）
             if (candlestickChart) {
@@ -4529,7 +4355,7 @@ HTML_PAGE = """<!DOCTYPE html>
             setTimeout(() => updateProgressStep(2), 1500);
 
             try {
-                const url = `${APP_PREFIX}/api/analyze?symbol=${symbol}&interval=${interval}&rsi_period=${rsi_period}&rsi_overbought=${rsi_overbought}&rsi_oversold=${rsi_oversold}&ema_fast=${ema_fast}&ema_slow=${ema_slow}&macd_fast=${macd_fast}&macd_slow=${macd_slow}&macd_signal=${macd_signal}`;
+                const url = `${APP_PREFIX}/api/analyze?symbol=${symbol}`;
 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -5188,10 +5014,10 @@ HTML_PAGE = """<!DOCTYPE html>
                         price: currentAnalysisData.price,
                         signals: currentAnalysisData.signals,
                         params: {
-                            interval: document.getElementById('interval').value,
-                            rsi_period: document.getElementById('rsi_period').value,
-                            ema_fast: document.getElementById('ema_fast').value,
-                            ema_slow: document.getElementById('ema_slow').value
+                            interval: '5m',
+                            rsi_period: 14,
+                            ema_fast: 9,
+                            ema_slow: 21
                         }
                     })
                 });
@@ -5310,35 +5136,6 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         // ⚡ 載入參數預設組合
-        async function loadPreset(presetName) {
-            try {
-                const response = await fetch(APP_PREFIX + '/api/presets');
-                const result = await response.json();
-
-                if (result.success && result.presets[presetName]) {
-                    const preset = result.presets[presetName];
-                    const params = preset.params;
-
-                    // 設置參數
-                    document.getElementById('interval').value = params.interval;
-                    document.getElementById('rsi_period').value = params.rsi_period;
-                    document.getElementById('rsi_overbought').value = params.rsi_overbought;
-                    document.getElementById('rsi_oversold').value = params.rsi_oversold;
-                    document.getElementById('ema_fast').value = params.ema_fast;
-                    document.getElementById('ema_slow').value = params.ema_slow;
-                    document.getElementById('macd_fast').value = params.macd_fast;
-                    document.getElementById('macd_slow').value = params.macd_slow;
-                    document.getElementById('macd_signal').value = params.macd_signal;
-
-                    showToast('已載入「' + preset.name + '」預設', 'success');
-                } else {
-                    showToast('載入預設失敗', 'error');
-                }
-            } catch (error) {
-                showToast('載入預設失敗: ' + error.message, 'error');
-            }
-        }
-
         // 📸 快照管理器
         function showSnapshotManager() {
             const modal = document.createElement('div');
