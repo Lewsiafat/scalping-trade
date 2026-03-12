@@ -18,21 +18,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app_v3 import ScalpingAnalyzerPro, fetch_klines_cached
+from app_v3 import ScalpingAnalyzerPro, fetch_klines_cached, FIXED_PARAMS
 from signal_engine_b import evaluate_conditions
-
-
-DEFAULT_PARAMS = {
-    'interval': '5m',
-    'rsi_period': 14,
-    'rsi_overbought': 70,
-    'rsi_oversold': 30,
-    'ema_fast': 9,
-    'ema_slow': 21,
-    'macd_fast': 12,
-    'macd_slow': 26,
-    'macd_signal': 9,
-}
 
 
 def fetch_klines(symbol, interval, limit=150):
@@ -49,10 +36,10 @@ def fetch_klines(symbol, interval, limit=150):
 
 def run_comparison(symbol, interval):
     """執行一次 A/B 比較"""
-    params = {**DEFAULT_PARAMS, 'interval': interval}
+    params = FIXED_PARAMS
 
-    # 抓取數據
-    data = fetch_klines(symbol, interval)
+    # 抓取數據（固定 5m）
+    data = fetch_klines(symbol, '5m')
     if not data or len(data) < 50:
         print(f"❌ 數據不足：僅 {len(data)} 根 K 線")
         return
