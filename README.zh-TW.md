@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.0
+# 📈 Scalping Trade Analyzer Pro V4.1
 
 > 專業級實時剝頭皮交易信號分析系統 | Professional Real-time Scalping Trading Signal Analysis System
 
@@ -12,9 +12,10 @@ Scalping Trade Analyzer Pro 是一個專為剝頭皮交易者設計的實時信�
 
 ### ✨ 核心功能
 
-- **🏗️ SMC 引擎** - Smart Money Concepts: Order Block、Break of Structure、Fair Value Gap、Liquidity Sweep ✨ V4.0 NEW
-- **📊 三維信號評分** - 趨勢/結構/動量三維度評分（各 0-100） ✨ V4.0 NEW
-- **⚠️ 兩階段信號** - 預警→確認信號，含自動過期機制 ✨ V4.0 NEW
+- **🏗️ SMC 引擎** - Smart Money Concepts: Order Block、BOS、FVG、Liquidity Sweep（三級：Full/Partial/Near）✨ V4.1 改進
+- **📊 三維信號評分** - 加權合分（T×0.35 + S×0.40 + M×0.25）+ 趨勢延續模式 ✨ V4.1 改進
+- **⚠️ 兩階段信號** - 預警→確認信號，R:R 分級（good/acceptable/caution）✨ V4.1 改進
+- **📋 評分明細** - 可展開面板顯示三維評分逐項明細 ✨ V4.1 NEW
 - **📊 7大技術指標** - RSI（Wilder's）、EMA、MACD、ATR、布林通道、隨機指標
 - **📈 成交量分析** - CVD趨勢指標（taker_buy_base_volume）、成交量比率分析
 - **⏱️ 多時間框架確認** - 自動檢查更高時間框架趨勢，過濾假信號
@@ -281,18 +282,20 @@ TP2: $65,450 (報酬 $450)
 
 ```
 scalping-trade/
-├── app_v3.py           # 主程式 v4.0.0（前後端 + SMC 引擎）
-├── app_v2.py           # 舊版 v3.6.0（保留參考）
-├── README.md           # 專案說明（英文）
-├── README.zh-TW.md     # 專案說明（繁體中文）
-├── CLAUDE.md           # Claude Code 專案指引
-├── CHANGELOG.md        # 版本變更記錄（英文）
-├── CHANGELOG.zh-TW.md  # 版本變更記錄（繁體中文）
-├── SPEC.md            # 技術規格
-├── specs/             # 任務規格與 walkthrough
+├── app_v3.py              # 主程式 v4.1.0（前後端 + SMC 引擎）
+├── app_v2.py              # 舊版 v3.6.0（保留參考）
+├── signal_engine_b.py     # 方案 B 條件累積引擎（A/B 測試用）
+├── test_signal_compare.py # A/B 信號引擎對比測試腳本
+├── README.md              # 專案說明（英文）
+├── README.zh-TW.md        # 專案說明（繁體中文）
+├── CLAUDE.md              # Claude Code 專案指引
+├── CHANGELOG.md           # 版本變更記錄（英文）
+├── CHANGELOG.zh-TW.md     # 版本變更記錄（繁體中文）
+├── SPEC.md                # 技術規格
+├── specs/                 # 任務規格與 walkthrough
 ├── docs/
-│   └── improv_plan.md  # 改善計畫
-└── LICENSE            # MIT 授權
+│   └── plans/             # 設計文件
+└── LICENSE                # MIT 授權
 ```
 
 ### 技術棧

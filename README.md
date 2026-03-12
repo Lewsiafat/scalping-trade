@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.0
+# 📈 Scalping Trade Analyzer Pro V4.1
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -14,9 +14,10 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 
 ### ✨ Core Features
 
-- **🏗️ SMC Engine** – Smart Money Concepts: Order Blocks, Break of Structure, Fair Value Gaps, Liquidity Sweep ✨ V4.0 NEW
-- **📊 3D Signal Scoring** – Three-dimensional scoring (Trend / Structure / Momentum, each 0-100) ✨ V4.0 NEW
-- **⚠️ Two-Stage Signals** – Pre-alert → Confirmed signal with automatic expiry mechanism ✨ V4.0 NEW
+- **🏗️ SMC Engine** – Smart Money Concepts: Order Blocks, Break of Structure, Fair Value Gaps, Liquidity Sweep (3-tier: Full/Partial/Near) ✨ V4.1 IMPROVED
+- **📊 3D Signal Scoring** – Weighted composite scoring (T×0.35 + S×0.40 + M×0.25) with trend continuation mode ✨ V4.1 IMPROVED
+- **⚠️ Two-Stage Signals** – Pre-alert → Confirmed signal with R:R grading (good/acceptable/caution) ✨ V4.1 IMPROVED
+- **📋 Score Breakdown** – Collapsible detail panel showing per-item scoring for all dimensions ✨ V4.1 NEW
 - **📊 7 Technical Indicators** – RSI (Wilder's), EMA, MACD, ATR, Bollinger Bands, Stochastic
 - **📈 Volume Analysis** – CVD trend (taker_buy_base_volume), volume ratio analysis
 - **⏱️ Multi-Timeframe Confirmation** – Automatically checks higher timeframe trends to filter false signals
@@ -283,8 +284,10 @@ Assume account balance: $10,000
 
 ```
 scalping-trade/
-├── app_v3.py            # Main application v4.0.0 (frontend + backend, SMC engine)
+├── app_v3.py            # Main application v4.1.0 (frontend + backend, SMC engine)
 ├── app_v2.py            # Legacy v3.6.0 (kept as reference)
+├── signal_engine_b.py   # Alternative signal engine (boolean condition accumulation) for A/B testing
+├── test_signal_compare.py # A/B signal engine comparison test script
 ├── README.md            # Project documentation (English)
 ├── README.zh-TW.md      # Project documentation (Traditional Chinese)
 ├── CLAUDE.md            # Claude Code project guide
@@ -293,7 +296,7 @@ scalping-trade/
 ├── SPEC.md              # Technical specification
 ├── specs/               # Task specs & walkthroughs
 ├── docs/
-│   └── improv_plan.md   # Improvement plan
+│   └── plans/           # Design documents
 └── LICENSE              # MIT License
 ```
 

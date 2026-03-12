@@ -6,6 +6,44 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.1.0] - 2026-03-12
+
+### 新增
+- **三級 Sweep 檢測**：`detect_liquidity_sweep()` 新增 Full(+25) / Partial(+15) / Near(+8) 分類，降低 Structure Score 門檻。
+- **動量趨勢延續**：`calc_momentum_score()` 新增 `trend_direction` 參數。RSI 健康區間(+10)、MACD 延續(+15)、Stoch 延續(+10)，與反轉互斥取較高分。
+- **加權合分信號判定**：以 `composite = T×0.35 + S×0.40 + M×0.25` + `min_floor` 取代原本的三維硬門檻 AND 邏輯。
+- **R:R 分級系統**：四級分類（good ≥1.5 / acceptable ≥1.0 / caution ≥0.7 / reject <0.7）。R:R 改用 TP1 計算。
+- **評分明細面板**：前端 `<details>` 可展開面板，顯示三維評分的逐項明細。API 回傳 `score_breakdown` 欄位。
+- **Composite 與 Min Floor 顯示**：三維進度條下方顯示合成分數與 R:R 等級。
+- **signal_engine_b.py**：方案 B 條件累積引擎（10 個布林條件，≥5 觸發信號），供 A/B 比較測試。
+- **test_signal_compare.py**：A/B 對比測試腳本，支援 `--loop` 持續刷新。
+
+### 變更
+- `calc_trend_score()`、`calc_structure_score()`、`calc_momentum_score()` 回傳值從 `int` 改為 `{'score': int, 'details': list}`。
+- `calc_dynamic_sl_tp()` 新增 `rr_grade` 和 `extended_rr` 欄位。R:R 0.7-1.0 降級為預警而非完全拒絕。
+- `analyze_entry_signal()` 從 BOS+EMA 推導 `trend_direction` 供動量延續評分使用。
+- API 回應新增 `composite_score`、`min_floor`、`score_breakdown` 欄位。Sweep 資料含 `strength` 欄位。
+- i18n：新增 `score_breakdown_title` 鍵（EN/ZH_TW）。
+
+## [4.0.0] - 2026-03-09
+
+### 新增
+- **SMC 引擎**：Smart Money Concepts 分析 — Swing Points、Break of Structure (BOS)、Order Blocks (OB)、Fair Value Gaps (FVG)、Liquidity Sweep 檢測。
+- **三維信號評分**：三維評分系統（趨勢/結構/動量，各 0-100）取代舊有 0-5 星評分。
+- **兩階段信號**：預警（接近關鍵結構）→ 確認信號（三維門檻 + R:R 達標），含自動過期機制。
+- **動態止損止盈**：結構錨點 SL/TP + ATR clamp(1.0, 2.5)，R:R < 1.0 拒絕信號。
+- **信號標籤**：分類信號類型 — OB 反彈、Sweep 確認、FVG 支撐、指標共振。
+- **三維進度條**：前端三色進度條（趨勢紫/結構金/動量綠）取代星星顯示。
+- **預警 UI**：橘色漸層動作卡片，含結構接近提示訊息。
+- **R:R 視覺指示**：風險報酬比顯示含狀態圖示（≥2.0 ✅ / ≥1.5 🟡 / <1.5 ⚠️）。
+
+### 變更
+- RSI 改用 Wilder's 平滑法。
+- MACD 信號線改用 EMA(9)。
+- Stochastic %D 改用 SMA(%K, 3)。
+- EMA 預設期數改為 9/21。
+- K 線請求增至 150 根，新增數據驗證層與 MTF 記憶體快取。
+
 ## [3.6.0] - 2026-03-06
 
 ### 新增

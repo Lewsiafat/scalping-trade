@@ -59,7 +59,7 @@ def parse_prefix():
     return ''  # 預設無前綴
 
 PREFIX = parse_prefix()
-VERSION = "4.0.0"
+VERSION = "4.1.0"
 BINANCE_API = "https://api.binance.com/api/v3"
 BINANCE_FAPI = "https://fapi.binance.com/fapi/v1"
 

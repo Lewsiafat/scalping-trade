@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.1.0] - 2026-03-12
+
+### Added
+- **Partial Sweep Detection**: Three-tier Sweep classification (Full +25 / Partial +15 / Near +8) in `detect_liquidity_sweep()`. Lowers the barrier for Structure Score without sacrificing signal quality.
+- **Momentum Trend Continuation**: New `trend_direction` parameter in `calc_momentum_score()`. RSI healthy zone (+10), MACD continuation (+15), Stochastic continuation (+10) — mutually exclusive with reversal scores (takes the higher).
+- **Weighted Composite Scoring**: Replaces hard AND-threshold signal logic with `composite = T×0.35 + S×0.40 + M×0.25` plus `min_floor` safeguard.
+- **R:R Grading System**: Four-tier R:R classification (good ≥1.5 / acceptable ≥1.0 / caution ≥0.7 / reject <0.7). R:R now calculated from TP1 instead of TP2.
+- **Score Breakdown Panel**: Frontend `<details>` collapsible panel showing per-item scoring details for all three dimensions. API returns `score_breakdown` field.
+- **Composite & Min Floor Display**: Shown below the 3D progress bars with R:R grade.
+- **signal_engine_b.py**: Alternative signal engine using boolean condition accumulation (10 conditions, ≥5 triggers signal) for A/B comparison testing.
+- **test_signal_compare.py**: A/B comparison test script. Supports `--loop` for continuous refresh.
+
+### Changed
+- `calc_trend_score()`, `calc_structure_score()`, `calc_momentum_score()` now return `{'score': int, 'details': list}` instead of plain `int`.
+- `calc_dynamic_sl_tp()` returns `rr_grade` and `extended_rr` fields. R:R 0.7-1.0 downgrades to pre_alert instead of full rejection.
+- `analyze_entry_signal()` derives `trend_direction` from BOS + EMA for momentum continuation scoring.
+- API response adds `composite_score`, `min_floor`, `score_breakdown` fields. Sweep data includes `strength` field.
+- i18n: Added `score_breakdown_title` key (EN/ZH_TW).
+
 ## [4.0.0] - 2026-03-09
 
 ### Added
