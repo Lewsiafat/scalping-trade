@@ -1293,8 +1293,10 @@ class ScalpingAnalyzerPro:
 
     @staticmethod
     def detect_liquidity_sweep(data, swing_points, atr, confirmation_window=3):
-        """檢測 Liquidity Sweep（掃盤）
-        規則：影線突破 Swing Point 但收盤價反轉回來，深度 ≥ ATR×0.5。
+        """檢測 Liquidity Sweep（掃盤）— 三級分類
+        Full Sweep:    wick 穿透 + close 反向 + depth ≥ ATR×0.5 + 確認 K 線
+        Partial Sweep: wick 穿透 + (close 未反向但 depth ≥ ATR×0.3) 或 (close 反向但無確認)
+        Near Sweep:    wick 到達 swing point ± ATR×0.2（觸碰但未穿透）
         Args:
             data: K 線數據列表
             swing_points: find_swing_points() 的輸出
@@ -1302,69 +1304,126 @@ class ScalpingAnalyzerPro:
             confirmation_window: 確認 K 線窗口（1-3 根）
         Returns:
             list of dict: [{'type': 'bullish'|'bearish', 'sweep_price': float,
-                            'swing_price': float, 'index': int, 'time': int, 'depth': float}, ...]
+                            'swing_price': float, 'index': int, 'time': int,
+                            'depth': float, 'strength': 'full'|'partial'|'near'}, ...]
         """
         if not swing_points or atr is None or atr <= 0 or len(data) < 3:
             return []
 
-        min_depth = atr * 0.5
         sweeps = []
 
         for sp in swing_points:
             sp_idx = sp['index']
+            found = False
 
             # 在 Swing Point 之後的 K 線中尋找 Sweep
             for i in range(sp_idx + 1, min(sp_idx + 20, len(data))):
                 high_i = float(data[i][2])
                 low_i = float(data[i][3])
                 close_i = float(data[i][4])
-                open_i = float(data[i][1])
 
                 if sp['type'] == 'high':
-                    # 看空 Sweep：影線突破 Swing High 但收盤在下方
-                    if high_i > sp['price'] and close_i < sp['price']:
+                    if high_i > sp['price']:
+                        # wick 穿透 Swing High
                         depth = high_i - sp['price']
-                        if depth >= min_depth:
-                            # 確認：後續 K 線繼續向下
+                        close_reversed = close_i < sp['price']
+
+                        if close_reversed and depth >= atr * 0.5:
+                            # 檢查確認 K 線
                             confirmed = False
                             for j in range(i + 1, min(i + confirmation_window + 1, len(data))):
                                 if float(data[j][4]) < close_i:
                                     confirmed = True
                                     break
                             if confirmed or i == len(data) - 1:
-                                sweeps.append({
-                                    'type': 'bearish',
-                                    'sweep_price': high_i,
-                                    'swing_price': sp['price'],
-                                    'index': i,
-                                    'time': int(data[i][0]),
-                                    'depth': round(depth, 2)
-                                })
-                            break
+                                strength = 'full'
+                            else:
+                                strength = 'partial'  # close 反向但無確認
+                        elif close_reversed and depth >= atr * 0.3:
+                            strength = 'partial'
+                        elif not close_reversed and depth >= atr * 0.3:
+                            strength = 'partial'  # wick 穿透但 close 未反向
+                        else:
+                            continue
+
+                        sweeps.append({
+                            'type': 'bearish',
+                            'sweep_price': high_i,
+                            'swing_price': sp['price'],
+                            'index': i,
+                            'time': int(data[i][0]),
+                            'depth': round(depth, 2),
+                            'strength': strength
+                        })
+                        found = True
+                        break
+
+                    elif abs(high_i - sp['price']) <= atr * 0.2:
+                        # Near Sweep：wick 觸碰但未穿透
+                        sweeps.append({
+                            'type': 'bearish',
+                            'sweep_price': high_i,
+                            'swing_price': sp['price'],
+                            'index': i,
+                            'time': int(data[i][0]),
+                            'depth': round(abs(high_i - sp['price']), 2),
+                            'strength': 'near'
+                        })
+                        found = True
+                        break
 
                 elif sp['type'] == 'low':
-                    # 看多 Sweep：影線突破 Swing Low 但收盤在上方
-                    if low_i < sp['price'] and close_i > sp['price']:
+                    if low_i < sp['price']:
+                        # wick 穿透 Swing Low
                         depth = sp['price'] - low_i
-                        if depth >= min_depth:
-                            # 確認：後續 K 線繼續向上
+                        close_reversed = close_i > sp['price']
+
+                        if close_reversed and depth >= atr * 0.5:
                             confirmed = False
                             for j in range(i + 1, min(i + confirmation_window + 1, len(data))):
                                 if float(data[j][4]) > close_i:
                                     confirmed = True
                                     break
                             if confirmed or i == len(data) - 1:
-                                sweeps.append({
-                                    'type': 'bullish',
-                                    'sweep_price': low_i,
-                                    'swing_price': sp['price'],
-                                    'index': i,
-                                    'time': int(data[i][0]),
-                                    'depth': round(depth, 2)
-                                })
-                            break
+                                strength = 'full'
+                            else:
+                                strength = 'partial'
+                        elif close_reversed and depth >= atr * 0.3:
+                            strength = 'partial'
+                        elif not close_reversed and depth >= atr * 0.3:
+                            strength = 'partial'
+                        else:
+                            continue
 
-        return sweeps
+                        sweeps.append({
+                            'type': 'bullish',
+                            'sweep_price': low_i,
+                            'swing_price': sp['price'],
+                            'index': i,
+                            'time': int(data[i][0]),
+                            'depth': round(depth, 2),
+                            'strength': strength
+                        })
+                        found = True
+                        break
+
+                    elif abs(low_i - sp['price']) <= atr * 0.2:
+                        # Near Sweep
+                        sweeps.append({
+                            'type': 'bullish',
+                            'sweep_price': low_i,
+                            'swing_price': sp['price'],
+                            'index': i,
+                            'time': int(data[i][0]),
+                            'depth': round(abs(low_i - sp['price']), 2),
+                            'strength': 'near'
+                        })
+                        found = True
+                        break
+
+        # 按時間排序，保留最近 5 個
+        sweeps.sort(key=lambda s: s['index'])
+        return sweeps[-5:]
 
     # ============================================================
     # 三維評分系統
@@ -1376,16 +1435,20 @@ class ScalpingAnalyzerPro:
         """計算趨勢分數 (0-100)
         BOS 方向(±30) + MTF 一致(+25/-10) + EMA 排列(±15) + 價格 vs EMA(±10) + BB(±10)
         原始分 +50 後映射到 0-100
+        回傳 dict: {'score': int, 'details': list}
         """
         raw = 0
+        details = []
 
         # BOS 方向 (±30)：取最近的 BOS
         if bos_list:
             last_bos = bos_list[-1]
             if last_bos['direction'] == 'bullish':
                 raw += 30
+                details.append({'item': 'BOS bullish', 'points': 30})
             else:
                 raw -= 30
+                details.append({'item': 'BOS bearish', 'points': -30})
 
         # MTF 一致 (+25/-10)
         if mtf_analysis.get('confirmation'):
@@ -1395,47 +1458,59 @@ class ScalpingAnalyzerPro:
                 if (bos_dir == 'bullish' and mtf_trend == 'uptrend') or \
                    (bos_dir == 'bearish' and mtf_trend == 'downtrend'):
                     raw += 25
+                    details.append({'item': 'MTF 一致', 'points': 25})
                 else:
                     raw -= 10
+                    details.append({'item': 'MTF 不一致', 'points': -10})
             else:
                 if mtf_trend == 'uptrend':
                     raw += 15
+                    details.append({'item': 'MTF uptrend', 'points': 15})
                 elif mtf_trend == 'downtrend':
                     raw -= 15
+                    details.append({'item': 'MTF downtrend', 'points': -15})
 
         # EMA 排列 (±15)
         if ema_fast is not None and ema_slow is not None:
             if ema_fast > ema_slow:
                 raw += 15
+                details.append({'item': 'EMA 多頭排列', 'points': 15})
             elif ema_fast < ema_slow:
                 raw -= 15
+                details.append({'item': 'EMA 空頭排列', 'points': -15})
 
         # 價格 vs EMA (±10)
         if ema_fast is not None:
             if current_price > ema_fast:
                 raw += 10
+                details.append({'item': '價格 > EMA', 'points': 10})
             elif current_price < ema_fast:
                 raw -= 10
+                details.append({'item': '價格 < EMA', 'points': -10})
 
         # BB 位置 (±10)
         if bb_upper and bb_lower and bb_middle:
             if current_price > bb_middle:
                 raw += 10
+                details.append({'item': 'BB 上方', 'points': 10})
             elif current_price < bb_middle:
                 raw -= 10
+                details.append({'item': 'BB 下方', 'points': -10})
 
         # 映射：raw ∈ [-100, +100] → +50 → [0, 100]，clamp
         score = max(0, min(100, raw + 50))
-        return score
+        return {'score': score, 'details': details}
 
     @staticmethod
     def calc_structure_score(order_blocks, fvgs, sweeps, current_price, atr,
                              bos_list):
         """計算結構分數 (0-100)
-        OB 進入(+30) + 趨勢一致(+15) + FVG(+15) + Sweep 確認(+25) +
+        OB 進入(+30) + 趨勢一致(+15) + FVG(+15) + Sweep 確認(+8/+15/+25) +
         深度合理(+10) + 過深(-10) + 已測試(-15)
+        回傳 dict: {'score': int, 'details': list}
         """
         score = 0
+        details = []
 
         # OB 進入 (+30)：價格進入某個 OB 區域
         active_ob = None
@@ -1443,6 +1518,7 @@ class ScalpingAnalyzerPro:
             if ob['bottom'] <= current_price <= ob['top']:
                 score += 30
                 active_ob = ob
+                details.append({'item': 'OB 進入', 'points': 30})
                 break
             # 接近 OB（距離 ≤ ATR×0.5）
             if atr and atr > 0:
@@ -1450,6 +1526,7 @@ class ScalpingAnalyzerPro:
                 if dist_to_ob <= atr * 0.5:
                     score += 20
                     active_ob = ob
+                    details.append({'item': f'OB 接近 ({dist_to_ob / atr:.1f}ATR)', 'points': 20})
                     break
 
         # 趨勢一致 (+15)：OB 方向與最近 BOS 一致
@@ -1457,111 +1534,198 @@ class ScalpingAnalyzerPro:
             last_bos = bos_list[-1]
             if active_ob['type'] == last_bos['direction']:
                 score += 15
+                details.append({'item': 'OB 趨勢一致', 'points': 15})
 
         # FVG (+15)：存在未填補的 FVG
+        fvg_scored = False
         if fvgs:
             for fvg in fvgs:
                 if fvg['bottom'] <= current_price <= fvg['top']:
                     score += 15
+                    details.append({'item': 'FVG 進入', 'points': 15})
+                    fvg_scored = True
                     break
-            else:
+            if not fvg_scored:
                 # 接近 FVG
                 if atr and atr > 0:
                     for fvg in fvgs:
                         dist = min(abs(current_price - fvg['top']), abs(current_price - fvg['bottom']))
                         if dist <= atr * 0.5:
                             score += 10
+                            details.append({'item': f'FVG 接近 ({dist / atr:.1f}ATR)', 'points': 10})
                             break
 
-        # Sweep 確認 (+25)：最近有 Sweep 發生
+        # Sweep 確認（三級給分）：最近有 Sweep 發生
         if sweeps:
             last_sweep = sweeps[-1]
-            # Sweep 在最近 10 根 K 線內
-            score += 25
+            sweep_strength = last_sweep.get('strength', 'full')
+            if sweep_strength == 'full':
+                score += 25
+                details.append({'item': 'Full Sweep', 'points': 25})
+            elif sweep_strength == 'partial':
+                score += 15
+                details.append({'item': 'Partial Sweep', 'points': 15})
+            elif sweep_strength == 'near':
+                score += 8
+                details.append({'item': 'Near Sweep', 'points': 8})
 
         # 深度合理 (+10) / 過深 (-10)
         if active_ob and atr and atr > 0:
             ob_mid = (active_ob['top'] + active_ob['bottom']) / 2
             depth_ratio = abs(current_price - ob_mid) / atr
             if 0.3 <= depth_ratio <= 1.5:
-                score += 10  # 深度合理
+                score += 10
+                details.append({'item': '深度合理', 'points': 10})
             elif depth_ratio > 2.5:
-                score -= 10  # 過深
+                score -= 10
+                details.append({'item': '深度過深', 'points': -10})
 
         # 已測試 (-15)：OB 被碰過
         if active_ob and active_ob.get('touches', 0) >= 1:
             score -= 15
+            details.append({'item': 'OB 已測試', 'points': -15})
 
-        return max(0, min(100, score))
+        return {'score': max(0, min(100, score)), 'details': details}
 
     @staticmethod
     def calc_momentum_score(rsi, macd_line, signal_line, histogram, stoch_k, stoch_d,
-                            volume_analysis, data, prev_histogram=None, atr=None):
+                            volume_analysis, data, prev_histogram=None, atr=None,
+                            trend_direction=None):
         """計算動量分數 (0-100)
-        RSI 反轉(+20) + RSI 背離(+15) + MACD 柱翻(+20) + MACD 叉(+10) +
-        Stoch 叉(+10) + 放量(+15) + 縮量(-10) + taker_buy>60%(+10)
+        反轉模式：RSI 反轉(+20) + RSI 背離(+15) + MACD 柱翻(+20) + MACD 叉(+10) +
+                   Stoch 叉(+10) + 放量(+15) + 縮量(-10) + taker_buy>60%(+10)
+        趨勢延續模式（與反轉同指標互斥，取較高分）：
+                   MACD 同向(+15) + RSI 健康區間(+10) + Stoch 同向(+10)
+        回傳 dict: {'score': int, 'details': list}
         """
         score = 0
+        details = []
 
-        # RSI 反轉 (+20)：從超賣/超買區回來
+        # === RSI 評分（反轉 vs 延續，取較高分）===
+        rsi_reversal = 0
+        rsi_cont = 0
+        rsi_rev_label = None
+        rsi_cont_label = None
         if rsi is not None:
             if 30 <= rsi <= 40:
-                score += 20  # 從超賣區反轉
+                rsi_reversal = 20
+                rsi_rev_label = f'RSI 超賣反轉 ({rsi:.0f})'
             elif 60 <= rsi <= 70:
-                score += 20  # 從超買區反轉
+                rsi_reversal = 20
+                rsi_rev_label = f'RSI 超買反轉 ({rsi:.0f})'
             elif rsi < 25 or rsi > 75:
-                score += 10  # 極端區域，可能反轉
+                rsi_reversal = 10
+                rsi_rev_label = f'RSI 極端 ({rsi:.0f})'
+            if trend_direction == 'bullish' and 40 < rsi < 65:
+                rsi_cont = 10
+                rsi_cont_label = f'RSI 多頭區間 ({rsi:.0f})'
+            elif trend_direction == 'bearish' and 35 < rsi < 60:
+                rsi_cont = 10
+                rsi_cont_label = f'RSI 空頭區間 ({rsi:.0f})'
+        rsi_pts = max(rsi_reversal, rsi_cont)
+        if rsi_pts > 0:
+            label = rsi_rev_label if rsi_reversal >= rsi_cont else rsi_cont_label
+            details.append({'item': label, 'points': rsi_pts})
+        score += rsi_pts
 
-        # RSI 背離 (+15)：簡化版 — 價格新低但 RSI 未新低（或反向）
+        # RSI 背離 (+15)
         if rsi is not None and len(data) >= 20:
             closes_recent = [float(data[i][4]) for i in range(len(data) - 10, len(data))]
             closes_prev = [float(data[i][4]) for i in range(len(data) - 20, len(data) - 10)]
             if min(closes_recent) < min(closes_prev) and rsi > 35:
-                score += 15  # 看多背離
+                score += 15
+                details.append({'item': '看多背離', 'points': 15})
             elif max(closes_recent) > max(closes_prev) and rsi < 65:
-                score += 15  # 看空背離
+                score += 15
+                details.append({'item': '看空背離', 'points': 15})
 
-        # MACD 柱翻 (+20)：比較前後兩根 histogram 符號穿越（相對判斷，適用各價格資產）
+        # === MACD 評分（柱翻/叉 vs 延續，取較高分）===
+        macd_rev = 0
+        macd_cont = 0
+        macd_rev_label = None
+        macd_cont_label = None
+
         if histogram is not None:
             if prev_histogram is not None:
                 if prev_histogram <= 0 < histogram:
-                    score += 20  # 從負轉正（多頭柱翻）
+                    macd_rev = 20
+                    macd_rev_label = 'MACD 多頭柱翻'
                 elif prev_histogram >= 0 > histogram:
-                    score += 20  # 從正轉負（空頭柱翻）
+                    macd_rev = 20
+                    macd_rev_label = 'MACD 空頭柱翻'
             elif atr and atr > 0 and abs(histogram) < atr * 0.05:
-                # fallback：histogram 極小代表接近穿越
-                score += 10
+                macd_rev = 10
+                macd_rev_label = 'MACD 接近穿越'
 
-        # MACD 叉 (+10)：用 ATR 正規化閾值，避免絕對值問題
         if macd_line is not None and signal_line is not None:
             diff = macd_line - signal_line
             if atr and atr > 0:
                 threshold = atr * 0.1
                 if 0 < diff < threshold:
-                    score += 10  # 金叉（差距在 ATR 10% 內）
+                    if macd_rev < 10:
+                        macd_rev = 10
+                        macd_rev_label = 'MACD 金叉'
                 elif -threshold < diff < 0:
-                    score += 10  # 死叉
+                    if macd_rev < 10:
+                        macd_rev = 10
+                        macd_rev_label = 'MACD 死叉'
             else:
-                # 無 ATR 時用相對比例
                 denom = abs(macd_line) + 1e-8
                 if 0 < diff / denom < 0.15:
-                    score += 10
+                    if macd_rev < 10:
+                        macd_rev = 10
+                        macd_rev_label = 'MACD 金叉'
                 elif -0.15 < diff / denom < 0:
-                    score += 10
+                    if macd_rev < 10:
+                        macd_rev = 10
+                        macd_rev_label = 'MACD 死叉'
 
-        # Stochastic 叉 (+10)
+        if macd_line is not None and histogram is not None:
+            if trend_direction == 'bullish' and macd_line > 0 and histogram > 0:
+                macd_cont = 15
+                macd_cont_label = 'MACD 多頭延續'
+            elif trend_direction == 'bearish' and macd_line < 0 and histogram < 0:
+                macd_cont = 15
+                macd_cont_label = 'MACD 空頭延續'
+
+        macd_pts = max(macd_rev, macd_cont)
+        if macd_pts > 0:
+            label = macd_rev_label if macd_rev >= macd_cont else macd_cont_label
+            details.append({'item': label, 'points': macd_pts})
+        score += macd_pts
+
+        # === Stochastic 評分（叉 vs 延續，取較高分）===
+        stoch_rev = 0
+        stoch_cont = 0
+        stoch_rev_label = None
+        stoch_cont_label = None
         if stoch_k is not None and stoch_d is not None:
             if stoch_k > stoch_d and stoch_k < 30:
-                score += 10  # 低位金叉
+                stoch_rev = 10
+                stoch_rev_label = 'Stoch 低位金叉'
             elif stoch_k < stoch_d and stoch_k > 70:
-                score += 10  # 高位死叉
+                stoch_rev = 10
+                stoch_rev_label = 'Stoch 高位死叉'
+            if trend_direction == 'bullish' and stoch_k > stoch_d and stoch_k < 70:
+                stoch_cont = 10
+                stoch_cont_label = 'Stoch 多頭延續'
+            elif trend_direction == 'bearish' and stoch_k < stoch_d and stoch_k > 30:
+                stoch_cont = 10
+                stoch_cont_label = 'Stoch 空頭延續'
+        stoch_pts = max(stoch_rev, stoch_cont)
+        if stoch_pts > 0:
+            label = stoch_rev_label if stoch_rev >= stoch_cont else stoch_cont_label
+            details.append({'item': label, 'points': stoch_pts})
+        score += stoch_pts
 
         # 放量 (+15) / 縮量 (-10)
         if volume_analysis:
             if volume_analysis.get('signal') == 'strong':
                 score += 15
+                details.append({'item': '放量', 'points': 15})
             elif volume_analysis.get('signal') == 'weak':
                 score -= 10
+                details.append({'item': '縮量', 'points': -10})
 
         # taker_buy > 60% (+10)
         if volume_analysis and len(data) >= 1:
@@ -1569,8 +1733,9 @@ class ScalpingAnalyzerPro:
             taker_buy = float(data[-1][9])
             if total_vol > 0 and (taker_buy / total_vol) > 0.6:
                 score += 10
+                details.append({'item': 'Taker Buy > 60%', 'points': 10})
 
-        return max(0, min(100, score))
+        return {'score': max(0, min(100, score)), 'details': details}
 
     @staticmethod
     def calc_dynamic_sl_tp(current_price, atr, signal_type, order_blocks, fvgs, swing_points):
@@ -1688,22 +1853,33 @@ class ScalpingAnalyzerPro:
             take_profit_1 = round(current_price - tp1_dist, 2)
             take_profit_2 = round(current_price - tp2_dist, 2)
 
-        # R:R 計算
+        # R:R 計算 — 用 TP1 作為主要 R:R，TP2 作為延伸
         risk = sl_distance
-        reward = tp2_dist
-        rr_ratio = round(reward / risk, 2) if risk > 0 else 0
+        reward_tp1 = tp1_dist
+        reward_tp2 = tp2_dist
+        rr_ratio = round(reward_tp1 / risk, 2) if risk > 0 else 0
+        extended_rr = round(reward_tp2 / risk, 2) if risk > 0 else 0
 
-        # R:R < 1.0 不發信號
-        if rr_ratio < 1.0:
-            return None
+        # R:R 分級處理
+        if rr_ratio < 0.7:
+            return None  # 完全拒絕
+
+        if rr_ratio >= 1.5:
+            rr_grade = 'good'
+        elif rr_ratio >= 1.0:
+            rr_grade = 'acceptable'
+        else:
+            rr_grade = 'caution'  # 0.7 ~ 1.0，降級但保留資訊
 
         return {
             'stop_loss': stop_loss,
             'take_profit_1': take_profit_1,
             'take_profit_2': take_profit_2,
             'risk_amount': round(risk, 2),
-            'reward_amount': round(reward, 2),
+            'reward_amount': round(reward_tp1, 2),
             'risk_reward_ratio': rr_ratio,
+            'extended_rr': extended_rr,
+            'rr_grade': rr_grade,
             'atr': round(atr, 2)
         }
 
@@ -1872,44 +2048,79 @@ class ScalpingAnalyzerPro:
         fvgs = ScalpingAnalyzerPro.identify_fvg(data)
         sweeps = ScalpingAnalyzerPro.detect_liquidity_sweep(data, swing_points, atr)
 
-        # 三維評分
-        trend_score = ScalpingAnalyzerPro.calc_trend_score(
+        # 推導趨勢方向（供 momentum 趨勢延續評分使用）
+        trend_direction = None
+        if bos_list:
+            trend_direction = bos_list[-1]['direction']  # 'bullish' or 'bearish'
+        elif ema_fast is not None and ema_slow is not None:
+            trend_direction = 'bullish' if ema_fast > ema_slow else 'bearish'
+
+        # 三維評分（回傳 dict: {'score': int, 'details': list}）
+        trend_result = ScalpingAnalyzerPro.calc_trend_score(
             bos_list, mtf_analysis, ema_fast, ema_slow, current_price,
             bb_upper, bb_middle, bb_lower
         )
-        structure_score = ScalpingAnalyzerPro.calc_structure_score(
+        structure_result = ScalpingAnalyzerPro.calc_structure_score(
             order_blocks, fvgs, sweeps, current_price, atr, bos_list
         )
-        momentum_score = ScalpingAnalyzerPro.calc_momentum_score(
+        momentum_result = ScalpingAnalyzerPro.calc_momentum_score(
             rsi, macd_line, signal_line, histogram, stoch_k, stoch_d,
-            volume_analysis, data, prev_histogram=prev_histogram, atr=atr
+            volume_analysis, data, prev_histogram=prev_histogram, atr=atr,
+            trend_direction=trend_direction
         )
+
+        trend_score = trend_result['score']
+        structure_score = structure_result['score']
+        momentum_score = momentum_result['score']
 
         # 向後相容：quality_score = 三維平均映射到 0-5
         quality_score = round((trend_score + structure_score + momentum_score) / 3 / 20, 1)
         quality_score = max(0, min(5, quality_score))
 
-        # 信號判定
+        # 加權合分信號判定
+        composite = trend_score * 0.35 + structure_score * 0.40 + momentum_score * 0.25
+        min_floor = min(trend_score, structure_score, momentum_score)
+
         signal_type = None
-        if trend_score >= 65 and structure_score >= 60 and momentum_score >= 55:
-            overall = 'strong_buy'
-            action = '強烈買入 BUY'
-            signal_type = 'buy'
-        elif trend_score >= 55 and structure_score >= 45 and momentum_score >= 45:
-            overall = 'buy'
-            action = '考慮買入'
-            signal_type = 'buy'
-        elif trend_score <= 35 and structure_score >= 60 and momentum_score >= 55:
-            overall = 'strong_sell'
-            action = '強烈賣出 SELL'
-            signal_type = 'sell'
-        elif trend_score <= 45 and structure_score >= 45 and momentum_score >= 45:
-            overall = 'sell'
-            action = '考慮賣出'
-            signal_type = 'sell'
+        if trend_score > 50:
+            # 多方信號
+            if composite >= 55 and min_floor >= 30 and trend_score >= 55:
+                overall = 'strong_buy'
+                action = '強烈買入 BUY'
+                signal_type = 'buy'
+            elif composite >= 45 and min_floor >= 25 and trend_score >= 45:
+                overall = 'buy'
+                action = '考慮買入'
+                signal_type = 'buy'
+            else:
+                overall = 'neutral'
+                action = '觀望 WAIT'
+        elif trend_score < 50:
+            # 空方信號
+            if composite >= 55 and min_floor >= 30 and trend_score <= 45:
+                overall = 'strong_sell'
+                action = '強烈賣出 SELL'
+                signal_type = 'sell'
+            elif composite >= 45 and min_floor >= 25 and trend_score <= 55:
+                overall = 'sell'
+                action = '考慮賣出'
+                signal_type = 'sell'
+            else:
+                overall = 'neutral'
+                action = '觀望 WAIT'
         else:
-            overall = 'neutral'
-            action = '觀望 WAIT'
+            # trend_score == 50，由 BOS 方向決定
+            if trend_direction == 'bullish' and composite >= 45 and min_floor >= 25:
+                overall = 'buy'
+                action = '考慮買入'
+                signal_type = 'buy'
+            elif trend_direction == 'bearish' and composite >= 45 and min_floor >= 25:
+                overall = 'sell'
+                action = '考慮賣出'
+                signal_type = 'sell'
+            else:
+                overall = 'neutral'
+                action = '觀望 WAIT'
 
         # 兩階段信號系統
         current_bar_index = len(data) - 1
@@ -1929,18 +2140,27 @@ class ScalpingAnalyzerPro:
                     current_price, atr, signal_type, order_blocks, fvgs, swing_points
                 )
                 if sl_tp is None:
-                    # R:R < 1.0 → 降級為預警
+                    # R:R < 0.7 → 完全拒絕
                     signal_stage = 'pre_alert'
                     overall = 'pre_alert'
                     action = '觀望 WAIT（R:R 不足）'
                     signal_type = None
+                elif sl_tp.get('rr_grade') == 'caution':
+                    # R:R 0.7~1.0 → 降級為預警，保留 SL/TP 資訊
+                    signal_stage = 'pre_alert'
+                    overall = 'pre_alert'
+                    action = f"謹慎進場（R:R {sl_tp['risk_reward_ratio']}）"
+                    signal_label = ScalpingAnalyzerPro.determine_signal_label(
+                        order_blocks, fvgs, sweeps, current_price, atr
+                    )
+                    # 不清除 signal_type，讓前端知道方向
                 else:
                     signal_stage = 'confirmed'
                     signal_label = ScalpingAnalyzerPro.determine_signal_label(
                         order_blocks, fvgs, sweeps, current_price, atr
                     )
             else:
-                # 方案 A：三維達標但無預警 → 仍發出信號，不帶 confirmed badge
+                # 三維達標但無預警 → 仍發出信號，不帶 confirmed badge
                 sl_tp = ScalpingAnalyzerPro.calc_dynamic_sl_tp(
                     current_price, atr, signal_type, order_blocks, fvgs, swing_points
                 )
@@ -1973,6 +2193,8 @@ class ScalpingAnalyzerPro:
             'trend_score': trend_score,
             'structure_score': structure_score,
             'momentum_score': momentum_score,
+            'composite_score': round(composite, 1),
+            'min_floor': min_floor,
             'signal_label': signal_label,
             'signal_stage': signal_stage,
             'pre_alert': pre_alert_info,
@@ -1983,9 +2205,17 @@ class ScalpingAnalyzerPro:
                                  for o in order_blocks],
                 'fvgs': [{'type': f['type'], 'top': f['top'], 'bottom': f['bottom'],
                           'filled_pct': f['filled_pct']} for f in fvgs],
-                'sweeps': [{'type': s['type'], 'depth': s['depth']} for s in sweeps]
+                'sweeps': [{'type': s['type'], 'depth': s['depth'],
+                            'strength': s.get('strength', 'full')} for s in sweeps]
             },
-            'stop_loss_take_profit': sl_tp
+            'stop_loss_take_profit': sl_tp,
+            'score_breakdown': {
+                'trend': trend_result['details'],
+                'structure': structure_result['details'],
+                'momentum': momentum_result['details'],
+                'composite_formula': f'{trend_score}×0.35 + {structure_score}×0.40 + {momentum_score}×0.25 = {round(composite, 1)}',
+                'rr_grade': sl_tp.get('rr_grade') if sl_tp else None
+            }
         }
 
         # 填充個別指標信號狀態（用於前端顯示）
@@ -2859,6 +3089,56 @@ HTML_PAGE = """<!DOCTYPE html>
             min-width: 32px;
             text-align: left;
         }
+
+        /* === 評分明細面板 === */
+        .score-breakdown-details {
+            margin-top: 12px;
+            border-top: 1px solid var(--color-border);
+            padding-top: 8px;
+        }
+        .score-breakdown-details summary {
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-align: center;
+            padding: 6px 0;
+            user-select: none;
+        }
+        .score-breakdown-details summary:hover {
+            color: var(--color-text-main);
+        }
+        .score-breakdown-content {
+            padding: 10px 0;
+        }
+        .breakdown-section {
+            margin-bottom: 12px;
+        }
+        .breakdown-section:last-child {
+            margin-bottom: 0;
+        }
+        .breakdown-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-main);
+            margin-bottom: 4px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--color-text-sub);
+            padding: 2px 4px;
+        }
+        .breakdown-pts {
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .breakdown-pts.positive { color: #10b981; }
+        .breakdown-pts.negative { color: #ef4444; }
 
         /* === 預警 / 正式信號卡片 === */
         .action-card.pre_alert {
@@ -3742,6 +4022,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 tri_trend: 'Trend',
                 tri_structure: 'Structure',
                 tri_momentum: 'Momentum',
+                score_breakdown_title: '📋 Score Breakdown',
                 signal_stage_pre_alert: '⚠️ Pre-Alert',
                 signal_stage_confirmed: '✅ Confirmed Signal',
                 pre_alert_hint: 'Approaching key structure — no action yet',
@@ -3967,6 +4248,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 tri_trend: '趨勢',
                 tri_structure: '結構',
                 tri_momentum: '動量',
+                score_breakdown_title: '📋 評分明細',
                 signal_stage_pre_alert: '⚠️ 預警',
                 signal_stage_confirmed: '✅ 確認信號',
                 pre_alert_hint: '接近關鍵結構 — 尚未建議操作',
@@ -4276,6 +4558,16 @@ HTML_PAGE = """<!DOCTYPE html>
             else if (overall === 'pre_alert') actionClass = 'pre_alert';
 
             // 翻譯 action 字串
+            function renderBreakdownSection(title, score, details) {
+                if (!details || !details.length) return `<div class="breakdown-section"><div class="breakdown-section-title">${title} (${score})</div><div class="breakdown-item" style="opacity:0.5">—</div></div>`;
+                const items = details.map(d => {
+                    const sign = d.points >= 0 ? '+' : '';
+                    const cls = d.points >= 0 ? 'positive' : 'negative';
+                    return `<div class="breakdown-item"><span>${d.item}</span><span class="breakdown-pts ${cls}">${sign}${d.points}</span></div>`;
+                }).join('');
+                return `<div class="breakdown-section"><div class="breakdown-section-title">${title} (${score})</div>${items}</div>`;
+            }
+
             function translateAction(action) {
                 if (!action) return action;
                 if (overall === 'pre_alert') return LANG[currentLang].action_pre_alert;
@@ -4284,6 +4576,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 if (action.includes('強烈賣出') || overall === 'strong_sell') return LANG[currentLang].action_strong_sell;
                 if (action.includes('考慮賣出') || overall === 'sell') return LANG[currentLang].action_sell;
                 if (action.includes('觀望') || overall === 'neutral') return LANG[currentLang].action_wait;
+                if (action.includes('謹慎進場')) return action;  // R:R caution — 保留原文含數值
                 return action;
             }
 
@@ -4400,6 +4693,9 @@ HTML_PAGE = """<!DOCTYPE html>
             const trendScore = signals.trend_score || 0;
             const structureScore = signals.structure_score || 0;
             const momentumScore = signals.momentum_score || 0;
+            const compositeScore = signals.composite_score || 0;
+            const minFloor = signals.min_floor || 0;
+            const scoreBreakdown = signals.score_breakdown || {};
             const signalLabel = signals.signal_label;
             const signalStage = signals.signal_stage;
             const preAlert = signals.pre_alert;
@@ -4458,6 +4754,23 @@ HTML_PAGE = """<!DOCTYPE html>
                         <div class="tri-score-bar"><div class="tri-score-fill momentum" style="width: ${momentumScore}%"></div></div>
                         <span class="tri-score-val">${momentumScore}</span>
                     </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: var(--color-text-sub); text-align: center;">
+                        Composite: <strong>${compositeScore}</strong> | Min Floor: <strong>${minFloor}</strong>
+                        ${signals.stop_loss_take_profit ? ` | R:R: <strong>${signals.stop_loss_take_profit.risk_reward_ratio}</strong> <span style="font-size:11px;opacity:0.7">(${signals.stop_loss_take_profit.rr_grade || ''})</span>` : ''}
+                    </div>
+                    <details class="score-breakdown-details">
+                        <summary>${LANG[currentLang].score_breakdown_title || 'Score Breakdown'}</summary>
+                        <div class="score-breakdown-content">
+                            ${renderBreakdownSection(LANG[currentLang].tri_trend, trendScore, scoreBreakdown.trend)}
+                            ${renderBreakdownSection(LANG[currentLang].tri_structure, structureScore, scoreBreakdown.structure)}
+                            ${renderBreakdownSection(LANG[currentLang].tri_momentum, momentumScore, scoreBreakdown.momentum)}
+                            <div class="breakdown-section">
+                                <div class="breakdown-section-title">Signal</div>
+                                <div class="breakdown-item"><span>${scoreBreakdown.composite_formula || ''}</span></div>
+                                ${scoreBreakdown.rr_grade ? `<div class="breakdown-item"><span>R:R Grade: ${scoreBreakdown.rr_grade}</span></div>` : ''}
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- 止損止盈 -->
