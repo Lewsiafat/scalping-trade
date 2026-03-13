@@ -2253,8 +2253,9 @@ class ScalpingHandler(http.server.SimpleHTTPRequestHandler):
 
             symbol = params.get('symbol', ['BTCUSDT'])[0]
 
-            # 固定 5m 框架 + 標準參數
-            data = fetch_klines_cached(symbol, '5m', limit=150)
+            # 固定 5m 框架 + 標準參數（不使用快取，確保每次刷新取得最新價格）
+            url = f"{BINANCE_API}/klines?symbol={symbol}&interval=5m&limit=150"
+            data = fetch_with_retry(url, is_kline_req=True)
 
             # 數據驗證
             is_valid, data, data_warnings = validate_kline_data(data, min_count=50)
