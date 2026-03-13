@@ -6,6 +6,11 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.2.1] - 2026-03-13
+
+### 修復
+- **即時價格更新**：主分析端點（`/api/analyze`）不再使用 `fetch_klines_cached()` 快取，每次請求都拉取最新數據。先前 MTF 快取導致價格和指標在整根 5m 蠟燭期間凍結（最多 5 分鐘不更新）。MTF 15m 快取保持不變。
+
 ## [4.2.0] - 2026-03-12
 
 ### 移除

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.2.1] - 2026-03-13
+
+### Fixed
+- **Real-time Price Update**: Main analysis endpoint (`/api/analyze`) now bypasses `fetch_klines_cached()` and fetches fresh data on every request. Previously, the MTF cache caused price and indicators to freeze for up to 5 minutes (entire candle duration). MTF 15m cache remains unchanged.
+
 ## [4.2.0] - 2026-03-12
 
 ### Removed
