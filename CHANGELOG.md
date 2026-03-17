@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.2.2] - 2026-03-17
+
+### Fixed
+- **Signal Symmetry**: Fixed three asymmetric logic bugs in the signal engine that suppressed sell signals:
+  - `calc_trend_score()`: MTF disagreement penalty changed from -10 to -25 (symmetric with +25 agreement bonus).
+  - `calc_momentum_score()`: RSI divergence thresholds changed from 35/65 to 30/70 (symmetric around midpoint 50).
+  - `analyze_entry_signal()`: Sell branch now uses `bearish_strength = 100 - trend_score` for composite/min_floor calculation, fixing the contradiction where stronger bearish trends made sell signals harder to trigger.
+- **Sell Signal UI**: API response `composite_score`, `min_floor`, and `composite_formula` now reflect the flipped bearish strength values when a sell signal is active.
+
+### Added
+- **Trading Guide & Developer Guide**: New documentation in `docs/trading-guide.md` and `docs/developer-guide.md` covering analysis flow, scoring logic, and SMC engine internals.
+
 ## [4.2.1] - 2026-03-13
 
 ### Fixed

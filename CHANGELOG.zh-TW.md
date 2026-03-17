@@ -6,6 +6,18 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.2.2] - 2026-03-17
+
+### 修復
+- **信號多空對稱性**：修正信號引擎中 3 處非對稱邏輯缺陷，解決系統幾乎不產生賣出信號的問題：
+  - `calc_trend_score()`：MTF 不一致扣分 -10 → -25（與一致 +25 對稱）
+  - `calc_momentum_score()`：RSI 背離門檻 35/65 → 30/70（對稱於中點 50）
+  - `analyze_entry_signal()`：賣出分支使用 `bearish_strength = 100 - trend_score` 計算 composite/min_floor，修正「越看空越難觸發賣出」的矛盾
+- **賣出信號 UI**：API 回傳的 `composite_score`、`min_floor`、`composite_formula` 在賣出時使用翻轉後的值
+
+### 新增
+- **交易者指南與開發者指南**：`docs/trading-guide.md` 與 `docs/developer-guide.md`，涵蓋分析流程、評分邏輯、SMC 引擎細節
+
 ## [4.2.1] - 2026-03-13
 
 ### 修復
