@@ -1398,8 +1398,8 @@ class ScalpingAnalyzerPro:
                     raw += 25
                     details.append({'item': 'MTF 一致', 'points': 25})
                 else:
-                    raw -= 10
-                    details.append({'item': 'MTF 不一致', 'points': -10})
+                    raw -= 25
+                    details.append({'item': 'MTF 不一致', 'points': -25})
             else:
                 if mtf_trend == 'uptrend':
                     raw += 15
@@ -1570,10 +1570,10 @@ class ScalpingAnalyzerPro:
         if rsi is not None and len(data) >= 20:
             closes_recent = [float(data[i][4]) for i in range(len(data) - 10, len(data))]
             closes_prev = [float(data[i][4]) for i in range(len(data) - 20, len(data) - 10)]
-            if min(closes_recent) < min(closes_prev) and rsi > 35:
+            if min(closes_recent) < min(closes_prev) and rsi > 30:
                 score += 15
                 details.append({'item': '看多背離', 'points': 15})
-            elif max(closes_recent) > max(closes_prev) and rsi < 65:
+            elif max(closes_recent) > max(closes_prev) and rsi < 70:
                 score += 15
                 details.append({'item': '看空背離', 'points': 15})
 
@@ -2017,6 +2017,8 @@ class ScalpingAnalyzerPro:
         # 加權合分信號判定
         composite = trend_score * 0.35 + structure_score * 0.40 + momentum_score * 0.25
         min_floor = min(trend_score, structure_score, momentum_score)
+        sell_composite = composite
+        sell_min_floor = min_floor
 
         signal_type = None
         if trend_score > 50:
@@ -2033,12 +2035,15 @@ class ScalpingAnalyzerPro:
                 overall = 'neutral'
                 action = '觀望 WAIT'
         elif trend_score < 50:
-            # 空方信號
-            if composite >= 55 and min_floor >= 30 and trend_score <= 45:
+            # 空方信號：將 trend_score 翻轉為強度分數，與 structure/momentum 一致
+            bearish_strength = 100 - trend_score
+            sell_composite = bearish_strength * 0.35 + structure_score * 0.40 + momentum_score * 0.25
+            sell_min_floor = min(bearish_strength, structure_score, momentum_score)
+            if sell_composite >= 55 and sell_min_floor >= 30 and trend_score <= 45:
                 overall = 'strong_sell'
                 action = '強烈賣出 SELL'
                 signal_type = 'sell'
-            elif composite >= 45 and min_floor >= 25 and trend_score <= 55:
+            elif sell_composite >= 45 and sell_min_floor >= 25 and trend_score <= 55:
                 overall = 'sell'
                 action = '考慮賣出'
                 signal_type = 'sell'
@@ -2130,8 +2135,8 @@ class ScalpingAnalyzerPro:
             'trend_score': trend_score,
             'structure_score': structure_score,
             'momentum_score': momentum_score,
-            'composite_score': round(composite, 1),
-            'min_floor': min_floor,
+            'composite_score': round(sell_composite if signal_type == 'sell' else composite, 1),
+            'min_floor': sell_min_floor if signal_type == 'sell' else min_floor,
             'signal_label': signal_label,
             'signal_stage': signal_stage,
             'pre_alert': pre_alert_info,
@@ -2150,7 +2155,7 @@ class ScalpingAnalyzerPro:
                 'trend': trend_result['details'],
                 'structure': structure_result['details'],
                 'momentum': momentum_result['details'],
-                'composite_formula': f'{trend_score}×0.35 + {structure_score}×0.40 + {momentum_score}×0.25 = {round(composite, 1)}',
+                'composite_formula': f'{100 - trend_score}×0.35 + {structure_score}×0.40 + {momentum_score}×0.25 = {round(sell_composite, 1)}' if signal_type == 'sell' else f'{trend_score}×0.35 + {structure_score}×0.40 + {momentum_score}×0.25 = {round(composite, 1)}',
                 'rr_grade': sl_tp.get('rr_grade') if sl_tp else None
             }
         }
