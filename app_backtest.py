@@ -38,7 +38,7 @@ from app_v3 import (
 )
 sys.argv = _orig_argv
 
-VERSION = "1.0.1"
+VERSION = "2.0.0"
 
 # MTF 時間框架映射：主圖 interval → 確認用高級 interval
 MTF_INTERVAL_MAP = {
@@ -115,7 +115,7 @@ class BacktestEngine:
         }
 
     @staticmethod
-    def analyze_bar(data_window, symbol, mtf_slice=None, mtf_interval='15m'):
+    def analyze_bar(data_window, symbol, mtf_slice=None, mtf_interval='15m', params=None):
         """對單一窗口執行分析，回傳信號結果
 
         Args:
@@ -123,7 +123,11 @@ class BacktestEngine:
             symbol: 交易對
             mtf_slice: 高級時間框架 K 線切片（None 時降級為 neutral mock）
             mtf_interval: MTF 時間框架字串，用於回傳 metadata
+            params: 自訂指標參數（覆蓋 FIXED_PARAMS），None 時使用預設
         """
+        use_params = {**FIXED_PARAMS}
+        if params:
+            use_params.update(params)
         orig_mtf = ScalpingAnalyzerPro.multi_timeframe_analysis
         orig_update = ScalpingAnalyzerPro.update_signal_state
 
@@ -168,7 +172,7 @@ class BacktestEngine:
 
         try:
             signals = ScalpingAnalyzerPro.analyze_entry_signal(
-                data_window, FIXED_PARAMS, symbol
+                data_window, use_params, symbol
             )
             return signals
         finally:
@@ -177,7 +181,12 @@ class BacktestEngine:
 
     @staticmethod
     def run_backtest(symbol, interval='5m', limit=500,
-                     min_quality=3.0, slippage_pct=0.05, cooldown_bars=0):
+                     min_quality=3.0, slippage_pct=0.05, cooldown_bars=0,
+                     params=None, trailing_stop=False, partial_tp=False,
+                     lose_streak_pause=0, lose_streak_cooldown=10,
+                     entry_mode='strong_only', require_confirmed=True,
+                     allow_caution_rr=False,
+                     _prefetched=None):
         """執行完整回測
 
         Args:
@@ -187,23 +196,35 @@ class BacktestEngine:
             min_quality: 最低品質星數門檻
             slippage_pct: 滑價百分比
             cooldown_bars: 冷卻根數（0=不啟用，持倉中不開單仍有效）
+            params: 自訂指標參數（覆蓋 FIXED_PARAMS）
+            trailing_stop: 啟用移動止損（TP1 後 SL 移至入場價）
+            partial_tp: 啟用部分止盈（TP1 平 50%，剩餘跑 TP2）
+            lose_streak_pause: 連虧 N 次後暫停（0=不啟用）
+            lose_streak_cooldown: 連虧暫停後等待 M 根 K 線
+            entry_mode: 入場模式 — 'strong_only'(僅強烈) | 'include_normal'(含一般)
+            require_confirmed: 是否要求 signal_stage == 'confirmed'
+            allow_caution_rr: 是否接受 'caution' R:R 等級
+            _prefetched: 預拉取的數據 {'all_data':..., 'mtf_data':...}（優化器內部用）
 
         Returns:
             dict: {trades, stats, equity_curve, candles}
         """
-        # 拉取主圖歷史數據
-        all_data = BacktestEngine.fetch_historical_klines(symbol, interval, limit)
+        # 拉取主圖歷史數據（支援預拉取以避免優化器重複拉取）
+        if _prefetched:
+            all_data = _prefetched['all_data']
+            mtf_data = _prefetched.get('mtf_data', [])
+            mtf_interval = _prefetched.get('mtf_interval', MTF_INTERVAL_MAP.get(interval, '15m'))
+        else:
+            all_data = BacktestEngine.fetch_historical_klines(symbol, interval, limit)
+            mtf_interval = MTF_INTERVAL_MAP.get(interval, '15m')
+            try:
+                mtf_data = BacktestEngine.fetch_historical_klines(symbol, mtf_interval, limit)
+            except Exception:
+                mtf_data = []
+
         total_bars = len(all_data)
         window_size = BacktestEngine.MIN_WINDOW
-
-        # 拉取 MTF 歷史數據（與主圖相同 limit，覆蓋足夠的時間範圍）
-        mtf_interval = MTF_INTERVAL_MAP.get(interval, '15m')
-        try:
-            mtf_data = BacktestEngine.fetch_historical_klines(symbol, mtf_interval, limit)
-            mtf_timestamps = [int(k[0]) for k in mtf_data]
-        except Exception:
-            mtf_data = []
-            mtf_timestamps = []
+        mtf_timestamps = [int(k[0]) for k in mtf_data]
 
         def _get_mtf_slice(bar_open_ts):
             """取得截至 bar_open_ts 的最近 50 根 MTF K 線"""
@@ -230,6 +251,10 @@ class BacktestEngine:
         position = None      # None | dict
         last_exit_bar = -999  # 上次出場的 bar index（用於 cooldown_bars）
 
+        # 連虧保護
+        consecutive_losses = 0
+        lose_streak_pause_until = -999  # bar index until which trading is paused
+
         # 遍歷每根 K 線（從第 window_size 根開始）
         for bar_idx in range(window_size, total_bars):
             bar = all_data[bar_idx]
@@ -241,6 +266,45 @@ class BacktestEngine:
 
             # === 持倉中：檢查 SL/TP ===
             if position is not None:
+                # 部分止盈 / Trailing Stop — 在 TP1 觸發的同 bar 只啟用，不檢查新 SL
+                trailing_just_activated = False
+
+                if partial_tp and not position.get('partial_closed'):
+                    direction = position['direction']
+                    hit_tp1 = (direction == 'long' and bar_high >= position['tp1']) or \
+                              (direction == 'short' and bar_low <= position['tp1'])
+                    if hit_tp1:
+                        entry_price = position['entry_price']
+                        tp1_price = position['tp1']
+                        if direction == 'long':
+                            partial_pnl = (tp1_price - entry_price) / entry_price * 100 * 0.5
+                        else:
+                            partial_pnl = (entry_price - tp1_price) / entry_price * 100 * 0.5
+                        position['partial_pnl'] = partial_pnl
+                        position['partial_closed'] = True
+                        position['sl'] = position['entry_price']
+                        position['trailing_activated'] = True
+                        trailing_just_activated = True
+
+                elif trailing_stop and not position.get('trailing_activated'):
+                    direction = position['direction']
+                    if direction == 'long' and bar_high >= position['tp1']:
+                        position['sl'] = position['entry_price']
+                        position['trailing_activated'] = True
+                        trailing_just_activated = True
+                    elif direction == 'short' and bar_low <= position['tp1']:
+                        position['sl'] = position['entry_price']
+                        position['trailing_activated'] = True
+                        trailing_just_activated = True
+
+                # 跳過剛啟用 trailing 的 bar（避免同一 bar TP1 觸發後立即被新 SL 出場）
+                if trailing_just_activated:
+                    equity_curve.append({
+                        'time': bar_time // 1000,
+                        'value': round(cumulative_pnl, 4),
+                    })
+                    continue
+
                 hit = BacktestEngine._check_sl_tp(position, bar_high, bar_low, bar_open)
                 if hit:
                     exit_price = hit['price']
@@ -251,6 +315,22 @@ class BacktestEngine:
                         pnl_pct = (exit_price - entry_price) / entry_price * 100
                     else:
                         pnl_pct = (entry_price - exit_price) / entry_price * 100
+
+                    # 部分止盈模式下，剩餘 50% 倉位的 PnL
+                    if position.get('partial_closed'):
+                        remaining_pnl = pnl_pct * 0.5
+                        total_pnl = position['partial_pnl'] + remaining_pnl
+                        pnl_pct = total_pnl
+                        exit_type = f"partial_{hit['type']}"
+                    else:
+                        exit_type = hit['type']
+
+                    # Trailing stop 類型標記
+                    if position.get('trailing_activated') and not position.get('partial_closed'):
+                        if hit['type'] == 'sl':
+                            exit_type = 'trailing_be'  # break-even
+                        elif hit['type'] in ('tp1', 'tp2'):
+                            exit_type = hit['type']
 
                     cumulative_pnl += pnl_pct
                     holding_bars = bar_idx - position['entry_bar_idx']
@@ -264,7 +344,7 @@ class BacktestEngine:
                         'exit_time': bar_time,
                         'exit_price': exit_price,
                         'exit_bar': bar_idx,
-                        'exit_type': hit['type'],  # 'sl' | 'tp1' | 'tp2'
+                        'exit_type': exit_type,
                         'sl': position['sl'],
                         'tp1': position['tp1'],
                         'tp2': position['tp2'],
@@ -278,6 +358,15 @@ class BacktestEngine:
                     trades.append(trade)
                     last_exit_bar = bar_idx
                     position = None
+
+                    # 連虧保護
+                    if pnl_pct <= 0:
+                        consecutive_losses += 1
+                        if lose_streak_pause > 0 and consecutive_losses >= lose_streak_pause:
+                            lose_streak_pause_until = bar_idx + lose_streak_cooldown
+                            consecutive_losses = 0
+                    else:
+                        consecutive_losses = 0
 
                 equity_curve.append({
                     'time': bar_time // 1000,
@@ -295,10 +384,18 @@ class BacktestEngine:
                 })
                 continue
 
+            # 連虧暫停檢查
+            if bar_idx < lose_streak_pause_until:
+                equity_curve.append({
+                    'time': bar_time // 1000,
+                    'value': round(cumulative_pnl, 4),
+                })
+                continue
+
             # 取窗口數據進行分析
             data_window = all_data[bar_idx - window_size:bar_idx]
             mtf_slice = _get_mtf_slice(bar_time)
-            signals = BacktestEngine.analyze_bar(data_window, symbol, mtf_slice, mtf_interval)
+            signals = BacktestEngine.analyze_bar(data_window, symbol, mtf_slice, mtf_interval, params)
 
             overall = signals.get('overall', 'neutral')
             quality = signals.get('quality_score', 0)
@@ -306,17 +403,28 @@ class BacktestEngine:
             signal_stage = signals.get('signal_stage')
             signal_label = signals.get('signal_label', '')
 
-            # 入場條件：強烈信號 + 品質門檻 + confirmed + 有 SL/TP
+            # 入場信號等級判斷
+            if entry_mode == 'include_normal':
+                valid_signals = ('strong_buy', 'buy', 'strong_sell', 'sell')
+            else:
+                valid_signals = ('strong_buy', 'strong_sell')
+
+            # R:R 等級判斷
+            valid_rr = ('good', 'acceptable')
+            if allow_caution_rr:
+                valid_rr = ('good', 'acceptable', 'caution')
+
+            # 入場條件
             can_enter = (
-                overall in ('strong_buy', 'strong_sell')
+                overall in valid_signals
                 and quality >= min_quality
-                and signal_stage == 'confirmed'
+                and (not require_confirmed or signal_stage == 'confirmed')
                 and sl_tp is not None
-                and sl_tp.get('rr_grade') in ('good', 'acceptable')
+                and sl_tp.get('rr_grade') in valid_rr
             )
 
             if can_enter:
-                direction = 'long' if overall == 'strong_buy' else 'short'
+                direction = 'long' if overall in ('strong_buy', 'buy') else 'short'
                 # 入場價 = 當前 bar 收盤價 + 滑價
                 if direction == 'long':
                     entry_price = bar_close * (1 + slippage_pct / 100)
@@ -352,6 +460,10 @@ class BacktestEngine:
                 pnl_pct = (exit_price - entry_price) / entry_price * 100
             else:
                 pnl_pct = (entry_price - exit_price) / entry_price * 100
+
+            if position.get('partial_closed'):
+                remaining_pnl = pnl_pct * 0.5
+                pnl_pct = position['partial_pnl'] + remaining_pnl
 
             cumulative_pnl += pnl_pct
 
@@ -406,6 +518,11 @@ class BacktestEngine:
                 'min_quality': min_quality,
                 'slippage_pct': slippage_pct,
                 'cooldown_bars': cooldown_bars,
+                'entry_mode': entry_mode,
+                'require_confirmed': require_confirmed,
+                'allow_caution_rr': allow_caution_rr,
+                'trailing_stop': trailing_stop,
+                'partial_tp': partial_tp,
                 'total_bars': total_bars,
                 'analyzed_bars': total_bars - window_size,
             }
@@ -541,6 +658,15 @@ class BacktestEngine:
 
         pnl_values = [t['pnl_pct'] for t in trades]
 
+        # 按出場類型統計
+        exit_type_stats = {}
+        for t in trades:
+            et = t['exit_type']
+            if et not in exit_type_stats:
+                exit_type_stats[et] = {'count': 0, 'pnl': 0}
+            exit_type_stats[et]['count'] += 1
+            exit_type_stats[et]['pnl'] = round(exit_type_stats[et]['pnl'] + t['pnl_pct'], 4)
+
         return {
             'total_trades': total,
             'long_trades': len(long_trades),
@@ -559,6 +685,153 @@ class BacktestEngine:
             'profit_factor': profit_factor if profit_factor != float('inf') else 999.99,
             'best_trade': round(max(pnl_values), 4),
             'worst_trade': round(min(pnl_values), 4),
+            'exit_type_stats': exit_type_stats,
+        }
+
+
+# === 參數優化引擎 ===
+
+class ParameterOptimizer:
+    """網格搜尋參數優化器 — 在預拉取數據上跑多組參數組合"""
+
+    # 預設搜尋範圍
+    # 注意：EMA/RSI 對 SMC 信號影響極小，預設只搜尋 1 組指標參數
+    # 主要優化方向：入場條件 + 品質門檻
+    DEFAULT_GRID = {
+        'ema_fast': [9],
+        'ema_slow': [21],
+        'rsi_period': [14],
+        'min_quality': [2.0, 2.5, 3.0, 3.5, 4.0],
+        'entry_mode': ['strong_only', 'include_normal'],
+        'require_confirmed': [True, False],
+        'allow_caution_rr': [False, True],
+    }
+
+    @staticmethod
+    def generate_combinations(grid):
+        """產生所有參數組合（笛卡爾積）"""
+        keys = sorted(grid.keys())
+        values = [grid[k] for k in keys]
+        combos = [{}]
+        for key, vals in zip(keys, values):
+            new_combos = []
+            for combo in combos:
+                for v in vals:
+                    c = dict(combo)
+                    c[key] = v
+                    new_combos.append(c)
+            combos = new_combos
+        return combos
+
+    @staticmethod
+    def run_optimization(symbol, interval='5m', limit=500, grid=None,
+                         slippage_pct=0.05, cooldown_bars=0,
+                         trailing_stop=False, partial_tp=False,
+                         lose_streak_pause=0, lose_streak_cooldown=10):
+        """執行參數優化
+
+        Args:
+            symbol: 交易對
+            interval: K 線週期
+            limit: K 線數量
+            grid: 搜尋範圍 dict（None 時用 DEFAULT_GRID）
+            其他參數同 run_backtest
+
+        Returns:
+            dict: {results: [...top10], total_combinations, data_info}
+        """
+        if grid is None:
+            grid = ParameterOptimizer.DEFAULT_GRID
+
+        # 分離 backtest 過濾參數 vs 指標參數
+        backtest_keys = {'min_quality', 'cooldown_bars', 'slippage_pct',
+                         'entry_mode', 'require_confirmed', 'allow_caution_rr'}
+
+        # 預拉取數據（只拉一次）
+        all_data = BacktestEngine.fetch_historical_klines(symbol, interval, limit)
+        mtf_interval = MTF_INTERVAL_MAP.get(interval, '15m')
+        try:
+            mtf_data = BacktestEngine.fetch_historical_klines(symbol, mtf_interval, limit)
+        except Exception:
+            mtf_data = []
+
+        prefetched = {
+            'all_data': all_data,
+            'mtf_data': mtf_data,
+            'mtf_interval': mtf_interval,
+        }
+
+        # 產生所有組合
+        all_combos = ParameterOptimizer.generate_combinations(grid)
+        total = len(all_combos)
+
+        results = []
+        for i, combo in enumerate(all_combos):
+            # 分離指標參數和過濾參數
+            ind_params = {k: v for k, v in combo.items() if k not in backtest_keys}
+            mq = combo.get('min_quality', 3.0)
+            cd = combo.get('cooldown_bars', cooldown_bars)
+            sp = combo.get('slippage_pct', slippage_pct)
+            em = combo.get('entry_mode', 'strong_only')
+            rc = combo.get('require_confirmed', True)
+            acr = combo.get('allow_caution_rr', False)
+
+            try:
+                result = BacktestEngine.run_backtest(
+                    symbol=symbol, interval=interval, limit=limit,
+                    min_quality=mq, slippage_pct=sp, cooldown_bars=cd,
+                    params=ind_params if ind_params else None,
+                    trailing_stop=trailing_stop, partial_tp=partial_tp,
+                    lose_streak_pause=lose_streak_pause,
+                    lose_streak_cooldown=lose_streak_cooldown,
+                    entry_mode=em, require_confirmed=rc, allow_caution_rr=acr,
+                    _prefetched=prefetched,
+                )
+                stats = result['stats']
+
+                # 過濾：至少 5 筆交易
+                if stats['total_trades'] < 5:
+                    continue
+
+                # 計算排序指標
+                pf = stats['profit_factor']
+                pnl = stats['total_pnl']
+                dd = stats['max_drawdown']
+                dd_ratio = pnl / dd if dd > 0 else (999.0 if pnl > 0 else 0)
+
+                results.append({
+                    'rank': 0,
+                    'params': combo,
+                    'stats': stats,
+                    'score': round(dd_ratio, 2),
+                    'profit_factor': pf,
+                    'total_pnl': round(pnl, 4),
+                    'max_drawdown': round(dd, 4),
+                    'win_rate': stats['win_rate'],
+                    'total_trades': stats['total_trades'],
+                })
+            except Exception:
+                continue
+
+        # 排序：PnL/DD ratio 為主，Profit Factor 為次
+        results.sort(key=lambda r: (r['score'], r['profit_factor']), reverse=True)
+
+        # 取 Top 10
+        top_results = results[:10]
+        for i, r in enumerate(top_results):
+            r['rank'] = i + 1
+
+        return {
+            'results': top_results,
+            'total_combinations': total,
+            'valid_combinations': len(results),
+            'data_info': {
+                'symbol': symbol,
+                'interval': interval,
+                'mtf_interval': mtf_interval,
+                'total_bars': len(all_data),
+                'analyzed_bars': len(all_data) - BacktestEngine.MIN_WINDOW,
+            }
         }
 
 
@@ -573,6 +846,8 @@ class BacktestHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             html = HTML_PAGE.replace('V{VERSION}', f'V{VERSION}')
             self.wfile.write(html.encode('utf-8'))
+        elif self.path.startswith('/api/optimize'):
+            self.handle_optimize()
         elif self.path.startswith('/api/backtest'):
             self.handle_backtest()
         else:
@@ -590,12 +865,28 @@ class BacktestHandler(http.server.SimpleHTTPRequestHandler):
             min_quality = float(params.get('min_quality', ['3.0'])[0])
             slippage_pct = float(params.get('slippage_pct', ['0.05'])[0])
             cooldown_bars = int(params.get('cooldown_bars', ['0'])[0])
+            trailing_stop = params.get('trailing_stop', ['0'])[0] == '1'
+            partial_tp = params.get('partial_tp', ['0'])[0] == '1'
+            lose_streak_pause = int(params.get('lose_streak_pause', ['0'])[0])
+            lose_streak_cooldown = int(params.get('lose_streak_cooldown', ['10'])[0])
+            entry_mode = params.get('entry_mode', ['strong_only'])[0]
+            require_confirmed = params.get('require_confirmed', ['1'])[0] == '1'
+            allow_caution_rr = params.get('allow_caution_rr', ['0'])[0] == '1'
+
+            # 自訂指標參數
+            custom_params = {}
+            for key in ('ema_fast', 'ema_slow', 'rsi_period', 'rsi_overbought',
+                        'rsi_oversold', 'macd_fast', 'macd_slow', 'macd_signal'):
+                if key in params:
+                    custom_params[key] = int(params[key][0])
 
             # 限制範圍
             limit = max(200, min(1000, limit))
             min_quality = max(0, min(5, min_quality))
             slippage_pct = max(0, min(1.0, slippage_pct))
             cooldown_bars = max(0, min(100, cooldown_bars))
+            lose_streak_pause = max(0, min(20, lose_streak_pause))
+            lose_streak_cooldown = max(0, min(50, lose_streak_cooldown))
 
             result = BacktestEngine.run_backtest(
                 symbol=symbol,
@@ -604,6 +895,82 @@ class BacktestHandler(http.server.SimpleHTTPRequestHandler):
                 min_quality=min_quality,
                 slippage_pct=slippage_pct,
                 cooldown_bars=cooldown_bars,
+                params=custom_params if custom_params else None,
+                trailing_stop=trailing_stop,
+                partial_tp=partial_tp,
+                lose_streak_pause=lose_streak_pause,
+                lose_streak_cooldown=lose_streak_cooldown,
+                entry_mode=entry_mode,
+                require_confirmed=require_confirmed,
+                allow_caution_rr=allow_caution_rr,
+            )
+
+            response = {
+                'success': True,
+                'timestamp': datetime.now().isoformat(),
+                **result,
+            }
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            error_info = classify_error(e)
+            self.send_response(500)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                'success': False,
+                'error': error_info.get('error', str(e)),
+                'error_type': error_info.get('error_type', 'unknown'),
+            }, ensure_ascii=False).encode('utf-8'))
+
+    def handle_optimize(self):
+        """處理參數優化請求"""
+        try:
+            query = urllib.parse.urlparse(self.path).query
+            params = urllib.parse.parse_qs(query)
+
+            symbol = params.get('symbol', ['BTCUSDT'])[0].upper()
+            interval = params.get('interval', ['5m'])[0]
+            limit = int(params.get('limit', ['500'])[0])
+            slippage_pct = float(params.get('slippage_pct', ['0.05'])[0])
+            cooldown_bars = int(params.get('cooldown_bars', ['0'])[0])
+            trailing_stop = params.get('trailing_stop', ['0'])[0] == '1'
+            partial_tp = params.get('partial_tp', ['0'])[0] == '1'
+
+            # 限制範圍
+            limit = max(200, min(1000, limit))
+            slippage_pct = max(0, min(1.0, slippage_pct))
+
+            # 自訂搜尋範圍（用逗號分隔）
+            grid = {}
+            grid_mappings = {
+                'grid_ema_fast': ('ema_fast', int),
+                'grid_ema_slow': ('ema_slow', int),
+                'grid_rsi_period': ('rsi_period', int),
+                'grid_min_quality': ('min_quality', float),
+            }
+            for param_key, (grid_key, cast_fn) in grid_mappings.items():
+                if param_key in params:
+                    try:
+                        grid[grid_key] = [cast_fn(v.strip()) for v in params[param_key][0].split(',')]
+                    except ValueError:
+                        pass
+
+            # 合併自訂 grid 和預設 grid（自訂覆蓋預設）
+            merged_grid = dict(ParameterOptimizer.DEFAULT_GRID)
+            if grid:
+                merged_grid.update(grid)
+
+            result = ParameterOptimizer.run_optimization(
+                symbol=symbol, interval=interval, limit=limit,
+                grid=merged_grid,
+                slippage_pct=slippage_pct, cooldown_bars=cooldown_bars,
+                trailing_stop=trailing_stop, partial_tp=partial_tp,
             )
 
             response = {
@@ -744,7 +1111,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             transition: background 0.2s;
             height: 35px;
         }
-        .btn-run:hover { background: var(--accent-hover); }
+        .btn-run:hover { background: var(--accent-hover); filter: brightness(1.1); }
         .btn-run:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -987,9 +1354,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="control-group">
         <label>K 線數量</label>
         <select id="limit">
-            <option value="500" selected>500</option>
+            <option value="500">500</option>
             <option value="750">750</option>
-            <option value="1000">1000</option>
+            <option value="1000" selected>1000</option>
         </select>
     </div>
     <div class="control-group">
@@ -1004,7 +1371,51 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <label>CD 根數</label>
         <input type="number" id="cooldownBars" value="0" min="0" max="100" step="1">
     </div>
+    <div class="control-group">
+        <label>入場模式</label>
+        <select id="entryMode">
+            <option value="strong_only">僅強烈信號</option>
+            <option value="include_normal">含一般信號</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>需 Confirmed</label>
+        <select id="requireConfirmed">
+            <option value="1">是</option>
+            <option value="0">否</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>接受 Caution RR</label>
+        <select id="allowCautionRR">
+            <option value="0">否</option>
+            <option value="1">是</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>Trailing Stop</label>
+        <select id="trailingStop">
+            <option value="0">關閉</option>
+            <option value="1">開啟</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>部分止盈</label>
+        <select id="partialTp">
+            <option value="0">關閉</option>
+            <option value="1">開啟</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>連虧暫停</label>
+        <input type="number" id="loseStreakPause" value="0" min="0" max="20" step="1" title="連續虧損 N 次後暫停（0=不啟用）">
+    </div>
+    <div class="control-group">
+        <label>暫停根數</label>
+        <input type="number" id="loseStreakCooldown" value="10" min="1" max="50" step="1" title="連虧暫停後等待 M 根 K 線">
+    </div>
     <button class="btn-run" id="btnRun" onclick="runBacktest()">開始回測</button>
+    <button class="btn-run" id="btnOptimize" onclick="runOptimize()" style="background:#ff9800;">參數優化</button>
 </div>
 
 <div class="main-content" id="mainContent">
@@ -1060,10 +1471,30 @@ async function runBacktest() {
     const slippage = document.getElementById('slippage').value;
     const cooldownBars = document.getElementById('cooldownBars').value;
 
+    const entryMode = document.getElementById('entryMode').value;
+    const requireConfirmed = document.getElementById('requireConfirmed').value;
+    const allowCautionRR = document.getElementById('allowCautionRR').value;
+    const trailingStop = document.getElementById('trailingStop').value;
+    const partialTp = document.getElementById('partialTp').value;
+    const loseStreakPause = document.getElementById('loseStreakPause').value;
+    const loseStreakCooldown = document.getElementById('loseStreakCooldown').value;
+
     const params = new URLSearchParams({
         symbol, interval, limit, min_quality: minQuality,
-        slippage_pct: slippage, cooldown_bars: cooldownBars
+        slippage_pct: slippage, cooldown_bars: cooldownBars,
+        entry_mode: entryMode, require_confirmed: requireConfirmed,
+        allow_caution_rr: allowCautionRR,
+        trailing_stop: trailingStop, partial_tp: partialTp,
+        lose_streak_pause: loseStreakPause, lose_streak_cooldown: loseStreakCooldown
     });
+
+    // 套用優化器選定的自訂參數
+    if (window._customParams) {
+        const cp = window._customParams;
+        if (cp.ema_fast) params.set('ema_fast', cp.ema_fast);
+        if (cp.ema_slow) params.set('ema_slow', cp.ema_slow);
+        if (cp.rsi_period) params.set('rsi_period', cp.rsi_period);
+    }
 
     try {
         document.getElementById('loadingProgress').textContent = `正在回測 ${symbol} ${interval} (${limit} 根 K 線)...`;
@@ -1097,7 +1528,14 @@ function renderResults(data) {
     // 1. 設定摘要
     const configInfo = document.createElement('div');
     configInfo.style.cssText = 'font-size:12px; color:var(--text-secondary); padding:4px 0;';
-    configInfo.textContent = `${config.symbol} | ${config.interval} (MTF: ${config.mtf_interval}) | ${config.total_bars} 根 K 線 | 分析 ${config.analyzed_bars} 根 | 門檻 ${config.min_quality} 星 | 滑價 ${config.slippage_pct}%`;
+    const features = [];
+    if (config.trailing_stop) features.push('TS');
+    if (config.partial_tp) features.push('PT');
+    if (config.entry_mode === 'include_normal') features.push('含一般信號');
+    if (!config.require_confirmed) features.push('不需Confirmed');
+    if (config.allow_caution_rr) features.push('含Caution RR');
+    const featureStr = features.length > 0 ? ` | ${features.join(' + ')}` : '';
+    configInfo.textContent = `${config.symbol} | ${config.interval} (MTF: ${config.mtf_interval}) | ${config.total_bars} 根 K 線 | 分析 ${config.analyzed_bars} 根 | Q≥${config.min_quality} | 滑價 ${config.slippage_pct}%${featureStr}`;
     container.appendChild(configInfo);
 
     // 2. 績效統計卡片
@@ -1340,8 +1778,13 @@ function renderTradeTable(container, trades) {
         const dirText = t.direction === 'long' ? 'LONG' : 'SHORT';
         const pnlCls = t.pnl_pct >= 0 ? 'pnl-pos' : 'pnl-neg';
         const cumCls = t.cumulative_pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-        const exitCls = t.exit_type === 'sl' ? 'exit-sl' : (t.exit_type === 'force_close' ? 'exit-force' : 'exit-tp');
-        const exitText = t.exit_type === 'sl' ? 'SL' : (t.exit_type === 'force_close' ? '強平' : t.exit_type.toUpperCase());
+        const exitTypeMap = {
+            'sl': ['exit-sl', 'SL'], 'tp1': ['exit-tp', 'TP1'], 'tp2': ['exit-tp', 'TP2'],
+            'force_close': ['exit-force', '強平'], 'trailing_be': ['exit-force', 'T-BE'],
+            'partial_sl': ['exit-sl', 'P-SL'], 'partial_tp1': ['exit-tp', 'P-TP1'],
+            'partial_tp2': ['exit-tp', 'P-TP2'],
+        };
+        const [exitCls, exitText] = exitTypeMap[t.exit_type] || ['exit-force', t.exit_type];
 
         const priceDecimals = t.entry_price > 100 ? 2 : (t.entry_price > 1 ? 4 : 6);
 
@@ -1365,6 +1808,150 @@ function renderTradeTable(container, trades) {
         `;
         tbody.appendChild(tr);
     }
+}
+
+// === 參數優化 ===
+async function runOptimize() {
+    const btn = document.getElementById('btnOptimize');
+    const loading = document.getElementById('loading');
+    btn.disabled = true;
+    loading.classList.add('active');
+
+    const customSym = document.getElementById('customSymbol').value.trim().toUpperCase();
+    const symbol = customSym || document.getElementById('symbol').value;
+    const interval = document.getElementById('interval').value;
+    const limit = document.getElementById('limit').value;
+    const slippage = document.getElementById('slippage').value;
+    const cooldownBars = document.getElementById('cooldownBars').value;
+    const trailingStop = document.getElementById('trailingStop').value;
+    const partialTp = document.getElementById('partialTp').value;
+
+    const params = new URLSearchParams({
+        symbol, interval, limit,
+        slippage_pct: slippage, cooldown_bars: cooldownBars,
+        trailing_stop: trailingStop, partial_tp: partialTp,
+    });
+
+    try {
+        document.getElementById('loadingProgress').textContent =
+            `正在優化 ${symbol} ${interval} 參數（可能需要數分鐘）...`;
+        const resp = await fetch(`/api/optimize?${params}`);
+        const data = await resp.json();
+
+        if (!data.success) {
+            showToast(data.error || '優化失敗', 'error');
+            return;
+        }
+
+        renderOptimizeResults(data);
+        showToast(`優化完成：測試 ${data.total_combinations} 組，有效 ${data.valid_combinations} 組`, 'success');
+
+    } catch (err) {
+        showToast('優化請求失敗: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        loading.classList.remove('active');
+    }
+}
+
+function renderOptimizeResults(data) {
+    const container = document.getElementById('mainContent');
+    container.innerHTML = '';
+
+    // 資訊欄
+    const info = document.createElement('div');
+    info.style.cssText = 'font-size:12px; color:var(--text-secondary); padding:4px 0;';
+    info.textContent = `${data.data_info.symbol} | ${data.data_info.interval} (MTF: ${data.data_info.mtf_interval}) | ${data.data_info.total_bars} 根 K 線 | 測試 ${data.total_combinations} 組合 | 有效 ${data.valid_combinations} 組`;
+    container.appendChild(info);
+
+    if (data.results.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<h2>無有效結果</h2><p>所有參數組合的交易次數均不足 5 筆</p>';
+        container.appendChild(empty);
+        return;
+    }
+
+    // 排行表
+    const section = document.createElement('div');
+    section.className = 'trade-table-section';
+    section.innerHTML = `
+        <div class="trade-table-header">
+            <span>參數優化排行（Top ${data.results.length}，依 PnL/DD 比值排序）</span>
+        </div>
+        <div class="trade-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>EMA</th>
+                        <th>RSI</th>
+                        <th>Q</th>
+                        <th>入場模式</th>
+                        <th>Confirmed</th>
+                        <th>Caution RR</th>
+                        <th>交易數</th>
+                        <th>勝率</th>
+                        <th>總 PnL%</th>
+                        <th>回撤%</th>
+                        <th>PnL/DD</th>
+                        <th>PF</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="optimizeBody"></tbody>
+            </table>
+        </div>
+    `;
+    container.appendChild(section);
+
+    const tbody = section.querySelector('#optimizeBody');
+    for (const r of data.results) {
+        const tr = document.createElement('tr');
+        const pnlCls = r.total_pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+        const pfCls = r.profit_factor >= 1 ? 'pnl-pos' : 'pnl-neg';
+
+        const ema = `${r.params.ema_fast || '-'}/${r.params.ema_slow || '-'}`;
+        const entryMode = r.params.entry_mode === 'include_normal' ? '含一般' : '僅強烈';
+        const confirmed = r.params.require_confirmed === false ? '否' : '是';
+        const cautionRR = r.params.allow_caution_rr === true ? '是' : '否';
+
+        tr.innerHTML = `
+            <td>${r.rank}</td>
+            <td>${ema}</td>
+            <td>${r.params.rsi_period || '-'}</td>
+            <td>${r.params.min_quality || '-'}</td>
+            <td>${entryMode}</td>
+            <td>${confirmed}</td>
+            <td>${cautionRR}</td>
+            <td>${r.total_trades}</td>
+            <td>${r.win_rate}%</td>
+            <td class="${pnlCls}">${r.total_pnl >= 0 ? '+' : ''}${r.total_pnl.toFixed(3)}%</td>
+            <td class="pnl-neg">${r.max_drawdown.toFixed(3)}%</td>
+            <td>${r.score}</td>
+            <td class="${pfCls}">${r.profit_factor}</td>
+            <td><button class="btn-run" style="padding:4px 12px;font-size:11px;height:auto;"
+                onclick="applyParams(${JSON.stringify(r.params).replace(/"/g, '&quot;')})">套用</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+function applyParams(params) {
+    if (params.min_quality !== undefined) {
+        document.getElementById('minQuality').value = params.min_quality;
+    }
+    if (params.entry_mode) {
+        document.getElementById('entryMode').value = params.entry_mode;
+    }
+    if (params.require_confirmed !== undefined) {
+        document.getElementById('requireConfirmed').value = params.require_confirmed ? '1' : '0';
+    }
+    if (params.allow_caution_rr !== undefined) {
+        document.getElementById('allowCautionRR').value = params.allow_caution_rr ? '1' : '0';
+    }
+    window._customParams = params;
+    showToast(`已套用參數：EMA ${params.ema_fast || '-'}/${params.ema_slow || '-'}, RSI ${params.rsi_period || '-'}, Q≥${params.min_quality || '-'}, ${params.entry_mode === 'include_normal' ? '含一般信號' : '僅強烈信號'}`, 'success');
 }
 
 // === 鍵盤快捷鍵 ===
