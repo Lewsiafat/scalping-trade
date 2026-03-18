@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.3.0] - 2026-03-18
+
+### Added
+- **Backtest System** (`app_backtest.py` v2.0.0): Standalone backtesting engine with web UI on port 8081. Fetches historical klines from Binance, runs bar-by-bar signal analysis, and reports trades/equity/stats.
+- **Parameter Optimizer** (`ParameterOptimizer`): Grid search engine that tests indicator parameter combinations (EMA/RSI/quality/entry mode) and ranks by PnL/MaxDrawdown ratio. Pre-fetches data once to avoid redundant API calls. New `/api/optimize` endpoint.
+- **Trailing Stop**: After TP1 is hit, SL moves to entry price (break-even). Same-bar activation guard prevents immediate stop-out.
+- **Partial Take-Profit**: TP1 closes 50% position, remaining runs to TP2 or trailing stop. Combined PnL calculation.
+- **Lose Streak Protection**: Pauses trading for M bars after N consecutive losses (configurable, default N=3, M=10).
+- **Entry Mode Controls**: Three new filter switches — `entry_mode` (strong_only/include_normal), `require_confirmed`, `allow_caution_rr` — all optimizable via grid search.
+- **Exit Type Classification**: Stats now break down by exit type (SL/TP1/TP2/trailing_be/partial_sl/partial_tp1/partial_tp2).
+- **CLI Backtest Runner** (`run_backtest.py`): Lightweight CLI script for quick backtesting without the web server.
+
 ## [4.2.2] - 2026-03-17
 
 ### Fixed

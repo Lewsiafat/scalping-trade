@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.2
+# 📈 Scalping Trade Analyzer Pro V4.3
 
 > 專業級實時剝頭皮交易信號分析系統 | Professional Real-time Scalping Trading Signal Analysis System
 
@@ -34,6 +34,8 @@ Scalping Trade Analyzer Pro 是一個專為剝頭皮交易者設計的實時信�
 - **🔗 nginx 子路徑支援** - `--prefix <PATH>` 反向代理路徑前綴 ✨ V3.3 NEW
 - **🎨 自定義主題風格** - 柔和極簡風格 (Soft Minimalist)，支援 CSS 變數動態主題 ✨ V3.4 NEW
 - **↔️ 互動式收折排版** - 左側設置面版與垂直分析區塊皮可收合，最大化 K 線圖表空間 ✨ V3.4 NEW
+- **🧪 回測引擎** - 逐 bar 回測，支援 Trailing Stop、部分止盈、連虧保護 ✨ V4.3 NEW
+- **🔬 參數優化器** - 網格搜尋最佳指標/過濾參數組合，以 PnL/DD 比值排序 ✨ V4.3 NEW
 - **🌐 國際化 (i18n) 支援** - 預設英文 (EN)，可切換至繁體中文 (ZH_TW)，語言偷好儲存於 localStorage ✨ V3.5 NEW
 - **📱 響應式設計** - 支援桌面與移動設備
 
@@ -282,7 +284,9 @@ TP2: $65,450 (報酬 $450)
 
 ```
 scalping-trade/
-├── app_v3.py              # 主程式 v4.2.0（前後端 + SMC 引擎，固定 5m+15m）
+├── app_v3.py              # 主程式 v4.3.0（前後端 + SMC 引擎，固定 5m+15m）
+├── app_backtest.py        # 回測引擎 v2.0.0（Web UI 於 port 8081，參數優化器）
+├── run_backtest.py        # CLI 回測執行器（輕量，無需 Web 伺服器）
 ├── app_v2.py              # 舊版 v3.6.0（保留參考）
 ├── signal_engine_b.py     # 方案 B 條件累積引擎（A/B 測試用）
 ├── test_signal_compare.py # A/B 信號引擎對比測試腳本

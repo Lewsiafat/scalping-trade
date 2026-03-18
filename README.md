@@ -1,4 +1,4 @@
-# 📈 Scalping Trade Analyzer Pro V4.2
+# 📈 Scalping Trade Analyzer Pro V4.3
 
 > Professional Real-time Scalping Trading Signal Analysis System
 
@@ -36,6 +36,8 @@ Scalping Trade Analyzer Pro is a real-time signal analysis system designed for s
 - **🔗 Nginx Sub-path Support** – `--prefix <PATH>` for reverse-proxy path prefix ✨ V3.3 NEW
 - **🎨 Custom UI Theme** – Soft Minimalist aesthetic with dynamic CSS variable management ✨ V3.4 NEW
 - **↔️ Interactive Layouts** – Collapsible sidebar and vertically folding analysis panels for maximum chart space ✨ V3.4 NEW
+- **🧪 Backtest Engine** – Bar-by-bar backtesting with Trailing Stop, Partial TP, Lose Streak Protection ✨ V4.3 NEW
+- **🔬 Parameter Optimizer** – Grid search for optimal indicator/filter combinations, ranked by PnL/DD ratio ✨ V4.3 NEW
 - **🌐 i18n Support** – EN (default) / Traditional Chinese (ZH_TW) language switching with localStorage persistence ✨ V3.5 NEW
 - **📱 Responsive Design** – Supports both desktop and mobile devices
 
@@ -284,7 +286,9 @@ Assume account balance: $10,000
 
 ```
 scalping-trade/
-├── app_v3.py            # Main application v4.2.0 (frontend + backend, SMC engine, fixed 5m+15m)
+├── app_v3.py            # Main application v4.3.0 (frontend + backend, SMC engine, fixed 5m+15m)
+├── app_backtest.py      # Backtest engine v2.0.0 (web UI on port 8081, parameter optimizer)
+├── run_backtest.py      # CLI backtest runner (lightweight, no web server)
 ├── app_v2.py            # Legacy v3.6.0 (kept as reference)
 ├── signal_engine_b.py   # Alternative signal engine (boolean condition accumulation) for A/B testing
 ├── test_signal_compare.py # A/B signal engine comparison test script

@@ -6,6 +6,18 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.3.0] - 2026-03-18
+
+### 新增
+- **回測系統**（`app_backtest.py` v2.0.0）：獨立回測引擎，Web UI 於 port 8081。從 Binance 拉取歷史 K 線，逐 bar 執行信號分析，產出交易/權益/統計報告。
+- **參數優化引擎**（`ParameterOptimizer`）：網格搜尋測試指標參數組合（EMA/RSI/品質/入場模式），以 PnL/MaxDrawdown 比值排序。預拉取數據一次避免重複 API 呼叫。新增 `/api/optimize` 端點。
+- **移動止損（Trailing Stop）**：TP1 觸發後 SL 移至入場價（保本）。同 bar 觸發保護機制避免立即出場。
+- **部分止盈**：TP1 平 50% 倉位，剩餘跑到 TP2 或被 Trailing Stop 出場。組合 PnL 計算。
+- **連虧保護**：連續 N 次虧損後暫停 M 根 K 線（可配置，預設 N=3, M=10）。
+- **入場模式控制**：三個新過濾開關 — `entry_mode`（僅強烈/含一般）、`require_confirmed`、`allow_caution_rr` — 均可透過網格搜尋優化。
+- **出場類型分類**：統計按出場類型細分（SL/TP1/TP2/trailing_be/partial_sl/partial_tp1/partial_tp2）。
+- **CLI 回測執行器**（`run_backtest.py`）：輕量 CLI 腳本，無需 Web 伺服器即可快速回測。
+
 ## [4.2.2] - 2026-03-17
 
 ### 修復
