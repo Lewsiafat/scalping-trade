@@ -74,6 +74,6 @@
     "rolling_window":   150,
     "min_data_bars":    50,
     "strong_only":      true,
-    "long_only":        true
+    "long_only":        false
   }
 }
