@@ -1,0 +1,258 @@
+{
+  "run_at": "2026-03-29T13:33:49.263413+00:00",
+  "mode": "optimizer",
+  "best_score": 0.2778,
+  "best_summary": {
+    "total_trades": 313,
+    "win_trades": 122,
+    "loss_trades": 190,
+    "expired_trades": 1,
+    "win_rate": 38.98,
+    "avg_rr": -0.157,
+    "total_pnl_r": -49.052,
+    "max_consecutive_loss": 7,
+    "profit_factor": 0.792,
+    "gross_profit_r": 186.593,
+    "gross_loss_r": 235.645,
+    "params_used": {
+      "weight_trend": 0.35,
+      "weight_structure": 0.4,
+      "weight_momentum": 0.25,
+      "strong_signal_composite": 70,
+      "strong_signal_min_floor": 40,
+      "strong_signal_trend": 55,
+      "normal_signal_composite": 45,
+      "normal_signal_min_floor": 25,
+      "normal_signal_trend": 45,
+      "rr_good": 1.5,
+      "rr_ok": 1.0,
+      "rr_reject": 0.7,
+      "atr_period": 14,
+      "atr_clamp_min": 2.5,
+      "atr_clamp_max": 2.5,
+      "atr_sl_fallback": 1.5,
+      "atr_tp1_min": 4.5,
+      "atr_tp1_fallback": 1.5,
+      "atr_tp2_min": 2.0,
+      "atr_tp2_fallback": 3.0,
+      "pre_alert_atr_mult": 0.5,
+      "swing_n": 3,
+      "swing_max_points": 20,
+      "liquidity_sweep_confirmation_window": 3,
+      "sweep_full_depth_atr_mult": 0.5,
+      "sweep_partial_depth_atr_mult": 0.3,
+      "sweep_near_atr_mult": 0.2,
+      "rsi_period": 14,
+      "rsi_overbought": 70,
+      "rsi_oversold": 30,
+      "ema_fast": 9,
+      "ema_slow": 21,
+      "macd_fast": 12,
+      "macd_slow": 26,
+      "macd_signal": 9,
+      "stoch_k_period": 14,
+      "stoch_d_period": 3,
+      "bb_period": 20,
+      "bb_std_dev": 2,
+      "cvd_window": 20,
+      "max_hold_bars": 0,
+      "commission_rate": 0.0004,
+      "rolling_window": 150,
+      "min_data_bars": 50,
+      "strong_only": true,
+      "long_only": false
+    }
+  },
+  "top10": [
+    {
+      "rank": 1,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 40,
+        "atr_clamp_min": 2.5,
+        "atr_tp1_min": 4.5,
+        "atr_clamp_max": 2.5
+      },
+      "score": 0.2778,
+      "summary": {
+        "total_trades": 313,
+        "win_rate": 38.98,
+        "profit_factor": 0.792,
+        "avg_rr": -0.157,
+        "total_pnl_r": -49.052,
+        "max_consecutive_loss": 7
+      }
+    },
+    {
+      "rank": 2,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 35,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 4.5,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2772,
+      "summary": {
+        "total_trades": 291,
+        "win_rate": 41.92,
+        "profit_factor": 0.778,
+        "avg_rr": -0.153,
+        "total_pnl_r": -44.484,
+        "max_consecutive_loss": 8
+      }
+    },
+    {
+      "rank": 3,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 40,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 5.0,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.256,
+      "summary": {
+        "total_trades": 266,
+        "win_rate": 39.85,
+        "profit_factor": 0.803,
+        "avg_rr": -0.141,
+        "total_pnl_r": -37.51,
+        "max_consecutive_loss": 9
+      }
+    },
+    {
+      "rank": 4,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 35,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 5.0,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2438,
+      "summary": {
+        "total_trades": 273,
+        "win_rate": 39.93,
+        "profit_factor": 0.814,
+        "avg_rr": -0.132,
+        "total_pnl_r": -35.988,
+        "max_consecutive_loss": 10
+      }
+    },
+    {
+      "rank": 5,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 35,
+        "atr_clamp_min": 2.5,
+        "atr_tp1_min": 4.5,
+        "atr_clamp_max": 2.5
+      },
+      "score": 0.2438,
+      "summary": {
+        "total_trades": 333,
+        "win_rate": 37.84,
+        "profit_factor": 0.758,
+        "avg_rr": -0.185,
+        "total_pnl_r": -61.486,
+        "max_consecutive_loss": 8
+      }
+    },
+    {
+      "rank": 6,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 40,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 7.5,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2301,
+      "summary": {
+        "total_trades": 207,
+        "win_rate": 32.85,
+        "profit_factor": 0.934,
+        "avg_rr": -0.053,
+        "total_pnl_r": -11.059,
+        "max_consecutive_loss": 10
+      }
+    },
+    {
+      "rank": 7,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 40,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 7.5,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2301,
+      "summary": {
+        "total_trades": 207,
+        "win_rate": 32.85,
+        "profit_factor": 0.934,
+        "avg_rr": -0.053,
+        "total_pnl_r": -11.059,
+        "max_consecutive_loss": 10
+      }
+    },
+    {
+      "rank": 8,
+      "params": {
+        "strong_signal_composite": 60,
+        "strong_signal_min_floor": 35,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 5.0,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2263,
+      "summary": {
+        "total_trades": 346,
+        "win_rate": 37.57,
+        "profit_factor": 0.753,
+        "avg_rr": -0.181,
+        "total_pnl_r": -62.49,
+        "max_consecutive_loss": 9
+      }
+    },
+    {
+      "rank": 9,
+      "params": {
+        "strong_signal_composite": 60,
+        "strong_signal_min_floor": 35,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 5.0,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2263,
+      "summary": {
+        "total_trades": 346,
+        "win_rate": 37.57,
+        "profit_factor": 0.753,
+        "avg_rr": -0.181,
+        "total_pnl_r": -62.49,
+        "max_consecutive_loss": 9
+      }
+    },
+    {
+      "rank": 10,
+      "params": {
+        "strong_signal_composite": 70,
+        "strong_signal_min_floor": 40,
+        "atr_clamp_min": 3.0,
+        "atr_tp1_min": 6.0,
+        "atr_clamp_max": 3.0
+      },
+      "score": 0.2224,
+      "summary": {
+        "total_trades": 242,
+        "win_rate": 35.95,
+        "profit_factor": 0.825,
+        "avg_rr": -0.134,
+        "total_pnl_r": -32.463,
+        "max_consecutive_loss": 10
+      }
+    }
+  ]
+}

@@ -5,7 +5,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git tag:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(python backtest_engine.py --no-save)",
+      "Bash(python optimizer.py --mode random -n 10 --no-update)",
+      "Bash(python optimizer.py --mode two-stage -n 150)",
+      "Bash(tasklist)"
     ]
   }
 }
