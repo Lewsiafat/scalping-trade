@@ -335,7 +335,7 @@ def run_backtest(klines: list, params: dict, symbol: str) -> dict:
                 elif bar_low <= active["tp_price"]:
                     result, exit_price = "tp_hit", active["tp_price"]
 
-            if result is None and hold_bars >= max_hold_bars:
+            if result is None and max_hold_bars > 0 and hold_bars >= max_hold_bars:
                 result, exit_price = "expired", bar_close
 
             if result:

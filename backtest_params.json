@@ -69,7 +69,7 @@
 
   "backtest_params": {
     "_comment": "回測引擎專用參數",
-    "max_hold_bars":    12,
+    "max_hold_bars":    0,
     "commission_rate":  0.0004,
     "rolling_window":   150,
     "min_data_bars":    50,
