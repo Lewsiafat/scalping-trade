@@ -280,7 +280,7 @@ def run_backtest(klines: list, params: dict, symbol: str) -> dict:
 
         # ── 處理持倉 ──
         if active:
-            hold_bars = i - active["entry_bar_index"]
+            hold_bars = i - active["trigger_bar_index"]
             result    = None
             exit_price = None
 
