@@ -212,13 +212,53 @@ def evaluate_signal(window: list, params: dict, symbol: str) -> dict:
                 current_price, atr, signal_type, obs, fvgs, swing_pts
             )
             if sl_tp is None:
-                signal_stage = "pre_alert"   # R:R < 0.7，拒絕
-                signal_type  = None
-            elif sl_tp.get("rr_grade") == "caution":
-                signal_stage = "pre_alert"   # R:R 0.7~1.0，謹慎
+                signal_stage = "pre_alert"
                 signal_type  = None
             else:
-                signal_stage = "confirmed"
+                # ── 覆蓋 TP1：強制最小 TP 距離 = atr × atr_tp1_min ──
+                tp1_min_mult = params.get("atr_tp1_min", 1.0)
+                if atr and tp1_min_mult > 1.0:
+                    min_tp_dist = atr * tp1_min_mult
+                    tp1_key = "take_profit_1"
+                    if signal_type == "buy":
+                        forced_tp1 = current_price + min_tp_dist
+                        if sl_tp[tp1_key] < forced_tp1:
+                            sl_tp = dict(sl_tp)
+                            sl_tp[tp1_key] = round(forced_tp1, 6)
+                    else:
+                        forced_tp1 = current_price - min_tp_dist
+                        if sl_tp[tp1_key] > forced_tp1:
+                            sl_tp = dict(sl_tp)
+                            sl_tp[tp1_key] = round(forced_tp1, 6)
+
+                # ── 覆蓋 SL：強制最小 SL 距離 = atr × atr_clamp_min ──
+                sl_min_mult = params.get("atr_clamp_min", 1.0)
+                if atr and sl_min_mult > 0:
+                    min_sl_dist = atr * sl_min_mult
+                    if signal_type == "buy":
+                        forced_sl = current_price - min_sl_dist
+                        if sl_tp["stop_loss"] > forced_sl:
+                            sl_tp = dict(sl_tp)
+                            sl_tp["stop_loss"] = round(forced_sl, 6)
+                    else:
+                        forced_sl = current_price + min_sl_dist
+                        if sl_tp["stop_loss"] < forced_sl:
+                            sl_tp = dict(sl_tp)
+                            sl_tp["stop_loss"] = round(forced_sl, 6)
+
+                # ── 重新計算 R:R，低於門檻則拒絕 ──
+                sl_dist_new = abs(current_price - sl_tp["stop_loss"])
+                tp_dist_new = abs(sl_tp["take_profit_1"] - current_price)
+                rr_new = tp_dist_new / sl_dist_new if sl_dist_new > 0 else 0
+
+                rr_min = params.get("rr_ok", 1.0)
+                if rr_new < rr_min:
+                    signal_stage = "pre_alert"
+                    signal_type  = None
+                else:
+                    sl_tp = dict(sl_tp)
+                    sl_tp["risk_reward_ratio"] = round(rr_new, 2)
+                    signal_stage = "confirmed"
         else:
             signal_stage = "pre_alert"
             signal_type  = None

@@ -38,20 +38,23 @@ from backtest_engine import (
 # ─── 搜尋空間定義 ─────────────────────────────────────────────────────────────
 
 SEARCH_SPACE = {
-    # 評分門檻
-    "strong_signal_composite":  [50, 55, 60, 65],
-    "strong_signal_min_floor":  [25, 30, 35],
-    "normal_signal_composite":  [40, 45, 50],
-    "normal_signal_min_floor":  [20, 25, 30],
+    # ── 方向 1：減少交易頻率（提高信號品質門檻）──────────────────
+    "strong_signal_composite":  [55, 60, 65, 70, 75],
+    "strong_signal_min_floor":  [30, 35, 40],
+    "normal_signal_composite":  [45, 50, 55],
+    "normal_signal_min_floor":  [25, 30, 35],
 
-    # 持倉週期
-    "max_hold_bars":            [8, 12, 16, 20],
+    # ── 方向 2：擴大止損距離（降低手續費 R 佔比）────────────────
+    # 5m ATR ≈ $150，atr_clamp_min 2.0 → SL ≈ $300 → 手續費 R ≈ 0.27
+    # atr_clamp_min 3.0 → SL ≈ $450 → 手續費 R ≈ 0.18
+    "atr_clamp_min":            [1.5, 2.0, 2.5, 3.0],
 
-    # ATR 止損下限（止損不能太小）
-    "atr_clamp_min":            [0.8, 1.0, 1.2],
+    # ── 方向 3：強制更高 TP 目標（增大 win 的 R）────────────────
+    # atr_tp1_min 覆蓋 calc_dynamic_sl_tp 的 TP1 最小距離
+    "atr_tp1_min":              [1.5, 2.0, 2.5],
 
-    # R:R 接受門檻
-    "rr_ok":                    [0.8, 1.0, 1.2],
+    # 持倉週期（配合更大 TP 需要更多時間）
+    "max_hold_bars":            [12, 16, 20, 24],
 }
 
 # 固定不動（非獨立變數）
