@@ -39,22 +39,20 @@ from backtest_engine import (
 
 SEARCH_SPACE = {
     # ── 方向 1：減少交易頻率（提高信號品質門檻）──────────────────
-    "strong_signal_composite":  [55, 60, 65, 70, 75],
-    "strong_signal_min_floor":  [30, 35, 40],
+    "strong_signal_composite":  [60, 65, 70, 75],
+    "strong_signal_min_floor":  [35, 40],
     "normal_signal_composite":  [45, 50, 55],
-    "normal_signal_min_floor":  [25, 30, 35],
+    "normal_signal_min_floor":  [25, 30],
 
-    # ── 方向 2：擴大止損距離（降低手續費 R 佔比）────────────────
-    # 5m ATR ≈ $150，atr_clamp_min 2.0 → SL ≈ $300 → 手續費 R ≈ 0.27
-    # atr_clamp_min 3.0 → SL ≈ $450 → 手續費 R ≈ 0.18
-    "atr_clamp_min":            [1.5, 2.0, 2.5, 3.0],
+    # ── 方向 B：SL 加寬讓 TP 有空間打到 ─────────────────────────
+    # 5m ATR ≈ $150
+    # atr_clamp_min 3.0 → SL ≈ $450；atr_clamp_min 4.0 → SL ≈ $600
+    # TP 必須等比放大才能維持 RR ≥ 1.5 → 需要更多 hold bars
+    "atr_clamp_min":            [2.5, 3.0, 3.5, 4.0],
+    "atr_tp1_min":              [3.0, 3.5, 4.0, 4.5, 5.0],
 
-    # ── 方向 3：強制更高 TP 目標（增大 win 的 R）────────────────
-    # atr_tp1_min 覆蓋 calc_dynamic_sl_tp 的 TP1 最小距離
-    "atr_tp1_min":              [1.5, 2.0, 2.5],
-
-    # 持倉週期（配合更大 TP 需要更多時間）
-    "max_hold_bars":            [12, 16, 20, 24],
+    # 更寬的 SL/TP 需要更多時間等待 → 增加 hold bars
+    "max_hold_bars":            [24, 30, 36, 48],
 }
 
 # 固定不動（非獨立變數）
@@ -111,6 +109,9 @@ def grid_combinations() -> list:
             continue
         if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
             continue
+        # TP 距離必須 ≥ SL 距離（確保 RR ≥ 1.0）
+        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0):
+            continue
         combos.append(d)
     return combos
 
@@ -124,6 +125,9 @@ def random_combinations(n: int, seed: int = 42) -> list:
         if d["strong_signal_composite"] <= d["normal_signal_composite"]:
             continue
         if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
+            continue
+        # TP 距離必須 ≥ SL 距離（確保 RR ≥ 1.0）
+        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0):
             continue
         combos.append(d)
         if len(combos) >= n:
