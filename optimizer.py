@@ -23,6 +23,8 @@ import copy
 import random
 import argparse
 import itertools
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -177,9 +179,37 @@ def hill_climb(base_params: dict, klines: list, symbol: str,
 
 # ─── 主流程 ───────────────────────────────────────────────────────────────────
 
+# ─── 平行化工作函式（必須在 module 頂層，ProcessPoolExecutor 才能 pickle）────
+
+def _worker(args):
+    """單次回測工作（供多進程使用）"""
+    override, base_params, klines, symbol = args
+    trial_params = copy.deepcopy(base_params)
+    trial_params.update(override)
+    trial_params.update(FIXED_IN_SEARCH)
+    result  = run_backtest(klines, trial_params, symbol)
+    summary = result["summary"]
+    sc      = score_result(summary)
+    return {
+        "rank":    0,
+        "params":  override,
+        "score":   sc,
+        "summary": {
+            "total_trades":         summary["total_trades"],
+            "win_rate":             summary["win_rate"],
+            "profit_factor":        summary["profit_factor"],
+            "avg_rr":               summary["avg_rr"],
+            "total_pnl_r":          summary["total_pnl_r"],
+            "max_consecutive_loss": summary["max_consecutive_loss"],
+        },
+        "full_params": trial_params,
+        "full_summary": summary,
+    }
+
+
 def run_optimizer(klines: list, symbol: str, base_params: dict,
                   mode: str = "grid", n_random: int = 80,
-                  verbose: bool = True) -> dict:
+                  workers: int = None, verbose: bool = True) -> dict:
     """
     執行優化，回傳:
     {
@@ -188,13 +218,18 @@ def run_optimizer(klines: list, symbol: str, base_params: dict,
         "best_summary": {...},
         "all_runs": [...]
     }
+    workers: 並行進程數（預設 = CPU 核心數）
     """
+    if workers is None:
+        workers = multiprocessing.cpu_count()
+
     print(f"\n{'='*60}")
     print(f"  🔍 參數優化器 | 模式: {mode.upper()} | {symbol}")
+    print(f"  ⚡ 並行進程: {workers} 核心")
     print(f"{'='*60}\n")
 
     if mode == "hill":
-        print("⛰️  爬山法啟動...")
+        print("⛰️  爬山法啟動（單執行緒）...")
         best_combo, best_score = hill_climb(base_params, klines, symbol, verbose=verbose)
         result = run_backtest(klines, best_combo, symbol)
         best_summary = result["summary"]
@@ -203,51 +238,53 @@ def run_optimizer(klines: list, symbol: str, base_params: dict,
     else:
         if mode == "random":
             combos = random_combinations(n_random)
-            print(f"🎲 隨機搜尋 {len(combos)} 種組合...")
+            print(f"🎲 隨機搜尋 {len(combos)} 種組合 × {workers} 核心...")
         else:
             combos = grid_combinations()
-            print(f"📐 格狀搜尋 {len(combos)} 種組合...")
+            print(f"📐 格狀搜尋 {len(combos)} 種組合 × {workers} 核心...")
 
-        all_runs   = []
-        best_score = -999.0
-        best_combo = None
+        all_runs     = []
+        best_score   = -999.0
+        best_combo   = None
         best_summary = None
+        completed    = 0
+        total        = len(combos)
 
-        for idx, override in enumerate(combos):
-            # 合併：base_params + override
-            trial_params = copy.deepcopy(base_params)
-            trial_params.update(override)
-            trial_params.update(FIXED_IN_SEARCH)
+        work_args = [(override, base_params, klines, symbol) for override in combos]
 
-            result  = run_backtest(klines, trial_params, symbol)
-            summary = result["summary"]
-            sc      = score_result(summary)
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            futures = {executor.submit(_worker, arg): arg for arg in work_args}
+            for future in as_completed(futures):
+                completed += 1
+                try:
+                    run = future.result()
+                except Exception as e:
+                    completed_safely = completed
+                    if verbose:
+                        print(f"\r  ⚠️ 某次回測失敗: {e}", flush=True)
+                    continue
 
-            all_runs.append({
-                "rank":    0,
-                "params":  override,
-                "score":   sc,
-                "summary": {
-                    "total_trades":         summary["total_trades"],
-                    "win_rate":             summary["win_rate"],
-                    "profit_factor":        summary["profit_factor"],
-                    "avg_rr":               summary["avg_rr"],
-                    "total_pnl_r":          summary["total_pnl_r"],
-                    "max_consecutive_loss": summary["max_consecutive_loss"],
-                },
-            })
+                all_runs.append(run)
 
-            if sc > best_score:
-                best_score   = sc
-                best_combo   = trial_params
-                best_summary = summary
+                if run["score"] > best_score:
+                    best_score   = run["score"]
+                    best_combo   = run["full_params"]
+                    best_summary = run["full_summary"]
 
-            # 每 10 次輸出進度
-            if verbose and (idx + 1) % 10 == 0:
-                pct = (idx + 1) / len(combos) * 100
-                print(f"  進度 {pct:5.1f}% | 目前最佳 score={best_score:.4f}  "
-                      f"wr={best_summary['win_rate']:.1f}%  "
-                      f"pf={best_summary['profit_factor']:.2f}")
+                if verbose and completed % 10 == 0:
+                    pct = completed / total * 100
+                    ws  = best_summary["win_rate"] if best_summary else 0
+                    pf  = best_summary["profit_factor"] if best_summary else 0
+                    print(f"\r  進度 {pct:5.1f}% ({completed}/{total}) | "
+                          f"最佳 score={best_score:.4f}  wr={ws:.1f}%  pf={pf:.2f}   ",
+                          end="", flush=True)
+
+        print()  # 換行
+
+        # 清除 full_params / full_summary（節省記憶體）
+        for r in all_runs:
+            r.pop("full_params",   None)
+            r.pop("full_summary",  None)
 
         # 排序
         all_runs.sort(key=lambda x: x["score"], reverse=True)
@@ -357,13 +394,16 @@ def main():
   python3 optimizer.py
   python3 optimizer.py -f history/BTCUSDT_5m_*.json --mode random -n 80
   python3 optimizer.py --mode hill
-  python3 optimizer.py --no-update    # 只跑優化，不更新 backtest_params.json
+  python3 optimizer.py --workers 8         # 指定 8 核心並行
+  python3 optimizer.py --no-update         # 只跑優化，不更新 backtest_params.json
         """
     )
     parser.add_argument("-f", "--file",    default=None)
     parser.add_argument("--mode",          choices=["grid", "random", "hill"], default="grid")
     parser.add_argument("-n", "--n-random",type=int, default=80,
                         help="隨機搜尋次數（--mode random 時使用）")
+    parser.add_argument("--workers",       type=int, default=None,
+                        help=f"並行進程數（預設: CPU 核心數 = {multiprocessing.cpu_count()}）")
     parser.add_argument("--params",        default=PARAMS_FILE)
     parser.add_argument("--no-update",     action="store_true",
                         help="不更新 backtest_params.json")
@@ -401,6 +441,7 @@ def main():
         klines, symbol, base_params,
         mode=args.mode,
         n_random=args.n_random,
+        workers=args.workers,
         verbose=not args.quiet,
     )
 
