@@ -38,22 +38,17 @@ from backtest_engine import (
 # ─── 搜尋空間定義 ─────────────────────────────────────────────────────────────
 
 SEARCH_SPACE = {
-    # ── 方向 1：嚴格信號門檻（減少過度交易）──────────────────────
-    # 只取強信號，normal 設高一點避免亂進場
-    "strong_signal_composite":  [65, 70, 75],
-    "strong_signal_min_floor":  [35, 40],
-    "normal_signal_composite":  [60, 65, 70],   # 貼近 strong，減少 normal 信號
-    "normal_signal_min_floor":  [30, 35],
+    # ── 強信號門檻（strong_only=true，normal 參數不影響結果）────
+    "strong_signal_composite":  [55, 60, 65, 70, 75],
+    "strong_signal_min_floor":  [30, 35, 40],
 
-    # ── 方向 B：SL 加寬讓 TP 有空間打到 ─────────────────────────
-    # 5m ATR ≈ $150
-    # atr_clamp_min 3.0 → SL ≈ $450；atr_clamp_min 4.0 → SL ≈ $600
-    # atr_tp1_min 必須 ≥ 1.5 × atr_clamp_min → 合法性檢查強制過濾
-    "atr_clamp_min":            [2.5, 3.0, 3.5, 4.0],
-    "atr_tp1_min":              [3.75, 4.5, 5.25, 6.0],   # 1.5× clamp_min 才過
+    # ── SL / TP 範圍 ──────────────────────────────────────────
+    # atr_tp1_min 必須 ≥ 1.5 × atr_clamp_min → 合法性檢查過濾
+    "atr_clamp_min":            [1.5, 2.0, 2.5, 3.0],
+    "atr_tp1_min":              [2.25, 3.0, 3.75, 4.5],
 
-    # 更寬的 SL/TP 需要更多時間等待
-    "max_hold_bars":            [30, 36, 48],
+    # 持倉週期
+    "max_hold_bars":            [12, 20, 30, 48],
 }
 
 # 固定不動（非獨立變數）
@@ -105,12 +100,7 @@ def grid_combinations() -> list:
     combos = []
     for combo in itertools.product(*values):
         d = dict(zip(keys, combo))
-        # 合法性檢查
-        if d["strong_signal_composite"] <= d["normal_signal_composite"]:
-            continue
-        if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
-            continue
-        # TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5，否則 40% 勝率必虧）
+        # 合法性檢查：TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5）
         if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0) * 1.5:
             continue
         # atr_clamp_max 必須 ≥ atr_clamp_min（避免 max < min 產生衝突）
@@ -125,11 +115,7 @@ def random_combinations(n: int, seed: int = 42) -> list:
     combos = []
     for _ in range(n * 5):   # 多生成後過濾
         d = {k: random.choice(v) for k, v in SEARCH_SPACE.items()}
-        if d["strong_signal_composite"] <= d["normal_signal_composite"]:
-            continue
-        if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
-            continue
-        # TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5，否則 40% 勝率必虧）
+        # 合法性檢查：TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5）
         if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0) * 1.5:
             continue
         # atr_clamp_max 必須 ≥ atr_clamp_min（避免 max < min 產生衝突）
@@ -170,11 +156,10 @@ def hill_climb(base_params: dict, klines: list, symbol: str,
                     continue
                 trial = copy.deepcopy(current)
                 trial[key] = val
-                # 合法性
-                if trial.get("strong_signal_composite", 999) <= trial.get("normal_signal_composite", 0):
+                # 合法性：RR ≥ 1.5
+                if trial.get("atr_tp1_min", 0) < trial.get("atr_clamp_min", 0) * 1.5:
                     continue
-                if trial.get("strong_signal_min_floor", 999) <= trial.get("normal_signal_min_floor", 0):
-                    continue
+                trial["atr_clamp_max"] = max(trial.get("atr_clamp_min", 1.0), 2.5)
 
                 s, summ = _run(trial)
                 if s > best_score:

@@ -72,6 +72,8 @@
     "max_hold_bars":    12,
     "commission_rate":  0.0004,
     "rolling_window":   150,
-    "min_data_bars":    50
+    "min_data_bars":    50,
+    "strong_only":      true,
+    "long_only":        true
   }
 }

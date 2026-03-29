@@ -377,6 +377,12 @@ def run_backtest(klines: list, params: dict, symbol: str) -> dict:
             except Exception as e:
                 continue   # 跳過計算失敗的 bar
 
+            # 過濾：只取強信號 / 只做買方
+            if params.get("strong_only", False) and sig["signal_grade"] != "strong":
+                continue
+            if params.get("long_only", False) and sig["signal_type"] != "buy":
+                continue
+
             if sig["signal_type"] and sig["sl_tp"]:
                 trade_id += 1
                 sl_tp = sig["sl_tp"]
