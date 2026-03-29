@@ -38,21 +38,22 @@ from backtest_engine import (
 # ─── 搜尋空間定義 ─────────────────────────────────────────────────────────────
 
 SEARCH_SPACE = {
-    # ── 方向 1：減少交易頻率（提高信號品質門檻）──────────────────
-    "strong_signal_composite":  [60, 65, 70, 75],
+    # ── 方向 1：嚴格信號門檻（減少過度交易）──────────────────────
+    # 只取強信號，normal 設高一點避免亂進場
+    "strong_signal_composite":  [65, 70, 75],
     "strong_signal_min_floor":  [35, 40],
-    "normal_signal_composite":  [45, 50, 55],
-    "normal_signal_min_floor":  [25, 30],
+    "normal_signal_composite":  [60, 65, 70],   # 貼近 strong，減少 normal 信號
+    "normal_signal_min_floor":  [30, 35],
 
     # ── 方向 B：SL 加寬讓 TP 有空間打到 ─────────────────────────
     # 5m ATR ≈ $150
     # atr_clamp_min 3.0 → SL ≈ $450；atr_clamp_min 4.0 → SL ≈ $600
-    # TP 必須等比放大才能維持 RR ≥ 1.5 → 需要更多 hold bars
+    # atr_tp1_min 必須 ≥ 1.5 × atr_clamp_min → 合法性檢查強制過濾
     "atr_clamp_min":            [2.5, 3.0, 3.5, 4.0],
-    "atr_tp1_min":              [3.0, 3.5, 4.0, 4.5, 5.0],
+    "atr_tp1_min":              [3.75, 4.5, 5.25, 6.0],   # 1.5× clamp_min 才過
 
-    # 更寬的 SL/TP 需要更多時間等待 → 增加 hold bars
-    "max_hold_bars":            [24, 30, 36, 48],
+    # 更寬的 SL/TP 需要更多時間等待
+    "max_hold_bars":            [30, 36, 48],
 }
 
 # 固定不動（非獨立變數）
@@ -109,9 +110,11 @@ def grid_combinations() -> list:
             continue
         if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
             continue
-        # TP 距離必須 ≥ SL 距離（確保 RR ≥ 1.0）
-        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0):
+        # TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5，否則 40% 勝率必虧）
+        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0) * 1.5:
             continue
+        # atr_clamp_max 必須 ≥ atr_clamp_min（避免 max < min 產生衝突）
+        d["atr_clamp_max"] = max(d.get("atr_clamp_min", 1.0), 2.5)
         combos.append(d)
     return combos
 
@@ -126,9 +129,11 @@ def random_combinations(n: int, seed: int = 42) -> list:
             continue
         if d["strong_signal_min_floor"] <= d["normal_signal_min_floor"]:
             continue
-        # TP 距離必須 ≥ SL 距離（確保 RR ≥ 1.0）
-        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0):
+        # TP 距離必須 ≥ 1.5 × SL 距離（確保 RR ≥ 1.5，否則 40% 勝率必虧）
+        if d.get("atr_tp1_min", 0) < d.get("atr_clamp_min", 0) * 1.5:
             continue
+        # atr_clamp_max 必須 ≥ atr_clamp_min（避免 max < min 產生衝突）
+        d["atr_clamp_max"] = max(d.get("atr_clamp_min", 1.0), 2.5)
         combos.append(d)
         if len(combos) >= n:
             break
