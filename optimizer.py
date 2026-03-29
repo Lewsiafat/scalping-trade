@@ -39,13 +39,15 @@ from backtest_engine import (
 
 SEARCH_SPACE = {
     # ── 強信號門檻（strong_only=true，normal 參數不影響結果）────
-    "strong_signal_composite":  [55, 60, 65, 70, 75],
-    "strong_signal_min_floor":  [30, 35, 40],
+    # 聚焦在上輪最佳區域 composite=70 附近
+    "strong_signal_composite":  [60, 65, 70, 75],
+    "strong_signal_min_floor":  [35, 40],
 
-    # ── SL / TP 範圍 ──────────────────────────────────────────
-    # atr_tp1_min 必須 ≥ 1.5 × atr_clamp_min → 合法性檢查過濾
-    "atr_clamp_min":            [1.5, 2.0, 2.5, 3.0],
-    "atr_tp1_min":              [2.25, 3.0, 3.75, 4.5],
+    # ── 選2：拉高 TP 目標（avg win 需達 ~1.93R 才能 break-even）─
+    # 上輪 clamp_min=2.5 / tp1_min=4.5 → avg win 1.53R，需更高 RR
+    # 目標 RR 2.0~2.5+（tp1_min = clamp_min × 2.0~2.5）
+    "atr_clamp_min":            [2.0, 2.5, 3.0],
+    "atr_tp1_min":              [4.5, 5.0, 5.5, 6.0, 6.75, 7.5],
 
     # max_hold_bars 已設為 0（無時間限制），不列入搜尋空間
 }
