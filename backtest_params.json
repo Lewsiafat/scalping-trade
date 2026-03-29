@@ -1,0 +1,77 @@
+{
+  "_comment": "Scalping Trade Analyzer Pro — Backtest 可調整參數表",
+  "_version": "1.0.0",
+  "_source": "app_v3.py FIXED_PARAMS + ScalpingAnalyzerPro 內部常數",
+
+  "scoring_weights": {
+    "_comment": "三維評分加權合分 (必須加總 = 1.0)",
+    "weight_trend":     0.35,
+    "weight_structure": 0.40,
+    "weight_momentum":  0.25
+  },
+
+  "signal_thresholds": {
+    "_comment": "信號觸發門檻 — 強信號 / 一般信號（composite = 加權分數，min_floor = 三維最低分）",
+    "strong_signal_composite":  55,
+    "strong_signal_min_floor":  30,
+    "strong_signal_trend":      55,
+    "normal_signal_composite":  45,
+    "normal_signal_min_floor":  25,
+    "normal_signal_trend":      45
+  },
+
+  "rr_thresholds": {
+    "_comment": "R:R 等級門檻 — good: 正式信號 / ok: 謹慎信號 / reject: 拒絕",
+    "rr_good":   1.5,
+    "rr_ok":     1.0,
+    "rr_reject": 0.7
+  },
+
+  "atr_params": {
+    "_comment": "ATR 止損止盈計算倍數",
+    "atr_period":          14,
+    "atr_clamp_min":       1.0,
+    "atr_clamp_max":       2.5,
+    "atr_sl_fallback":     1.5,
+    "atr_tp1_min":         1.0,
+    "atr_tp1_fallback":    1.5,
+    "atr_tp2_min":         2.0,
+    "atr_tp2_fallback":    3.0,
+    "pre_alert_atr_mult":  0.5
+  },
+
+  "smc_params": {
+    "_comment": "SMC 結構分析參數",
+    "swing_n":          3,
+    "swing_max_points": 20,
+    "liquidity_sweep_confirmation_window": 3,
+    "sweep_full_depth_atr_mult":    0.5,
+    "sweep_partial_depth_atr_mult": 0.3,
+    "sweep_near_atr_mult":          0.2
+  },
+
+  "indicator_params": {
+    "_comment": "技術指標參數 (與 FIXED_PARAMS 一致)",
+    "rsi_period":      14,
+    "rsi_overbought":  70,
+    "rsi_oversold":    30,
+    "ema_fast":        9,
+    "ema_slow":        21,
+    "macd_fast":       12,
+    "macd_slow":       26,
+    "macd_signal":     9,
+    "stoch_k_period":  14,
+    "stoch_d_period":  3,
+    "bb_period":       20,
+    "bb_std_dev":      2,
+    "cvd_window":      20
+  },
+
+  "backtest_params": {
+    "_comment": "回測引擎專用參數",
+    "max_hold_bars":    12,
+    "commission_rate":  0.0004,
+    "rolling_window":   150,
+    "min_data_bars":    50
+  }
+}
