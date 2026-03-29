@@ -27,13 +27,22 @@ from datetime import datetime, timezone, timedelta
 
 # ─── 設定 ──────────────────────────────────────────────────────────────────────
 
-BINANCE_API   = "https://api.binance.com/api/v3"
+BINANCE_HOSTS = [
+    "https://api.binance.com/api/v3",     # 主節點
+    "https://api1.binance.com/api/v3",    # 備用 1
+    "https://api2.binance.com/api/v3",    # 備用 2
+    "https://api3.binance.com/api/v3",    # 備用 3
+    "https://api4.binance.com/api/v3",    # 備用 4
+]
+BINANCE_API   = BINANCE_HOSTS[0]         # 目前使用節點（自動切換）
 INTERVAL      = "5m"
 LIMIT_PER_REQ = 1000          # Binance 每次最多 1000 根
 DELAY_BETWEEN = 0.4           # 每次請求間隔秒數（安全值，避免 ban）
 MAX_RETRIES   = 5
 RETRY_DELAY   = 2.0           # 429/5xx 重試等待秒數（指數退避）
 HISTORY_DIR   = "history"
+
+_current_host_idx = 0         # 節點輪替索引
 
 # SSL context（與主程式一致）
 _ctx = ssl.create_default_context()
@@ -64,20 +73,30 @@ def progress_bar(current: int, total: int, width: int = 40) -> str:
 
 # ─── Binance 請求 ──────────────────────────────────────────────────────────────
 
+def _next_host():
+    """切換到下一個備用節點"""
+    global _current_host_idx
+    _current_host_idx = (_current_host_idx + 1) % len(BINANCE_HOSTS)
+    host = BINANCE_HOSTS[_current_host_idx]
+    log(f"🔄 切換節點 → {host}")
+    return host
+
+
 def fetch_klines(symbol: str, start_ms: int, end_ms: int) -> list:
     """
     取得指定時間範圍的 K 線（一次最多 1000 根）
     回傳原始 Binance kline 陣列
+    403 時自動切換備用節點
     """
-    url = (
-        f"{BINANCE_API}/klines"
-        f"?symbol={symbol}&interval={INTERVAL}"
-        f"&startTime={start_ms}&endTime={end_ms}&limit={LIMIT_PER_REQ}"
-    )
+    global _current_host_idx
+    base = BINANCE_HOSTS[_current_host_idx]
+
+    qs = f"?symbol={symbol}&interval={INTERVAL}&startTime={start_ms}&endTime={end_ms}&limit={LIMIT_PER_REQ}"
 
     for attempt in range(1, MAX_RETRIES + 1):
+        url = f"{base}/klines{qs}"
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "ScalpingBacktest/1.0"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, context=_ctx, timeout=30) as resp:
                 data = json.loads(resp.read().decode())
                 if not isinstance(data, list):
@@ -89,6 +108,10 @@ def fetch_klines(symbol: str, start_ms: int, end_ms: int) -> list:
                 wait = RETRY_DELAY * (2 ** attempt)
                 log(f"⚠️  Rate limit (429), 等待 {wait:.0f}s ...")
                 time.sleep(wait)
+            elif e.code == 403:  # Geo-block，換節點
+                log(f"⚠️  HTTP 403 (地區限制)，切換節點 {attempt}/{len(BINANCE_HOSTS)} ...")
+                base = _next_host()
+                time.sleep(0.5)
             elif e.code == 400:
                 log(f"❌ 請求錯誤 (400): {e.read().decode()}")
                 raise
@@ -100,7 +123,7 @@ def fetch_klines(symbol: str, start_ms: int, end_ms: int) -> list:
             log(f"⚠️  請求失敗: {e}, 重試 {attempt}/{MAX_RETRIES} ...")
             time.sleep(RETRY_DELAY * attempt)
 
-    raise RuntimeError(f"超過最大重試次數 ({MAX_RETRIES})")
+    raise RuntimeError(f"所有節點均失敗，超過最大重試次數 ({MAX_RETRIES})")
 
 
 # ─── 主要爬取邏輯 ──────────────────────────────────────────────────────────────
