@@ -147,5 +147,52 @@
       },
       "stop_loss_take_profit": null
     }
+  },
+  {
+    "id": 4,
+    "timestamp": "2026-03-10T12:30:48.372264",
+    "symbol": "BTCUSDT",
+    "price": 69792.47,
+    "action": "觀望 WAIT",
+    "quality_score": 0.7,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": "14",
+      "ema_fast": "9",
+      "ema_slow": "21"
+    },
+    "signals": {
+      "rsi": {
+        "value": 52.87,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 69729.5,
+        "slow": 69747.14,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": 20.83,
+        "signal": "sell",
+        "histogram": -41.62
+      },
+      "volume": {
+        "volume_ratio": 0.06,
+        "avg_volume": 87.87,
+        "current_volume": 5.42,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.68,
+        "ema_20": 69509.88,
+        "ema_50": 69040.83,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": null
+    }
   }
 ]

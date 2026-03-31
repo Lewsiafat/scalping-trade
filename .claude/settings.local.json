@@ -5,7 +5,20 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git tag:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git:*)",
+      "Bash(echo exit: $?:*)",
+      "Bash(kill 95135)",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=BTCUSDT\" | python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in ['overall','action','trend_score','structure_score','momentum_score','signal_stage','signal_label'] if k in d}, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=BTCUSDT\" | python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); keys=list\\(d.keys\\(\\)\\); print\\(keys[:20]\\)\")",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=BTCUSDT\" | python3 -c \"\nimport sys,json\nd=json.load\\(sys.stdin\\)\ns=d.get\\('signals',{}\\)\nprint\\(json.dumps\\({k:s.get\\(k\\) for k in ['overall','action','trend_score','structure_score','momentum_score','signal_stage','signal_label']}, indent=2, ensure_ascii=False\\)\\)\n\")",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=ETHUSDT\" | python3 -c \"\nimport sys,json\ns=json.load\\(sys.stdin\\).get\\('signals',{}\\)\nt,st,m=s['trend_score'],s['structure_score'],s['momentum_score']\ncomposite = t*0.35 + st*0.40 + m*0.25\nmin_floor = min\\(t, st, m\\)\nprint\\(f'trend={t} struct={st} momentum={m}'\\)\nprint\\(f'composite={composite:.1f} \\(need>=45\\) min_floor={min_floor} \\(need>=25\\)'\\)\nprint\\(f'sell 條件: trend<50={t<50}, composite>=45={composite>=45}, min_floor>=25={min_floor>=25}'\\)\n\")",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=ADAUSDT\" | python3 -c \"\nimport sys,json\ns=json.load\\(sys.stdin\\).get\\('signals',{}\\)\nt,st,m=s['trend_score'],s['structure_score'],s['momentum_score']\ncomposite = t*0.35 + st*0.40 + m*0.25\nmin_floor = min\\(t, st, m\\)\nprint\\(f'trend={t} struct={st} momentum={m}'\\)\nprint\\(f'composite={composite:.1f} \\(need>=45\\) min_floor={min_floor} \\(need>=25\\)'\\)\nprint\\(f'strong_buy 條件: trend>50={t>50}, composite>=55={composite>=55}, min_floor>=30={min_floor>=30}, trend>=55={t>=55}'\\)\nprint\\(f'buy 條件: trend>50={t>50}, composite>=45={composite>=45}, min_floor>=25={min_floor>=25}, trend>=45={t>=45}'\\)\nprint\\(f'overall={s[\\\\\"overall\\\\\"]} action={s[\\\\\"action\\\\\"]}'\\)\n\")",
+      "Bash(curl -s \"http://localhost:8080/api/analyze?symbol=DOGEUSDT\" | python3 -c \"\nimport sys,json\ns=json.load\\(sys.stdin\\).get\\('signals',{}\\)\nt,st,m=s['trend_score'],s['structure_score'],s['momentum_score']\ncomposite = t*0.35 + st*0.40 + m*0.25\nmin_floor = min\\(t, st, m\\)\nprint\\(f'trend={t} struct={st} momentum={m}'\\)\nprint\\(f'composite={composite:.1f} min_floor={min_floor}'\\)\nprint\\(f'overall={s[\\\\\"overall\\\\\"]} action={s[\\\\\"action\\\\\"]}'\\)\n\" && curl -s \"http://localhost:8080/api/analyze?symbol=RENDERUSDT\" | python3 -c \"\nimport sys,json\ns=json.load\\(sys.stdin\\).get\\('signals',{}\\)\nt,st,m=s['trend_score'],s['structure_score'],s['momentum_score']\ncomposite = t*0.35 + st*0.40 + m*0.25\nmin_floor = min\\(t, st, m\\)\nprint\\(f'trend={t} struct={st} momentum={m}'\\)\nprint\\(f'composite={composite:.1f} min_floor={min_floor}'\\)\nprint\\(f'overall={s[\\\\\"overall\\\\\"]} action={s[\\\\\"action\\\\\"]}'\\)\n\")",
+      "Bash(pkill -f \"app_v3.py\" 2>/dev/null; sleep 1; python3 /Users/lewis.chan/Documents/workspaceAI/scalping-trade/app_v3.py --port 8080)",
+      "Bash(sleep 2 && curl -s \"http://localhost:8080/api/analyze?symbol=ETHUSDT\" | python3 -c \"\nimport sys,json\ns=json.load\\(sys.stdin\\).get\\('signals',{}\\)\nprint\\(f'overall={s[\\\\\"overall\\\\\"]} action={s[\\\\\"action\\\\\"]}'\\)\nprint\\(f'composite_score={s[\\\\\"composite_score\\\\\"]} min_floor={s[\\\\\"min_floor\\\\\"]}'\\)\nb=s.get\\('score_breakdown',{}\\)\nprint\\(f'formula: {b.get\\(\\\\\"composite_formula\\\\\",\\\\\"\\\\\"\\)}'\\)\n\")",
+      "Bash(pkill -f \"python3 app_\")"
     ]
   }
 }
