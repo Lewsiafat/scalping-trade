@@ -6,30 +6,19 @@
     "condition": "above",
     "value": "4",
     "enabled": true,
-    "created_at": "2026-03-01T21:17:32.558854",
-    "triggered_count": 529,
-    "last_triggered": "2026-03-12T15:26:34.223805"
+    "created_at": "2026-03-13T22:37:51.669338",
+    "triggered_count": 11,
+    "last_triggered": "2026-07-10T20:33:13.961284"
   },
   {
     "id": 2,
-    "type": "price",
-    "symbol": "BTCUSDT",
-    "condition": "below",
-    "value": "70000",
-    "enabled": false,
-    "created_at": "2026-03-01T21:17:58.090959",
-    "triggered_count": 161,
-    "last_triggered": "2026-03-03T16:12:10.664127"
-  },
-  {
-    "id": 3,
-    "type": "quality",
+    "type": "signal",
     "symbol": "",
-    "condition": "above",
-    "value": "5",
+    "condition": "equal",
+    "value": "強烈買入",
     "enabled": true,
-    "created_at": "2026-03-03T17:43:46.396079",
-    "triggered_count": 63,
-    "last_triggered": "2026-03-09T06:14:36.693189"
+    "created_at": "2026-03-13T22:38:20.341588",
+    "triggered_count": 3423,
+    "last_triggered": "2026-07-10T21:33:42.630164"
   }
 ]

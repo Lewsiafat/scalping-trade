@@ -150,37 +150,151 @@
   },
   {
     "id": 4,
-    "timestamp": "2026-03-10T12:30:48.372264",
+    "timestamp": "2026-03-13T21:37:09.638608",
     "symbol": "BTCUSDT",
-    "price": 69792.47,
-    "action": "觀望 WAIT",
-    "quality_score": 0.7,
+    "price": 72776.89,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.2,
     "strength": 5,
     "parameters": {
       "interval": "5m",
-      "rsi_period": "14",
-      "ema_fast": "9",
-      "ema_slow": "21"
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
     },
     "signals": {
       "rsi": {
-        "value": 52.87,
+        "value": 54.37,
         "signal": "neutral"
       },
       "ema": {
-        "fast": 69729.5,
-        "slow": 69747.14,
-        "signal": "bearish"
+        "fast": 72896.74,
+        "slow": 72719.98,
+        "signal": "bullish"
       },
       "macd": {
-        "line": 20.83,
-        "signal": "sell",
-        "histogram": -41.62
+        "line": 186.13,
+        "signal": "buy",
+        "histogram": 19.9
       },
       "volume": {
-        "volume_ratio": 0.06,
-        "avg_volume": 87.87,
-        "current_volume": 5.42,
+        "volume_ratio": 1.17,
+        "avg_volume": 162.06,
+        "current_volume": 190.15,
+        "cvd_trend": "bullish",
+        "signal": "normal"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.82,
+        "ema_20": 72382.64,
+        "ema_50": 71790.48,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 72527.75,
+        "take_profit_1": 73026.03,
+        "take_profit_2": 73524.31,
+        "risk_amount": 249.14,
+        "reward_amount": 249.14,
+        "risk_reward_ratio": 1,
+        "extended_rr": 3,
+        "rr_grade": "acceptable",
+        "atr": 249.14
+      }
+    }
+  },
+  {
+    "id": 5,
+    "timestamp": "2026-03-14T21:16:48.319476",
+    "symbol": "BTCUSDT",
+    "price": 70802.74,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.3,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 61.23,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 70754.57,
+        "slow": 70724.92,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 32.39,
+        "signal": "buy",
+        "histogram": 2
+      },
+      "volume": {
+        "volume_ratio": 0.34,
+        "avg_volume": 50.22,
+        "current_volume": 17.09,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.12,
+        "ema_20": 70696.98,
+        "ema_50": 70783.12,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 70733.77,
+        "take_profit_1": 70871.71,
+        "take_profit_2": 71151.3,
+        "risk_amount": 68.97,
+        "reward_amount": 68.97,
+        "risk_reward_ratio": 1,
+        "extended_rr": 5.05,
+        "rr_grade": "acceptable",
+        "atr": 68.97
+      }
+    }
+  },
+  {
+    "id": 6,
+    "timestamp": "2026-03-16T09:51:45.895865",
+    "symbol": "BTCUSDT",
+    "price": 72689.55,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.6,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 57.09,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 72592.66,
+        "slow": 72569.46,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 28.03,
+        "signal": "buy",
+        "histogram": 6.86
+      },
+      "volume": {
+        "volume_ratio": 0.31,
+        "avg_volume": 53.48,
+        "current_volume": 16.73,
         "cvd_trend": "bearish",
         "signal": "weak"
       },
@@ -188,11 +302,1104 @@
         "timeframe": "15m",
         "trend": "uptrend",
         "trend_strength": 0.68,
-        "ema_20": 69509.88,
-        "ema_50": 69040.83,
+        "ema_20": 72378.89,
+        "ema_50": 71889.41,
         "confirmation": true
       },
-      "stop_loss_take_profit": null
+      "stop_loss_take_profit": {
+        "stop_loss": 72553.38,
+        "take_profit_1": 73008.94,
+        "take_profit_2": 73199,
+        "risk_amount": 136.17,
+        "reward_amount": 319.39,
+        "risk_reward_ratio": 2.35,
+        "extended_rr": 3.74,
+        "rr_grade": "good",
+        "atr": 135.68
+      }
+    }
+  },
+  {
+    "id": 7,
+    "timestamp": "2026-03-16T10:57:17.512128",
+    "symbol": "BTCUSDT",
+    "price": 72588,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.1,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 51.92,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 72524.57,
+        "slow": 72553.87,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": -19.09,
+        "signal": "sell",
+        "histogram": -14.54
+      },
+      "volume": {
+        "volume_ratio": 0.22,
+        "avg_volume": 44.69,
+        "current_volume": 9.78,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.64,
+        "ema_20": 72428.78,
+        "ema_50": 71971.24,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 72476.06,
+        "take_profit_1": 72699.94,
+        "take_profit_2": 72811.88,
+        "risk_amount": 111.94,
+        "reward_amount": 111.94,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 111.94
+      }
+    }
+  },
+  {
+    "id": 8,
+    "timestamp": "2026-03-16T15:04:27.048603",
+    "symbol": "BTCUSDT",
+    "price": 73860,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.2,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 53.48,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 73803.69,
+        "slow": 73807.71,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": 23.74,
+        "signal": "sell",
+        "histogram": -26.41
+      },
+      "volume": {
+        "volume_ratio": 0.94,
+        "avg_volume": 111.35,
+        "current_volume": 104.84,
+        "cvd_trend": "bullish",
+        "signal": "normal"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 1.11,
+        "ema_20": 73495.52,
+        "ema_50": 72687.88,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 73710.29,
+        "take_profit_1": 74009.71,
+        "take_profit_2": 74159.42,
+        "risk_amount": 149.71,
+        "reward_amount": 149.71,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 149.71
+      }
+    }
+  },
+  {
+    "id": 9,
+    "timestamp": "2026-03-16T21:09:32.505061",
+    "symbol": "BTCUSDT",
+    "price": 73868.72,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.4,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 61.53,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 73826.55,
+        "slow": 73737.31,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 95.86,
+        "signal": "buy",
+        "histogram": 7.38
+      },
+      "volume": {
+        "volume_ratio": 0.64,
+        "avg_volume": 70.95,
+        "current_volume": 45.55,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.29,
+        "ema_20": 73590.16,
+        "ema_50": 73380.62,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 73695.6,
+        "take_profit_1": 74041.84,
+        "take_profit_2": 74214.96,
+        "risk_amount": 173.12,
+        "reward_amount": 173.12,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 173.12
+      }
+    }
+  },
+  {
+    "id": 10,
+    "timestamp": "2026-03-16T21:50:15.224274",
+    "symbol": "BNBUSDT",
+    "price": 680.66,
+    "action": "強烈買入 BUY",
+    "quality_score": 2.8,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 56.18,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 680.32,
+        "slow": 679.57,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 0.74,
+        "signal": "buy",
+        "histogram": 0.15
+      },
+      "volume": {
+        "volume_ratio": 0.04,
+        "avg_volume": 1049.71,
+        "current_volume": 38.23,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.02,
+        "ema_20": 678.67,
+        "ema_50": 678.51,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 679.03,
+        "take_profit_1": 682.29,
+        "take_profit_2": 683.92,
+        "risk_amount": 1.63,
+        "reward_amount": 1.63,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 1.63
+      }
+    }
+  },
+  {
+    "id": 11,
+    "timestamp": "2026-03-16T21:54:32.034591",
+    "symbol": "BTCUSDT",
+    "price": 73943.18,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.2,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 52.24,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 74046.89,
+        "slow": 73928.06,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 129.79,
+        "signal": "buy",
+        "histogram": 6.78
+      },
+      "volume": {
+        "volume_ratio": 0.99,
+        "avg_volume": 110.6,
+        "current_volume": 109.25,
+        "cvd_trend": "bullish",
+        "signal": "normal"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.32,
+        "ema_20": 73712.01,
+        "ema_50": 73474.2,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 73724.32,
+        "take_profit_1": 74162.04,
+        "take_profit_2": 74380.9,
+        "risk_amount": 218.86,
+        "reward_amount": 218.86,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 218.86
+      }
+    }
+  },
+  {
+    "id": 12,
+    "timestamp": "2026-03-16T22:05:39.248493",
+    "symbol": "BNBUSDT",
+    "price": 679.96,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.1,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 52.14,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 680.16,
+        "slow": 679.66,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 0.57,
+        "signal": "sell",
+        "histogram": -0.02
+      },
+      "volume": {
+        "volume_ratio": 0.2,
+        "avg_volume": 1223.77,
+        "current_volume": 248.23,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.04,
+        "ema_20": 678.91,
+        "ema_50": 678.67,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 678.06,
+        "take_profit_1": 681.86,
+        "take_profit_2": 683.76,
+        "risk_amount": 1.9,
+        "reward_amount": 1.9,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 1.9
+      }
+    }
+  },
+  {
+    "id": 13,
+    "timestamp": "2026-03-16T22:05:45.039353",
+    "symbol": "BNBUSDT",
+    "price": 679.78,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.1,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 51.44,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 680.12,
+        "slow": 679.64,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 0.56,
+        "signal": "sell",
+        "histogram": -0.03
+      },
+      "volume": {
+        "volume_ratio": 0.26,
+        "avg_volume": 1227.45,
+        "current_volume": 321.85,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.04,
+        "ema_20": 678.91,
+        "ema_50": 678.67,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 677.86,
+        "take_profit_1": 681.7,
+        "take_profit_2": 683.62,
+        "risk_amount": 1.92,
+        "reward_amount": 1.92,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 1.92
+      }
+    }
+  },
+  {
+    "id": 14,
+    "timestamp": "2026-03-17T10:09:30.777088",
+    "symbol": "BTCUSDT",
+    "price": 75260.5,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.5,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 47.24,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 75541.18,
+        "slow": 75434.09,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 160.52,
+        "signal": "sell",
+        "histogram": -53.89
+      },
+      "volume": {
+        "volume_ratio": 1.67,
+        "avg_volume": 139.05,
+        "current_volume": 232.25,
+        "cvd_trend": "bullish",
+        "signal": "strong"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 1.03,
+        "ema_20": 75098.59,
+        "ema_50": 74331.46,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 74983.05,
+        "take_profit_1": 75537.95,
+        "take_profit_2": 75815.4,
+        "risk_amount": 277.45,
+        "reward_amount": 277.45,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 277.45
+      }
+    }
+  },
+  {
+    "id": 15,
+    "timestamp": "2026-03-17T10:09:35.845753",
+    "symbol": "BTCUSDT",
+    "price": 75243.88,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.5,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 46.83,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 75537.86,
+        "slow": 75432.58,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 159.2,
+        "signal": "sell",
+        "histogram": -54.95
+      },
+      "volume": {
+        "volume_ratio": 1.7,
+        "avg_volume": 139.29,
+        "current_volume": 237.05,
+        "cvd_trend": "bullish",
+        "signal": "strong"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 1.03,
+        "ema_20": 75098.59,
+        "ema_50": 74331.46,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 74966.43,
+        "take_profit_1": 75521.33,
+        "take_profit_2": 75798.78,
+        "risk_amount": 277.45,
+        "reward_amount": 277.45,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 277.45
+      }
+    }
+  },
+  {
+    "id": 16,
+    "timestamp": "2026-03-17T21:51:41.666352",
+    "symbol": "BTCUSDT",
+    "price": 73651.69,
+    "action": "強烈賣出 SELL",
+    "quality_score": 1.6,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 41.38,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 73785.91,
+        "slow": 73831.34,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": -48.42,
+        "signal": "sell",
+        "histogram": -5.02
+      },
+      "volume": {
+        "volume_ratio": 0.66,
+        "avg_volume": 69.66,
+        "current_volume": 45.95,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.48,
+        "ema_20": 73919.81,
+        "ema_50": 74277.01,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 73820.1,
+        "take_profit_1": 73483.28,
+        "take_profit_2": 73314.87,
+        "risk_amount": 168.41,
+        "reward_amount": 168.41,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 168.41
+      }
+    }
+  },
+  {
+    "id": 17,
+    "timestamp": "2026-03-18T11:22:50.522657",
+    "symbol": "BTCUSDT",
+    "price": 74335.17,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.1,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 58.85,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 74307.64,
+        "slow": 74250.07,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 66.77,
+        "signal": "sell",
+        "histogram": -6.39
+      },
+      "volume": {
+        "volume_ratio": 0.22,
+        "avg_volume": 38.76,
+        "current_volume": 8.5,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.12,
+        "ema_20": 74203.52,
+        "ema_50": 74293.16,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 74246.69,
+        "take_profit_1": 74423.65,
+        "take_profit_2": 74512.13,
+        "risk_amount": 88.48,
+        "reward_amount": 88.48,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 88.48
+      }
+    }
+  },
+  {
+    "id": 18,
+    "timestamp": "2026-03-18T16:45:23.655223",
+    "symbol": "BTCUSDT",
+    "price": 74084.49,
+    "action": "考慮買入",
+    "quality_score": 2.4,
+    "strength": 3,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 57.47,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 74040.01,
+        "slow": 74001.33,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 19.42,
+        "signal": "buy",
+        "histogram": 30.08
+      },
+      "volume": {
+        "volume_ratio": 0.04,
+        "avg_volume": 52.16,
+        "current_volume": 1.93,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.17,
+        "ema_20": 74061.63,
+        "ema_50": 74187.1,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 73995.93,
+        "take_profit_1": 74211.43,
+        "take_profit_2": 74261.61,
+        "risk_amount": 88.56,
+        "reward_amount": 126.94,
+        "risk_reward_ratio": 1.43,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 88.56
+      }
+    }
+  },
+  {
+    "id": 19,
+    "timestamp": "2026-03-19T14:24:03.524268",
+    "symbol": "BTCUSDT",
+    "price": 70822.43,
+    "action": "強烈賣出 SELL",
+    "quality_score": 2.6,
+    "strength": 1,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 45.9,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 70834.05,
+        "slow": 70850.15,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": -34.72,
+        "signal": "buy",
+        "histogram": 20.27
+      },
+      "volume": {
+        "volume_ratio": 1.11,
+        "avg_volume": 32.82,
+        "current_volume": 36.52,
+        "cvd_trend": "bullish",
+        "signal": "normal"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.24,
+        "ema_20": 70955.88,
+        "ema_50": 71124.65,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 70924.26,
+        "take_profit_1": 70720.6,
+        "take_profit_2": 70618.77,
+        "risk_amount": 101.83,
+        "reward_amount": 101.83,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 101.83
+      }
+    }
+  },
+  {
+    "id": 20,
+    "timestamp": "2026-03-20T00:13:35.562379",
+    "symbol": "BTCUSDT",
+    "price": 69256.74,
+    "action": "強烈賣出 SELL",
+    "quality_score": 1.8,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 45.83,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 69303.07,
+        "slow": 69356.78,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": -67.14,
+        "signal": "buy",
+        "histogram": 5.66
+      },
+      "volume": {
+        "volume_ratio": 0.39,
+        "avg_volume": 151.76,
+        "current_volume": 59.4,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.75,
+        "ema_20": 69556.59,
+        "ema_50": 70080.06,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 69491.62,
+        "take_profit_1": 69021.86,
+        "take_profit_2": 68786.98,
+        "risk_amount": 234.88,
+        "reward_amount": 234.88,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 234.88
+      }
+    }
+  },
+  {
+    "id": 21,
+    "timestamp": "2026-03-20T08:55:31.611218",
+    "symbol": "BTCUSDT",
+    "price": 70185.77,
+    "action": "強烈買入 BUY",
+    "quality_score": 2.8,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 53.31,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 70153.14,
+        "slow": 70119.75,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 9.55,
+        "signal": "buy",
+        "histogram": 36.44
+      },
+      "volume": {
+        "volume_ratio": 0.01,
+        "avg_volume": 62.01,
+        "current_volume": 0.69,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.4,
+        "ema_20": 70152.59,
+        "ema_50": 69875.26,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 70076.16,
+        "take_profit_1": 70295.38,
+        "take_profit_2": 70404.99,
+        "risk_amount": 109.61,
+        "reward_amount": 109.61,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 109.61
+      }
+    }
+  },
+  {
+    "id": 22,
+    "timestamp": "2026-03-20T10:53:51.309971",
+    "symbol": "BTCUSDT",
+    "price": 70425.78,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.5,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 57.52,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 70307.29,
+        "slow": 70308.23,
+        "signal": "bearish"
+      },
+      "macd": {
+        "line": 8.27,
+        "signal": "sell",
+        "histogram": -10.25
+      },
+      "volume": {
+        "volume_ratio": 0.47,
+        "avg_volume": 32.38,
+        "current_volume": 15.17,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.34,
+        "ema_20": 70254.95,
+        "ema_50": 70019.72,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 70320.6,
+        "take_profit_1": 70534.15,
+        "take_profit_2": 70636.14,
+        "risk_amount": 105.18,
+        "reward_amount": 108.37,
+        "risk_reward_ratio": 1.03,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 105.18
+      }
+    }
+  },
+  {
+    "id": 23,
+    "timestamp": "2026-03-25T21:52:56.876193",
+    "symbol": "BTCUSDT",
+    "price": 71645.21,
+    "action": "強烈賣出 SELL",
+    "quality_score": 1.6,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 51.58,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 71675.54,
+        "slow": 71632.59,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 45.1,
+        "signal": "buy",
+        "histogram": 6.55
+      },
+      "volume": {
+        "volume_ratio": 0.58,
+        "avg_volume": 90.99,
+        "current_volume": 52.53,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.5,
+        "ema_20": 71533.23,
+        "ema_50": 71178.94,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 71828,
+        "take_profit_1": 71462.42,
+        "take_profit_2": 71279.63,
+        "risk_amount": 182.79,
+        "reward_amount": 182.79,
+        "risk_reward_ratio": 1,
+        "extended_rr": 2,
+        "rr_grade": "acceptable",
+        "atr": 182.79
+      }
+    }
+  },
+  {
+    "id": 24,
+    "timestamp": "2026-03-28T12:49:18.739944",
+    "symbol": "BTCUSDT",
+    "price": 66279.46,
+    "action": "強烈買入 BUY",
+    "quality_score": 3.3,
+    "strength": 5,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 58.75,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 66260.1,
+        "slow": 66221.38,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 34.36,
+        "signal": "buy",
+        "histogram": 11.18
+      },
+      "volume": {
+        "volume_ratio": 0.4,
+        "avg_volume": 49.1,
+        "current_volume": 19.83,
+        "cvd_trend": "bullish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "uptrend",
+        "trend_strength": 0.17,
+        "ema_20": 66192.28,
+        "ema_50": 66076.95,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 66220.65,
+        "take_profit_1": 66338.27,
+        "take_profit_2": 66473.75,
+        "risk_amount": 58.81,
+        "reward_amount": 58.81,
+        "risk_reward_ratio": 1,
+        "extended_rr": 3.3,
+        "rr_grade": "acceptable",
+        "atr": 58.81
+      }
+    }
+  },
+  {
+    "id": 25,
+    "timestamp": "2026-04-17T14:30:45.915775",
+    "symbol": "BTCUSDT",
+    "price": 74764.86,
+    "action": "謹慎進場（R:R 0.7）",
+    "quality_score": 2.8,
+    "strength": 4,
+    "parameters": {
+      "interval": "5m",
+      "rsi_period": 14,
+      "ema_fast": 9,
+      "ema_slow": 21
+    },
+    "signals": {
+      "rsi": {
+        "value": 54.36,
+        "signal": "neutral"
+      },
+      "ema": {
+        "fast": 74742.37,
+        "slow": 74720.9,
+        "signal": "bullish"
+      },
+      "macd": {
+        "line": 13.39,
+        "signal": "buy",
+        "histogram": 14.76
+      },
+      "volume": {
+        "volume_ratio": 0.15,
+        "avg_volume": 20.77,
+        "current_volume": 3.21,
+        "cvd_trend": "bearish",
+        "signal": "weak"
+      },
+      "multi_timeframe": {
+        "timeframe": "15m",
+        "trend": "downtrend",
+        "trend_strength": 0.16,
+        "ema_20": 74751.19,
+        "ema_50": 74873.86,
+        "confirmation": true
+      },
+      "stop_loss_take_profit": {
+        "stop_loss": 74672.01,
+        "take_profit_1": 74829.74,
+        "take_profit_2": 74894.62,
+        "risk_amount": 92.85,
+        "reward_amount": 64.88,
+        "risk_reward_ratio": 0.7,
+        "extended_rr": 1.4,
+        "rr_grade": "caution",
+        "atr": 64.88
+      }
     }
   }
 ]
