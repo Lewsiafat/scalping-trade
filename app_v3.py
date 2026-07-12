@@ -698,7 +698,7 @@ class ScalpingAnalyzerPro:
         for price in prices[period:]:
             ema = (price - ema) * multiplier + ema
 
-        return round(ema, 2)
+        return round(ema, 8)
 
     @staticmethod
     def calculate_macd(prices, fast=12, slow=26, signal=9):
@@ -744,7 +744,7 @@ class ScalpingAnalyzerPro:
         signal_line = signal_val
         histogram = macd_line - signal_line
 
-        return round(macd_line, 2), round(signal_line, 2), round(histogram, 2)
+        return round(macd_line, 8), round(signal_line, 8), round(histogram, 8)
 
     @staticmethod
     def calculate_atr(data, period=14):
@@ -769,7 +769,8 @@ class ScalpingAnalyzerPro:
             return None
 
         atr = sum(true_ranges[-period:]) / period
-        return round(atr, 2)
+        # 8 位小數（Binance 原生精度）：2 位會使低價幣（如 DOGE ATR≈0.0001）歸零
+        return round(atr, 8)
 
     @staticmethod
     def calculate_bollinger_bands(prices, period=20, std_dev=2):
@@ -788,7 +789,7 @@ class ScalpingAnalyzerPro:
         upper_band = sma + (std_dev * std)
         lower_band = sma - (std_dev * std)
 
-        return round(upper_band, 2), round(sma, 2), round(lower_band, 2)
+        return round(upper_band, 8), round(sma, 8), round(lower_band, 8)
 
     @staticmethod
     def calculate_stochastic(data, k_period=14, d_period=3):
@@ -835,11 +836,11 @@ class ScalpingAnalyzerPro:
         result = [None] * (period - 1)
         multiplier = 2 / (period + 1)
         ema = sum(prices[:period]) / period
-        result.append(round(ema, 2))
+        result.append(round(ema, 8))
 
         for price in prices[period:]:
             ema = (price - ema) * multiplier + ema
-            result.append(round(ema, 2))
+            result.append(round(ema, 8))
 
         return result
 
@@ -859,8 +860,8 @@ class ScalpingAnalyzerPro:
             sma = sum(window) / period
             variance = sum((p - sma) ** 2 for p in window) / period
             std = math.sqrt(variance)
-            upper.append(round(sma + std_dev * std, 2))
-            lower.append(round(sma - std_dev * std, 2))
+            upper.append(round(sma + std_dev * std, 8))
+            lower.append(round(sma - std_dev * std, 8))
 
         return upper, lower
 
@@ -1290,7 +1291,7 @@ class ScalpingAnalyzerPro:
                             'swing_price': sp['price'],
                             'index': i,
                             'time': int(data[i][0]),
-                            'depth': round(depth, 2),
+                            'depth': round(depth, 8),
                             'strength': strength
                         })
                         found = True
@@ -1304,7 +1305,7 @@ class ScalpingAnalyzerPro:
                             'swing_price': sp['price'],
                             'index': i,
                             'time': int(data[i][0]),
-                            'depth': round(abs(high_i - sp['price']), 2),
+                            'depth': round(abs(high_i - sp['price']), 8),
                             'strength': 'near'
                         })
                         found = True
@@ -1339,7 +1340,7 @@ class ScalpingAnalyzerPro:
                             'swing_price': sp['price'],
                             'index': i,
                             'time': int(data[i][0]),
-                            'depth': round(depth, 2),
+                            'depth': round(depth, 8),
                             'strength': strength
                         })
                         found = True
@@ -1353,7 +1354,7 @@ class ScalpingAnalyzerPro:
                             'swing_price': sp['price'],
                             'index': i,
                             'time': int(data[i][0]),
-                            'depth': round(abs(low_i - sp['price']), 2),
+                            'depth': round(abs(low_i - sp['price']), 8),
                             'strength': 'near'
                         })
                         found = True
@@ -1712,7 +1713,7 @@ class ScalpingAnalyzerPro:
             else:
                 sl_distance = atr * 1.5  # 回退
 
-            stop_loss = round(current_price - sl_distance, 2)
+            stop_loss = round(current_price - sl_distance, 8)
 
         else:  # sell
             # 找最近的 bearish OB 頂部作為止損錨點
@@ -1732,7 +1733,7 @@ class ScalpingAnalyzerPro:
             else:
                 sl_distance = atr * 1.5
 
-            stop_loss = round(current_price + sl_distance, 2)
+            stop_loss = round(current_price + sl_distance, 8)
 
         # === 止盈計算 ===
         tp1_anchor = None
@@ -1781,15 +1782,15 @@ class ScalpingAnalyzerPro:
             tp1_dist = max(tp1_dist, atr * 1.0)
             tp2_dist = (tp2_anchor - current_price) if tp2_anchor else atr * 3.0
             tp2_dist = max(tp2_dist, atr * 2.0)
-            take_profit_1 = round(current_price + tp1_dist, 2)
-            take_profit_2 = round(current_price + tp2_dist, 2)
+            take_profit_1 = round(current_price + tp1_dist, 8)
+            take_profit_2 = round(current_price + tp2_dist, 8)
         else:
             tp1_dist = (current_price - tp1_anchor) if tp1_anchor else atr * 1.5
             tp1_dist = max(tp1_dist, atr * 1.0)
             tp2_dist = (current_price - tp2_anchor) if tp2_anchor else atr * 3.0
             tp2_dist = max(tp2_dist, atr * 2.0)
-            take_profit_1 = round(current_price - tp1_dist, 2)
-            take_profit_2 = round(current_price - tp2_dist, 2)
+            take_profit_1 = round(current_price - tp1_dist, 8)
+            take_profit_2 = round(current_price - tp2_dist, 8)
 
         # R:R 計算 — 用 TP1 作為主要 R:R，TP2 作為延伸
         risk = sl_distance
@@ -1813,12 +1814,12 @@ class ScalpingAnalyzerPro:
             'stop_loss': stop_loss,
             'take_profit_1': take_profit_1,
             'take_profit_2': take_profit_2,
-            'risk_amount': round(risk, 2),
-            'reward_amount': round(reward_tp1, 2),
+            'risk_amount': round(risk, 8),
+            'reward_amount': round(reward_tp1, 8),
             'risk_reward_ratio': rr_ratio,
             'extended_rr': extended_rr,
             'rr_grade': rr_grade,
-            'atr': round(atr, 2)
+            'atr': round(atr, 8)
         }
 
     # ============================================================
@@ -1883,15 +1884,23 @@ class ScalpingAnalyzerPro:
         return False, None
 
     @staticmethod
-    def determine_signal_label(order_blocks, fvgs, sweeps, current_price, atr):
-        """判定信號類型標籤"""
+    def determine_signal_label(order_blocks, fvgs, sweeps, current_price, atr,
+                               current_index=None):
+        """判定信號類型標籤
+
+        current_index: 當前 bar 在分析窗口中的 index。提供時僅採計最近 10 根 bar
+        內的 sweep——否則 150 根窗口內幾乎必有歷史 sweep，標籤會 100% 短路為
+        「Sweep 確認」，其餘標籤形同死代碼（2026-07-10 基準驗證實測 1691/1691）。
+        """
         if not atr or atr <= 0:
             return '指標共振'
 
-        # Sweep 確認優先級最高
-        if sweeps:
-            last = sweeps[-1]
-            return 'Sweep 確認' if last['type'] == 'bullish' else 'Sweep 確認'
+        # Sweep 確認優先級最高（僅採計近期 sweep）
+        recent_sweeps = sweeps
+        if current_index is not None:
+            recent_sweeps = [s for s in sweeps if current_index - s['index'] <= 10]
+        if recent_sweeps:
+            return 'Sweep 確認'
 
         # OB 反彈
         for ob in reversed(order_blocks):
@@ -2093,13 +2102,15 @@ class ScalpingAnalyzerPro:
                     overall = 'pre_alert'
                     action = f"謹慎進場（R:R {sl_tp['risk_reward_ratio']}）"
                     signal_label = ScalpingAnalyzerPro.determine_signal_label(
-                        order_blocks, fvgs, sweeps, current_price, atr
+                        order_blocks, fvgs, sweeps, current_price, atr,
+                        current_index=len(data) - 1
                     )
                     # 不清除 signal_type，讓前端知道方向
                 else:
                     signal_stage = 'confirmed'
                     signal_label = ScalpingAnalyzerPro.determine_signal_label(
-                        order_blocks, fvgs, sweeps, current_price, atr
+                        order_blocks, fvgs, sweeps, current_price, atr,
+                        current_index=len(data) - 1
                     )
             else:
                 # 三維達標但無預警 → 仍發出信號，不帶 confirmed badge
@@ -2108,7 +2119,8 @@ class ScalpingAnalyzerPro:
                 )
                 signal_stage = None  # 無結構確認，無 badge
                 signal_label = ScalpingAnalyzerPro.determine_signal_label(
-                    order_blocks, fvgs, sweeps, current_price, atr
+                    order_blocks, fvgs, sweeps, current_price, atr,
+                    current_index=len(data) - 1
                 )
         elif pre_alert_triggered:
             signal_stage = 'pre_alert'
