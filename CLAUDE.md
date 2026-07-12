@@ -23,7 +23,9 @@ No dependency installation needed — uses only Python 3.11+ standard library.
 
 ## Architecture
 
-**Current version**: `app_v3.py` (v4.3.0). Legacy `app_v2.py` (v3.6.0) kept as reference. Backtest engine: `app_backtest.py` (v2.0.0).
+**Current version**: `app_v3.py` (v4.4.0). Legacy `app_v2.py` (v3.6.0) kept as reference. Backtest engine: `app_backtest.py` (v2.0.0). Signal profit verifier: `verify_signal_profit.py` (v1.0.0).
+
+**Signal verification** (`verify_signal_profit.py`): Per-signal event study — replays klines, records each signal's full grade profile at trigger, independently simulates its own entry/SL/TP outcome (fees/slippage/MFE/MAE), and reports win rate/PF/expectancy stratified by grade tier A–E. Complements `app_backtest.py` (which measures portfolio strategy, not per-signal-grade quality). Key finding: SMC signals have no statistically established edge at the K-line level (5m–1h); see `specs/verify-signal-profit-report.md`.
 
 **Single-file monolith** (`app_v3.py`): Backend HTTP server + embedded frontend (HTML/CSS/JS as string literals) in one file.
 

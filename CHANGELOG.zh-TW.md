@@ -6,6 +6,20 @@
 版本管理遵循 [語義化版本](https://semver.org/spec/v2.0.0.html)。
 > 🌐 [English CHANGELOG](CHANGELOG.md)
 
+## [4.4.0] - 2026-07-12
+
+### 新增
+- **訊號獲利驗證機制**（`verify_signal_profit.py`）：逐訊號事件研究工具。重播歷史 K 線，記錄每次訊號觸發當下的完整等級剖面（overall / signal_stage / rr_grade / 3D 分數 / composite / label），用系統給的入場價 + SL/TP 獨立模擬每筆訊號結局（含手續費、滑價、MFE/MAE），按等級 A–E 分層統計勝率 / PF / 期望值。分頁抓取突破單次 1000 根 K 線上限。
+- **精度與標籤回歸測試**（`test_precision_label.py`）：五項測試，涵蓋低價幣 ATR/SL 精度與 signal_label 時近性過濾。
+- **驗證報告**（`specs/verify-signal-profit-report.md`）：完整分析——機制設計、基準結果、P0 修復、低摩擦假設空間研究、擴大樣本推翻，以及 24 來源 deep-research 對外部 scalping 策略證據的綜合。
+
+### 修復
+- **低價幣訊號全滅**：`calculate_atr` 與所有價格尺度捨入由 `round(x, 2)` 改為 `round(x, 8)`。2 位小數下低價幣（DOGE ATR ≈ 0.00013、XRP ≈ 0.0018）捨入歸零，觸發全管線的 `atr <= 0` 防衛——DOGE 完全無訊號、XRP 的 SL 距離尺度異常。修復後 5000 根 K 線範圍內 DOGE 從 0 增至 319 筆、XRP 的 SL 距離中位由 1.105% 回落至 0.254%。
+- **signal_label 退化**：`determine_signal_label` 新增 `current_index` 參數，只採計近 10 根 bar 內的 sweep。原本 `detect_liquidity_sweep` 掃描全 150 根窗口（100% 窗口 sweep 列表非空），`if sweeps:` 短路使 100% 事件標為「Sweep 確認」，其餘五類標籤形同死代碼。現在六類標籤皆會出現。
+
+### 說明
+- 核心發現（內部 4,435+ 筆事件驗證與外部 deep-research 一致）：SMC 結構訊號在 **K 線層面（5m 到 1h）沒有可統計確立的 edge**。5m 零摩擦期望值 ≈ 0；30m/1h 的正期望點估計在樣本擴大至 n=130–155 後回歸零。真正的短線 edge 在秒級以下的 L2 orderbook 資料，非現有 REST + 純 Python 架構所能承載。
+
 ## [4.3.0] - 2026-03-18
 
 ### 新增

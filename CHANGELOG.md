@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > 🌐 [繁體中文版 CHANGELOG](CHANGELOG.zh-TW.md)
 
+## [4.4.0] - 2026-07-12
+
+### Added
+- **Signal Profit Verifier** (`verify_signal_profit.py`): Per-signal event-study tool that replays historical klines, records each signal's full grade profile (overall / signal_stage / rr_grade / 3D scores / composite / label) at trigger time, and independently simulates each signal's outcome using its own entry/SL/TP (with fees, slippage, MFE/MAE). Reports win rate / PF / expectancy stratified by grade tier A–E. Paginated fetching lifts the single-request 1000-candle cap.
+- **Precision & Label Regression Tests** (`test_precision_label.py`): Five tests covering low-price-coin ATR/SL precision and signal_label recency filtering.
+- **Verification Report** (`specs/verify-signal-profit-report.md`): Full analysis — mechanism design, baseline results, P0 fixes, low-friction hypothesis-space research, sample-expansion refutation, and a 24-source deep-research synthesis of external scalping-strategy evidence.
+
+### Fixed
+- **Low-Price-Coin Signal Blackout**: `calculate_atr` and all price-scale roundings changed from `round(x, 2)` to `round(x, 8)`. At 2 decimals, low-price coins (DOGE ATR ≈ 0.00013, XRP ≈ 0.0018) rounded to zero, tripping the `atr <= 0` guard across the whole pipeline — DOGE produced zero signals and XRP's SL distances were scale-distorted. After the fix DOGE went from 0 to 319 events and XRP's median SL distance from 1.105% to 0.254% over 5000 candles.
+- **signal_label Degeneration**: `determine_signal_label` now takes a `current_index` argument and only counts sweeps within the last 10 bars. Previously `detect_liquidity_sweep` scanned the full 150-bar window (100% of windows had a non-empty sweep list), so the `if sweeps:` short-circuit labeled 100% of events "Sweep 確認"; the other five labels were dead code. All six labels now appear.
+
+### Notes
+- Key finding (both internal 4,435+ event verification and external deep-research): SMC structure signals have **no statistically established edge at the K-line level (5m to 1h)**. 5m zero-friction expectancy ≈ 0; the 30m/1h positive-expectancy point estimate collapsed toward zero once the sample grew to n=130–155. Real short-horizon edge lives in sub-second L2 order book data, outside the current REST + pure-Python architecture.
+
 ## [4.3.0] - 2026-03-18
 
 ### Added

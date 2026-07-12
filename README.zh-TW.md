@@ -286,6 +286,8 @@ TP2: $65,450 (報酬 $450)
 scalping-trade/
 ├── app_v3.py              # 主程式 v4.3.0（前後端 + SMC 引擎，固定 5m+15m）
 ├── app_backtest.py        # 回測引擎 v2.0.0（Web UI 於 port 8081，參數優化器）
+├── verify_signal_profit.py # 逐訊號獲利驗證器（事件研究，按等級分層統計勝率/PF/期望值）
+├── test_precision_label.py # 精度與 signal_label 時近性回歸測試
 ├── run_backtest.py        # CLI 回測執行器（輕量，無需 Web 伺服器）
 ├── app_v2.py              # 舊版 v3.6.0（保留參考）
 ├── signal_engine_b.py     # 方案 B 條件累積引擎（A/B 測試用）

@@ -288,6 +288,8 @@ Assume account balance: $10,000
 scalping-trade/
 ├── app_v3.py            # Main application v4.3.0 (frontend + backend, SMC engine, fixed 5m+15m)
 ├── app_backtest.py      # Backtest engine v2.0.0 (web UI on port 8081, parameter optimizer)
+├── verify_signal_profit.py # Per-signal profit verifier (event study, grade-tiered win rate/PF/expectancy)
+├── test_precision_label.py # Precision & signal_label recency regression tests
 ├── run_backtest.py      # CLI backtest runner (lightweight, no web server)
 ├── app_v2.py            # Legacy v3.6.0 (kept as reference)
 ├── signal_engine_b.py   # Alternative signal engine (boolean condition accumulation) for A/B testing
